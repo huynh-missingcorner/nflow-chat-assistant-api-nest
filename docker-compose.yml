@@ -1,72 +1,34 @@
 version: '3.8'
 
 services:
-  api:
-    container_name: nflow-chat-assistant
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
+  postgres:
+    container_name: nflow-assistant-db
+    image: postgres:14-alpine
+    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          memory: 128Mb
     ports:
-      - '3000:3000'
-    volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules
-    env_file:
-      - .env
-    depends_on:
-      # - postgres # * We are using Supabase for the database
-      - redis
-      - rabbitmq
-    networks:
-      - ecommerce_network
-    # Add extra_hosts to ensure the container can resolve external hosts
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-
-  # * We are using Supabase for the database
-  # postgres:
-  #   container_name: ecommerce_postgres
-  #   image: postgres:16-alpine
-  #   ports:
-  #     - '5432:5432'
-  #   environment:
-  #     POSTGRES_USER: ${POSTGRES_USER:-postgres}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-  #     POSTGRES_DB: ${POSTGRES_DB:-ecommerce}
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   networks:
-  #     - ecommerce_network
-
-  redis:
-    container_name: ecommerce_redis
-    image: redis:7-alpine
-    ports:
-      - '6379:6379'
-    volumes:
-      - redis_data:/data
-    networks:
-      - ecommerce_network
-
-  rabbitmq:
-    container_name: ecommerce_rabbitmq
-    image: rabbitmq:3-management-alpine
-    ports:
-      - '5672:5672' # AMQP protocol port
-      - '15672:15672' # Management UI port
+      - '5432:5432'
+    command: -c shared_buffers=500MB -c fsync=off
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+      POSTGRES_USER: ${PGUSER:-pg}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-pg}
+      POSTGRES_DB: ${PGDATABASE:-}
+    healthcheck:
+      start_period: 5s
+      test: 'pg_isready'
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - nflow-assistant_pg_data:/var/lib/postgresql/data
     networks:
-      - ecommerce_network
+      - nflow-assistant
 
 networks:
-  ecommerce_network:
-    driver: bridge
+  nflow-assistant:
 
 volumes:
-  postgres_data:
-  redis_data:
-  rabbitmq_data:
+  nflow-assistant_pg_data:
+    driver: local

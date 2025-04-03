@@ -15,7 +15,7 @@ export class CoordinatorService {
     message: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     chatContext: any[],
-  ): Promise<{ reply: string; appUrl?: string }> {
+  ) {
     // This is a simplified implementation
     // In the real implementation, this would route through various agents
 

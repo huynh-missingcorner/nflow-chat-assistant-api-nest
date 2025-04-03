@@ -20,9 +20,15 @@ export const envSchema = z.object({
   // RabbitMQ
   RABBITMQ_URL: z.string().url(),
 
-  // Payment
-  STRIPE_SECRET_KEY: z.string().optional(),
-  PAYPAL_CLIENT_ID: z.string().optional(),
+  // OpenAI
+  OPENAI_API_KEY: z.string(),
+  OPENAI_MODEL: z.string().default('gpt-4'),
+  OPENAI_MAX_TOKENS: z.coerce.number().default(2000),
+  OPENAI_TEMPERATURE: z.coerce.number().default(0.7),
+
+  // Nflow
+  NFLOW_API_URL: z.string().url(),
+  NFLOW_API_KEY: z.string(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

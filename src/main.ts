@@ -2,15 +2,15 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import validationConfig from './config/validation/validation.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Set up global validation pipe
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.useGlobalPipes(new ValidationPipe(validationConfig()));
 
   // Set up Swagger documentation
-  const config = new DocumentBuilder()
+  const configSwagger = new DocumentBuilder()
     .setTitle('Nflow Chat Assistant API')
     .setDescription(
       'API for the Nflow Chat Assistant that interprets user prompts and interacts with the Nflow no-code platform',
@@ -19,7 +19,7 @@ async function bootstrap() {
     .addTag('Chat')
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, configSwagger);
   SwaggerModule.setup('api', app, document);
 
   await app.listen(process.env.PORT ?? 3000);

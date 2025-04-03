@@ -11,26 +11,32 @@ export class CoordinatorService {
    * @param chatContext Previous chat history for context
    * @returns Object containing the reply and app URL if applicable
    */
-  processUserMessage(
+  async processUserMessage(
     message: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    chatContext: any[],
-  ) {
-    // This is a simplified implementation
-    // In the real implementation, this would route through various agents
+    chatContext: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+  ): Promise<{ reply: string; appUrl?: string }> {
+    try {
+      const messages = [
+        {
+          role: 'system' as const,
+          content:
+            'You are a helpful AI assistant that helps users build applications using Nflow. Be concise and clear in your responses.',
+        },
+        ...chatContext,
+        { role: 'user' as const, content: message },
+      ];
 
-    // TODO: Implement coordination logic with all agents:
-    // 1. Intent & Feature Extraction Agent
-    // 2. Component Mapping Agent
-    // 3. API Call Generator Agent
-    // 4. Validation & Debug Agent
-    // 5. Specific Nflow Agents (Application, Object, Layout, Flow)
-    // 6. Nflow Execution Agent
+      // Generate response using OpenAI
+      const reply = await this.openAIService.generateChatCompletion(messages);
 
-    // For now, return a stub response
-    return {
-      reply: `I've received your message: "${message}". This is a placeholder response as the full agent system is under development.`,
-      appUrl: undefined,
-    };
+      return {
+        reply,
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      return {
+        reply: `I apologize, but I encountered an error while processing your message: ${errorMessage}`,
+      };
+    }
   }
 }

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { OpenaiService } from '../openai/openai.service';
+import { OpenAIService } from '../openai/openai.service';
 
 @Injectable()
 export class CoordinatorService {
-  constructor(private readonly openaiService: OpenaiService) {}
+  constructor(private readonly openAIService: OpenAIService) {}
 
   /**
    * Process a user message through the multi-agent system

@@ -19,8 +19,8 @@ export class ChatService {
   async processMessage(chatRequestDto: ChatRequestDto): Promise<ChatResponseDto> {
     const { sessionId, message } = chatRequestDto;
     const chatContext = await this.historyService.getSessionHistory(sessionId);
-    const result = await this.coordinatorService.processUserMessage(message, chatContext);
-    await this.historyService.saveInteraction(sessionId, message, result.reply);
+    const result = this.coordinatorService.processUserMessage(message, chatContext);
+    // await this.historyService.saveInteraction(sessionId, message, result.reply);
 
     return {
       reply: result.reply,

@@ -1,22 +1,102 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import OpenAI from 'openai';
+import { OpenAIConfig, createOpenAIConfig } from './openai.config';
 
-/**
- * Service for interacting with OpenAI API
- */
+interface OpenAIError extends Error {
+  response?: {
+    status: number;
+    data: {
+      error: {
+        message: string;
+      };
+    };
+  };
+}
+
 @Injectable()
-export class OpenaiService {
+export class OpenAIService implements OnModuleInit {
+  private openai: OpenAI;
+  private config: OpenAIConfig;
+
+  onModuleInit(): void {
+    try {
+      this.config = createOpenAIConfig();
+      this.openai = new OpenAI({
+        apiKey: this.config.apiKey,
+      });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to initialize OpenAI service: ${error.message}`);
+      }
+      throw new Error('Failed to initialize OpenAI service');
+    }
+  }
+
   /**
-   * Call the OpenAI API with a prompt
-   * @param messages Array of message objects for the conversation
-   * @returns Generated response text
+   * Sends a completion request to OpenAI's API
+   * @param prompt The prompt to send to OpenAI
+   * @param overrideConfig Optional configuration to override default settings
+   * @returns The completion response from OpenAI
    */
-  async generateCompletion(messages: { role: string; content: string }[]): Promise<string> {
-    // This is a simplified implementation
-    // In the real implementation, this would call the OpenAI API
+  async generateCompletion(
+    prompt: string,
+    overrideConfig?: Partial<OpenAIConfig>,
+  ): Promise<string> {
+    const config = { ...this.config, ...overrideConfig };
 
-    console.log('OpenAI service called with messages:', messages);
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: config.model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: config.maxTokens,
+        temperature: config.temperature,
+      });
 
-    // For now, return a stub response
-    return 'This is a placeholder response from the OpenAI service.';
+      return response.choices[0]?.message?.content || '';
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        const apiError = error as OpenAIError;
+        if (apiError.response) {
+          throw new Error(
+            `OpenAI API Error: ${apiError.response.status} - ${apiError.response.data.error.message}`,
+          );
+        }
+      }
+      throw new Error('Failed to generate completion');
+    }
+  }
+
+  /**
+   * Sends a chat completion request to OpenAI's API with multiple messages
+   * @param messages Array of messages to send to OpenAI
+   * @param overrideConfig Optional configuration to override default settings
+   * @returns The chat completion response from OpenAI
+   */
+  async generateChatCompletion(
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    overrideConfig?: Partial<OpenAIConfig>,
+  ): Promise<string> {
+    const config = { ...this.config, ...overrideConfig };
+
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: config.model,
+        messages,
+        max_tokens: config.maxTokens,
+        temperature: config.temperature,
+      });
+
+      return response.choices[0]?.message?.content || '';
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        const apiError = error as OpenAIError;
+        if (apiError.response) {
+          throw new Error(
+            `OpenAI API Error: ${apiError.response.status} - ${apiError.response.data.error.message}`,
+          );
+        }
+      }
+      throw new Error('Failed to generate chat completion');
+    }
   }
 }

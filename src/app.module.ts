@@ -6,7 +6,7 @@ import { ConfigModule } from './config/config.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { CoordinatorModule } from './modules/coordinator/coordinator.module';
 import { HistoryModule } from './modules/history/history.module';
-import { OpenaiModule } from './modules/openai/openai.module';
+import { OpenAIModule } from './modules/openai/openai.module';
 
 @Module({
   imports: [
@@ -15,7 +15,7 @@ import { OpenaiModule } from './modules/openai/openai.module';
     ChatModule,
     CoordinatorModule,
     HistoryModule,
-    OpenaiModule,
+    OpenAIModule,
   ],
   controllers: [AppController],
   providers: [AppService],

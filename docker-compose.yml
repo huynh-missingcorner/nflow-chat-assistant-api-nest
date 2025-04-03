@@ -1,31 +1,72 @@
 version: '3.8'
+
 services:
-  nest-api:
-    container_name: nest-api
+  api:
+    container_name: ecommerce_api
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
-      - 3000:3000
-    restart: always
+      - '3000:3000'
     volumes:
       - .:/usr/src/app
+      - /usr/src/app/node_modules
+    env_file:
+      - .env
     depends_on:
-      - postgres
-    env_file:
-      - .env
+      # - postgres # * We are using Supabase for the database
+      - redis
+      - rabbitmq
+    networks:
+      - ecommerce_network
+    # Add extra_hosts to ensure the container can resolve external hosts
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 
-  postgres:
-    image: postgres:13
-    container_name: postgresprisma
-    restart: always
+  # * We are using Supabase for the database
+  # postgres:
+  #   container_name: ecommerce_postgres
+  #   image: postgres:16-alpine
+  #   ports:
+  #     - '5432:5432'
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_USER:-postgres}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+  #     POSTGRES_DB: ${POSTGRES_DB:-ecommerce}
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - ecommerce_network
+
+  redis:
+    container_name: ecommerce_redis
+    image: redis:7-alpine
     ports:
-      - 5432:5432
-    env_file:
-      - .env
+      - '6379:6379'
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - redis_data:/data
+    networks:
+      - ecommerce_network
+
+  rabbitmq:
+    container_name: ecommerce_rabbitmq
+    image: rabbitmq:3-management-alpine
+    ports:
+      - '5672:5672' # AMQP protocol port
+      - '15672:15672' # Management UI port
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - ecommerce_network
+
+networks:
+  ecommerce_network:
+    driver: bridge
 
 volumes:
-  postgres:
-    name: nest-prisma-db
+  postgres_data:
+  redis_data:
+  rabbitmq_data:

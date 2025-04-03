@@ -1,6 +1,7 @@
 # compiled output
 /dist
 /node_modules
+/build
 
 # Logs
 logs
@@ -10,11 +11,9 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-dock
 
 # OS
 .DS_Store
-.env
 
 # Tests
 /coverage
@@ -35,3 +34,30 @@ dock
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# temp directory
+.temp
+.tmp
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Uploads
+uploads/*
+.qodo
+
+# Linting and formatting
+.eslintcache

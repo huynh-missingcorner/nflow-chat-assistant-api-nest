@@ -1,26 +1,52 @@
-FROM node:14 AS builder
+# Build Stage
+FROM node:22-alpine AS builder
 
-# Create app directory
-WORKDIR /app
+WORKDIR /usr/src/app
 
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-COPY package*.json ./
-COPY prisma ./prisma/
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Install app dependencies
-RUN npm install
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
 
+# Install dependencies
+RUN pnpm install
+
+# Copy source code
 COPY . .
 
-RUN sleep 3
+# Generate Prisma client
+RUN pnpm prisma generate
 
-RUN npm run build
+# Build application
+RUN pnpm build
 
-FROM node:14
+# Production Stage
+FROM node:22-alpine
 
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/dist ./dist
+WORKDIR /usr/src/app
 
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+
+# Install production dependencies only
+RUN pnpm install --prod
+
+# Copy Prisma schema and generated client
+COPY --from=builder /usr/src/app/prisma ./prisma
+COPY --from=builder /usr/src/app/node_modules/.prisma ./node_modules/.prisma
+
+# Copy built application
+COPY --from=builder /usr/src/app/dist ./dist
+
+# Expose port
 EXPOSE 3000
-CMD ["npm", "run", "start:prod" ]
+
+# Set NODE_ENV
+ENV NODE_ENV=production
+
+# Start the application
+CMD ["pnpm", "start:prod"]

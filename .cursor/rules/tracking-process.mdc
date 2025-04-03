@@ -1,0 +1,44 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Rule Name: tracking-process
+Description: 
+This rule defines how to track progress in the Nflow Chat Assistant project.
+
+## Project Progress Tracking
+
+### Guidelines for Progress Tracking
+
+- Use the `docs/project-roadmap.md` file to track overall project progress
+- Mark tasks as completed by changing `[ ]` to `[V]` (not the traditional `[x]`)
+- Maintain accurate progress percentages in the tracking section
+- When completing a task:
+  1. Update its checkbox from `[ ]` to `[V]`
+  2. Update the phase completion count (e.g., "Phase 1: 1/13 completed (8%)")
+  3. Update the total progress percentage
+- Keep the roadmap up-to-date as requirements evolve
+- Add detailed subtasks as needed while keeping the main tasks intact
+
+### Progress Review Process
+
+- Review progress weekly
+- Add comments or notes below completed tasks if necessary
+- If a task is blocked, mark it with `[B]` and add a note explaining why
+- If a task needs revision, mark it with `[R]` and describe the necessary changes
+
+### Progress Commands
+
+When using VSCode or Cursor editors, you can use the following commands to update progress:
+- Find all incomplete tasks: Search for `- [ ]`
+- Find all completed tasks: Search for `- [V]`
+- Find all blocked tasks: Search for `- [B]`
+- Find all tasks needing revision: Search for `- [R]`
+
+### Integration with CI/CD
+
+When possible, automate the progress tracking:
+- On successful test runs, automatically mark test-related tasks as complete
+- On successful deployments, automatically mark deployment tasks as complete
+- Generate progress reports automatically as part of CI/CD pipeline 

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { OpenAIService } from '../../openai/openai.service';
+import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ExtractedIntent, ExtractIntentParams } from './types/intent.types';
 import { IntentPrompts } from './prompts/intent.prompts';
 import { IntentErrors } from './constants/intent.constants';

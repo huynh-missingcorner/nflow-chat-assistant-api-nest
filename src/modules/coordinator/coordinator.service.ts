@@ -21,12 +21,11 @@ export class CoordinatorService {
     chatContext: Array<{ role: 'user' | 'assistant'; content: string }> = [],
   ): Promise<{ reply: string; appUrl?: string }> {
     try {
+      // Extract the intent from the user's message
       const intent = await this.intentService.extractIntent({
         message,
         chatContext,
       });
-
-      this.logger.debug('Intent extracted', intent);
 
       const reply = await this.openAIService.generateChatCompletion([
         {
@@ -45,6 +44,7 @@ export class CoordinatorService {
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      this.logger.error('Error in processUserMessage', error);
       return {
         reply: `I apologize, but I encountered an error while processing your message: ${errorMessage}`,
       };

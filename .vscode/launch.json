@@ -2,15 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug NestJS App",
       "type": "node",
-      "request": "launch",
-      "args": ["${workspaceFolder}/src/main.ts"],
-      "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
-      "sourceMaps": true,
-      "cwd": "${workspaceFolder}",
+      "request": "attach",
+      "name": "Attach to NestJS",
+      "port": 9229,
+      "restart": true,
       "protocol": "inspector",
-      "internalConsoleOptions": "openOnSessionStart"
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
     }
   ]
 }

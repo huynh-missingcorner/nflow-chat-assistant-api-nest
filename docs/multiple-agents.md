@@ -61,9 +61,7 @@ Final executor agent that sends requests to Nflow APIs, handles retries and logs
 
 ```json
 {
-  "results": [
-    {"resource": "app", "id": "xyz123", "url": "https://nflow.so/app/xyz123"}
-  ]
+  "results": [{ "resource": "app", "id": "xyz123", "url": "https://nflow.so/app/xyz123" }]
 }
 ```
 

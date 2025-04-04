@@ -7,6 +7,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { CoordinatorModule } from './modules/coordinator/coordinator.module';
 import { HistoryModule } from './modules/history/history.module';
 import { OpenAIModule } from './modules/openai/openai.module';
+import { SharedModule } from './shared/shared.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { OpenAIModule } from './modules/openai/openai.module';
     CoordinatorModule,
     HistoryModule,
     OpenAIModule,
+    SharedModule,
   ],
   controllers: [AppController],
   providers: [AppService],

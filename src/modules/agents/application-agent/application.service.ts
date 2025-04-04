@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OpenAIService } from '../../openai/openai.service';
 import { PrismaService } from 'src/shared/infrastructure/prisma/prisma.service';
+import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import {
   GenerateApplicationParams,
   GenerateApplicationResponse,
@@ -15,10 +16,12 @@ import {
 @Injectable()
 export class ApplicationService {
   private readonly logger = new Logger(ApplicationService.name);
+  private readonly AGENT_PATH = 'src/modules/agents/application-agent';
 
   constructor(
     private readonly openAIService: OpenAIService,
     private readonly prisma: PrismaService,
+    private readonly contextLoader: ContextLoaderService,
   ) {}
 
   /**
@@ -32,10 +35,13 @@ export class ApplicationService {
     try {
       this.validateIntent(params.intent);
 
+      // Load context from file
+      const context = await this.contextLoader.loadContext(this.AGENT_PATH);
+
       const messages = [
         {
           role: 'system' as const,
-          content: ApplicationPrompts.SYSTEM_CONTEXT,
+          content: `${ApplicationPrompts.SYSTEM_CONTEXT}\n\n${context}`,
         },
         {
           role: 'user' as const,

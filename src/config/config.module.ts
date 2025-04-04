@@ -13,7 +13,6 @@ import { ZodError } from 'zod';
       load: [env, database, validation],
       validate: (config) => {
         try {
-          console.log(config);
           return envSchema.parse(config);
         } catch (error: unknown) {
           if (error instanceof ZodError) {

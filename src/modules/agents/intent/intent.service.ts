@@ -3,12 +3,16 @@ import { OpenAIService } from '../../openai/openai.service';
 import { ExtractedIntent, ExtractIntentParams } from './types/intent.types';
 import { IntentPrompts } from './prompts/intent.prompts';
 import { IntentErrors } from './constants/intent.constants';
-
+import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 @Injectable()
 export class IntentService {
   private readonly logger = new Logger(IntentService.name);
+  private readonly AGENT_PATH = 'src/modules/agents/intent';
 
-  constructor(private readonly openAIService: OpenAIService) {}
+  constructor(
+    private readonly openAIService: OpenAIService,
+    private readonly contextLoader: ContextLoaderService,
+  ) {}
 
   /**
    * Extracts features, components, and goals from a user's prompt
@@ -17,10 +21,12 @@ export class IntentService {
    */
   async extractIntent(params: ExtractIntentParams): Promise<ExtractedIntent> {
     try {
+      const context = await this.contextLoader.loadContext(this.AGENT_PATH);
+
       const messages = [
         {
           role: 'system' as const,
-          content: IntentPrompts.FEATURE_EXTRACTION,
+          content: `${IntentPrompts.FEATURE_EXTRACTION}\n\n${context}`,
         },
         ...(params.chatContext || []),
         { role: 'user' as const, content: params.message },
@@ -30,24 +36,7 @@ export class IntentService {
         },
       ];
 
-      const response = await this.openAIService.generateChatCompletion(messages, {
-        // responseFormat: {
-        //   type: 'json_schema',
-        //   json_schema: {
-        //     name: 'intent',
-        //     strict: true,
-        //     schema: {
-        //       type: 'object',
-        //       properties: {
-        //         features: { type: 'array', items: { type: 'string' } },
-        //         components: { type: 'array', items: { type: 'string' } },
-        //         summary: { type: 'string' },
-        //       },
-        //       required: ['features', 'components', 'summary'],
-        //     },
-        //   },
-        // },
-      });
+      const response = await this.openAIService.generateChatCompletion(messages);
 
       try {
         const parsedResponse = JSON.parse(response) as ExtractedIntent;

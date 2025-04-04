@@ -33,13 +33,10 @@ This document tracks the implementation progress of the Nflow Chat Assistant pro
 - [ ] Implement chat history persistence
 - [ ] Create agent base class/interface
 
-### Workflow Agents
+### Core Agents
 
 - [ ] Implement Intent & Feature Extraction Agent
-- [ ] Implement Component Mapping Agent
-- [ ] Implement API Call Generator Agent
-- [ ] Implement Validation & Debug Agent
-- [ ] Implement Execution Agent
+- [ ] Implement Nflow Execution Agent
 
 ## Phase 3: Nflow Domain Expert Agents
 
@@ -145,8 +142,8 @@ This document tracks the implementation progress of the Nflow Chat Assistant pro
 
 ## Progress Tracking
 
-- Phase 1: 0/13 completed (0%)
-- Phase 2: 0/10 completed (0%)
+- Phase 1: 4/13 completed (31%)
+- Phase 2: 0/7 completed (0%)
 - Phase 3: 0/8 completed (0%)
 - Phase 4: 0/9 completed (0%)
 - Phase 5: 0/8 completed (0%)
@@ -154,4 +151,4 @@ This document tracks the implementation progress of the Nflow Chat Assistant pro
 - Phase 7: 0/8 completed (0%)
 - Phase 8: 0/8 completed (0%)
 
-**Total Progress: 0/73 completed (0%)**
+**Total Progress: 4/70 completed (6%)**

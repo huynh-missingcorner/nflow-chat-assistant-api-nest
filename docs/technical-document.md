@@ -17,7 +17,7 @@ A multi-agent AI chatbot system that interprets user prompts and interacts with 
 
 ```
 User Prompt -> Frontend (Next.js Chat UI) -> Backend (/chat API) -> Coordinator Agent ->
-Step-by-step call to each Agent -> Return message + created app link -> Frontend displays response & iframe
+Intent Agent -> Domain Agents -> Execution Agent -> Frontend displays response & iframe
 ```
 
 ### 🔁 Agent Interaction Flow
@@ -25,9 +25,6 @@ Step-by-step call to each Agent -> Return message + created app link -> Frontend
 1. **User** sends prompt via `/chat`
 2. **Coordinator Agent** receives and routes through:
    - Intent & Feature Extraction Agent
-   - Component Mapping Agent
-   - API Call Generator Agent
-   - Validation & Debug Agent
    - Domain-specific Nflow Agents (Application, Object, Layout, Flow)
    - Nflow Execution Agent
 3. **Coordinator Agent** compiles response + app link
@@ -74,22 +71,6 @@ src/
 │   │   │   ├── intent.module.ts
 │   │   │   ├── intent.service.ts
 │   │   │   └── context.md
-│   │   ├── mapping/
-│   │   │   ├── mapping.module.ts
-│   │   │   ├── mapping.service.ts
-│   │   │   └── context.md
-│   │   ├── api-generator/
-│   │   │   ├── api-generator.module.ts
-│   │   │   ├── api-generator.service.ts
-│   │   │   └── context.md
-│   │   ├── validation/
-│   │   │   ├── validation.module.ts
-│   │   │   ├── validation.service.ts
-│   │   │   └── context.md
-│   │   ├── execution/
-│   │   │   ├── execution.module.ts
-│   │   │   ├── execution.service.ts
-│   │   │   └── context.md
 │   │   ├── application-agent/
 │   │   │   ├── application.module.ts
 │   │   │   ├── application.service.ts
@@ -124,12 +105,10 @@ Each agent module can include tools, `context.md` for grounding, and model-speci
 
 ## 🧠 Agent Types
 
-### General Workflow Agents
+### Core Agents
 
 - Intent & Feature Extraction
-- Component Mapping
-- API Call Generator
-- Validation & Debug
+- Coordinator
 - Execution
 
 ### Nflow Domain Experts
@@ -177,7 +156,7 @@ Each expert agent focuses on specific Nflow API domains:
 
 ## 🗂 Future Enhancements
 
-- Multi-model routing (e.g., use GPT-4 for Intent Agent, GPT-3.5 for Mapping)
+- Multi-model routing (e.g., use GPT-4 for Intent Agent, GPT-3.5 for others)
 - WebSocket streaming responses
 - Agent memory using vector embeddings for long-term context
 - User auth and project saving

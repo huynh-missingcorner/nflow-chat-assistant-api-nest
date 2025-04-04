@@ -1,9 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OpenAIService } from '../openai/openai.service';
+import { IntentService } from '../agents/intent/intent.service';
 
 @Injectable()
 export class CoordinatorService {
-  constructor(private readonly openAIService: OpenAIService) {}
+  constructor(
+    private readonly intentService: IntentService,
+    private readonly openAIService: OpenAIService,
+    private readonly logger: Logger,
+  ) {}
 
   /**
    * Process a user message through the multi-agent system
@@ -16,18 +21,24 @@ export class CoordinatorService {
     chatContext: Array<{ role: 'user' | 'assistant'; content: string }> = [],
   ): Promise<{ reply: string; appUrl?: string }> {
     try {
-      const messages = [
-        {
-          role: 'system' as const,
-          content:
-            'You are a helpful AI assistant that helps users build applications using Nflow. Be concise and clear in your responses.',
-        },
-        ...chatContext,
-        { role: 'user' as const, content: message },
-      ];
+      const intent = await this.intentService.extractIntent({
+        message,
+        chatContext,
+      });
 
-      // Generate response using OpenAI
-      const reply = await this.openAIService.generateChatCompletion(messages);
+      this.logger.debug('Intent extracted', intent);
+
+      const reply = await this.openAIService.generateChatCompletion([
+        {
+          role: 'system',
+          content:
+            'You are a helpful AI assistant that helps users build applications using Nflow.',
+        },
+        {
+          role: 'user',
+          content: `Here is the intent: ${JSON.stringify(intent)}`,
+        },
+      ]);
 
       return {
         reply,

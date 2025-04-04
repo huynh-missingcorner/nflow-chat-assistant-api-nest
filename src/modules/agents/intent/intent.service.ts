@@ -30,7 +30,24 @@ export class IntentService {
         },
       ];
 
-      const response = await this.openAIService.generateChatCompletion(messages);
+      const response = await this.openAIService.generateChatCompletion(messages, {
+        responseFormat: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'intent',
+            strict: true,
+            schema: {
+              type: 'object',
+              properties: {
+                features: { type: 'array', items: { type: 'string' } },
+                components: { type: 'array', items: { type: 'string' } },
+                summary: { type: 'string' },
+              },
+              required: ['features', 'components', 'summary'],
+            },
+          },
+        },
+      });
 
       try {
         const parsedResponse = JSON.parse(response) as ExtractedIntent;

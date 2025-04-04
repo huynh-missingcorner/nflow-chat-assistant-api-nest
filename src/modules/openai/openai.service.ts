@@ -1,17 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import OpenAI from 'openai';
 import { OpenAIConfig, createOpenAIConfig } from './openai.config';
-
-interface OpenAIError extends Error {
-  response?: {
-    status: number;
-    data: {
-      error: {
-        message: string;
-      };
-    };
-  };
-}
+import { ChatCompletionOptions, ChatMessage, OpenAIError } from './openai.types';
 
 @Injectable()
 export class OpenAIService implements OnModuleInit {
@@ -69,14 +59,14 @@ export class OpenAIService implements OnModuleInit {
   /**
    * Sends a chat completion request to OpenAI's API with multiple messages
    * @param messages Array of messages to send to OpenAI
-   * @param overrideConfig Optional configuration to override default settings
+   * @param options Optional configuration including response format and other settings
    * @returns The chat completion response from OpenAI
    */
   async generateChatCompletion(
-    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-    overrideConfig?: Partial<OpenAIConfig>,
+    messages: ChatMessage[],
+    options?: ChatCompletionOptions,
   ): Promise<string> {
-    const config = { ...this.config, ...overrideConfig };
+    const config = { ...this.config, ...options };
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -84,6 +74,7 @@ export class OpenAIService implements OnModuleInit {
         messages,
         max_tokens: config.maxTokens,
         temperature: config.temperature,
+        ...(options?.responseFormat && { response_format: options.responseFormat }),
       });
 
       return response.choices[0]?.message?.content || '';

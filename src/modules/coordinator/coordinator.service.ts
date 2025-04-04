@@ -4,10 +4,11 @@ import { IntentService } from '../agents/intent-agent/intent.service';
 
 @Injectable()
 export class CoordinatorService {
+  private readonly logger = new Logger(CoordinatorService.name);
+
   constructor(
     private readonly intentService: IntentService,
     private readonly openAIService: OpenAIService,
-    private readonly logger: Logger,
   ) {}
 
   /**

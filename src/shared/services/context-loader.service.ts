@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { getAgentContextPath } from '../constants/agent-paths.constants';
 
 @Injectable()
 export class ContextLoaderService {
@@ -9,7 +10,7 @@ export class ContextLoaderService {
 
   /**
    * Load context from a markdown file
-   * @param agentPath Path to the agent's directory
+   * @param agentPath Path to the agent's directory relative to src
    * @returns Context content as string
    */
   async loadContext(agentPath: string): Promise<string> {
@@ -19,7 +20,7 @@ export class ContextLoaderService {
         return this.contextCache.get(cacheKey)!;
       }
 
-      const contextPath = path.join(process.cwd(), agentPath, 'context.md');
+      const contextPath = path.join(process.cwd(), getAgentContextPath(agentPath));
       const content = await fs.readFile(contextPath, 'utf-8');
 
       // Cache the content

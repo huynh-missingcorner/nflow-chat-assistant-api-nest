@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { PrismaService } from 'src/shared/infrastructure/prisma/prisma.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
+import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import {
   GenerateLayoutsParams,
   GenerateLayoutsResponse,
@@ -14,7 +15,7 @@ import { LayoutErrors, LayoutPrompts, LayoutDefaults } from './constants/layout.
 @Injectable()
 export class LayoutService {
   private readonly logger = new Logger(LayoutService.name);
-  private readonly AGENT_PATH = 'src/modules/agents/layout-agent';
+  private readonly AGENT_PATH = AGENT_PATHS.LAYOUT;
 
   constructor(
     private readonly openAIService: OpenAIService,

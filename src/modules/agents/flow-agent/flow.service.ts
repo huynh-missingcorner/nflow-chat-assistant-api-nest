@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { PrismaService } from 'src/shared/infrastructure/prisma/prisma.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
+import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import {
   GenerateFlowsParams,
   GenerateFlowsResponse,
@@ -15,7 +16,7 @@ import { FlowErrors, FlowPrompts, FlowDefaults } from './constants/flow.constant
 @Injectable()
 export class FlowService {
   private readonly logger = new Logger(FlowService.name);
-  private readonly AGENT_PATH = 'src/modules/agents/flow-agent';
+  private readonly AGENT_PATH = AGENT_PATHS.FLOW;
 
   constructor(
     private readonly openAIService: OpenAIService,

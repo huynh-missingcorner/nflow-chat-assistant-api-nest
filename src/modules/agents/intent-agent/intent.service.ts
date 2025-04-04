@@ -4,10 +4,12 @@ import { ExtractedIntent, ExtractIntentParams } from './types/intent.types';
 import { IntentPrompts } from './prompts/intent.prompts';
 import { IntentErrors } from './constants/intent.constants';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
+import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
+
 @Injectable()
 export class IntentService {
   private readonly logger = new Logger(IntentService.name);
-  private readonly AGENT_PATH = 'src/modules/agents/intent';
+  private readonly AGENT_PATH = AGENT_PATHS.INTENT;
 
   constructor(
     private readonly openAIService: OpenAIService,

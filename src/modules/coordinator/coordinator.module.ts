@@ -1,7 +1,7 @@
 import { Module, Logger } from '@nestjs/common';
 import { CoordinatorService } from './coordinator.service';
 import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
-import { IntentModule } from '../agents/intent/intent.module';
+import { IntentModule } from '../agents/intent-agent/intent.module';
 
 @Module({
   imports: [OpenAIModule, IntentModule],

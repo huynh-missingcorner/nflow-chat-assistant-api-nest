@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { PrismaService } from 'src/shared/infrastructure/prisma/prisma.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
+import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import {
   GenerateApplicationParams,
   GenerateApplicationResponse,
@@ -16,7 +17,7 @@ import {
 @Injectable()
 export class ApplicationService {
   private readonly logger = new Logger(ApplicationService.name);
-  private readonly AGENT_PATH = 'src/modules/agents/application-agent';
+  private readonly AGENT_PATH = AGENT_PATHS.APPLICATION;
 
   constructor(
     private readonly openAIService: OpenAIService,

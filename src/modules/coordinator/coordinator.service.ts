@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import { IntentService } from '../agents/intent/intent.service';
+import { IntentService } from '../agents/intent-agent/intent.service';
 
 @Injectable()
 export class CoordinatorService {

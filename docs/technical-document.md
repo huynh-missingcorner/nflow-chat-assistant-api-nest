@@ -1,6 +1,7 @@
 # Nflow Chat Assistant - Technical Design Document
 
 ## 🏗 Project Overview
+
 A multi-agent AI chatbot system that interprets user prompts and interacts with the Nflow no-code platform to generate applications.
 
 ---
@@ -8,16 +9,19 @@ A multi-agent AI chatbot system that interprets user prompts and interacts with 
 ## 📐 Software Architecture
 
 ### 🧱 Architecture Type
+
 - **Modular Monolith**
 - NestJS Modules organized under `modules/` directory for clear boundaries and scalability
 
 ### 🖼️ High-Level Flow
+
 ```
 User Prompt -> Frontend (Next.js Chat UI) -> Backend (/chat API) -> Coordinator Agent ->
 Step-by-step call to each Agent -> Return message + created app link -> Frontend displays response & iframe
 ```
 
 ### 🔁 Agent Interaction Flow
+
 1. **User** sends prompt via `/chat`
 2. **Coordinator Agent** receives and routes through:
    - Intent & Feature Extraction Agent
@@ -34,12 +38,14 @@ Step-by-step call to each Agent -> Return message + created app link -> Frontend
 ## 📦 Key Features
 
 ### Frontend (Next.js)
+
 - Persistent chat UI (chat history)
 - Prompt input + enter to send
 - Streamed or chunked responses
 - Display iframe of generated app from Nflow
 
 ### Backend (NestJS)
+
 - REST endpoint `/chat`
 - Modular multi-agent system under `modules/`
 - Stateless execution but stateful context management
@@ -119,6 +125,7 @@ Each agent module can include tools, `context.md` for grounding, and model-speci
 ## 🧠 Agent Types
 
 ### General Workflow Agents
+
 - Intent & Feature Extraction
 - Component Mapping
 - API Call Generator
@@ -126,7 +133,9 @@ Each agent module can include tools, `context.md` for grounding, and model-speci
 - Execution
 
 ### Nflow Domain Experts
+
 Each expert agent focuses on specific Nflow API domains:
+
 - **Application Agent**: Handles RESTful APIs for applications
 - **Object Agent**: Handles database table structure (objects) and their APIs
 - **Layout Agent**: Handles UI layout APIs
@@ -136,18 +145,19 @@ Each expert agent focuses on specific Nflow API domains:
 
 ## 🧰 Technology Stack
 
-| Layer        | Stack                        |
-|--------------|-------------------------------|
-| Frontend     | Next.js, TailwindCSS         |
-| Backend      | NestJS, TypeScript           |
-| Database     | PostgreSQL + Prisma ORM      |
-| API Calls    | `axios` or `httpx` (Nflow)   |
-| OpenAI       | `openai` SDK                 |
-| DevOps       | Docker, GitHub Actions       |
+| Layer     | Stack                      |
+| --------- | -------------------------- |
+| Frontend  | Next.js, TailwindCSS       |
+| Backend   | NestJS, TypeScript         |
+| Database  | PostgreSQL + Prisma ORM    |
+| API Calls | `axios` or `httpx` (Nflow) |
+| OpenAI    | `openai` SDK               |
+| DevOps    | Docker, GitHub Actions     |
 
 ---
 
 ## 🔐 Security & Best Practices
+
 - Rate limiting and abuse protection on `/chat`
 - API key rotation and env management for OpenAI & Nflow
 - Prisma validation for all data models
@@ -157,6 +167,7 @@ Each expert agent focuses on specific Nflow API domains:
 ---
 
 ## 🧪 Testing Strategy
+
 - Unit test each agent with mock OpenAI responses
 - Integration test coordinator flow
 - E2E test: `/chat` with mocked Nflow API
@@ -165,6 +176,7 @@ Each expert agent focuses on specific Nflow API domains:
 ---
 
 ## 🗂 Future Enhancements
+
 - Multi-model routing (e.g., use GPT-4 for Intent Agent, GPT-3.5 for Mapping)
 - WebSocket streaming responses
 - Agent memory using vector embeddings for long-term context
@@ -176,6 +188,7 @@ Each expert agent focuses on specific Nflow API domains:
 ## ✅ Initial Endpoint: POST /chat
 
 **Request Body**:
+
 ```json
 {
   "sessionId": "abc123",
@@ -184,6 +197,7 @@ Each expert agent focuses on specific Nflow API domains:
 ```
 
 **Response**:
+
 ```json
 {
   "reply": "✅ Your app is ready! Here's the link to view it in Nflow.",

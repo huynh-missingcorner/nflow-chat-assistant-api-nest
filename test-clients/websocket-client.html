@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nflow Chat WebSocket Test Client</title>
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        color: #333;
+      }
+      h1 {
+        color: #2a52be;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+      }
+      #chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 500px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      #messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+        background-color: #f9f9f9;
+      }
+      .input-container {
+        display: flex;
+        padding: 10px;
+        background-color: #eee;
+        border-top: 1px solid #ddd;
+      }
+      #message-input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-right: 8px;
+      }
+      button {
+        background-color: #2a52be;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 16px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #1a42ae;
+      }
+      .status {
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #e5f2ff;
+        border-radius: 4px;
+      }
+      .message {
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        border-radius: 4px;
+        max-width: 80%;
+      }
+      .user-message {
+        background-color: #deecff;
+        align-self: flex-end;
+        margin-left: auto;
+      }
+      .system-message {
+        background-color: #e6e6e6;
+        color: #666;
+      }
+      .ai-message {
+        background-color: #f0f7ea;
+      }
+      #status-indicator {
+        font-weight: bold;
+      }
+      .controls {
+        margin-bottom: 10px;
+      }
+      .session-info {
+        display: flex;
+        margin-bottom: 10px;
+        align-items: center;
+      }
+      .session-info label {
+        margin-right: 10px;
+      }
+      .session-info input {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Nflow Chat WebSocket Test Client</h1>
+
+    <div class="status">
+      <p>Connection Status: <span id="status-indicator">Disconnected</span></p>
+    </div>
+
+    <div class="session-info">
+      <label for="session-id">Session ID:</label>
+      <input type="text" id="session-id" value="test-session-123" />
+      <button id="join-session">Join Session</button>
+    </div>
+
+    <div class="controls">
+      <button id="connect">Connect</button>
+      <button id="disconnect" disabled>Disconnect</button>
+    </div>
+
+    <div id="chat-container">
+      <div id="messages"></div>
+      <div class="input-container">
+        <input type="text" id="message-input" placeholder="Type your message here..." disabled />
+        <button id="send-message" disabled>Send</button>
+      </div>
+    </div>
+
+    <script>
+      let socket;
+      let currentSessionId = '';
+
+      const statusIndicator = document.getElementById('status-indicator');
+      const messagesContainer = document.getElementById('messages');
+      const messageInput = document.getElementById('message-input');
+      const sendButton = document.getElementById('send-message');
+      const connectButton = document.getElementById('connect');
+      const disconnectButton = document.getElementById('disconnect');
+      const sessionIdInput = document.getElementById('session-id');
+      const joinSessionButton = document.getElementById('join-session');
+
+      function updateStatus(status, isConnected) {
+        statusIndicator.textContent = status;
+        connectButton.disabled = isConnected;
+        disconnectButton.disabled = !isConnected;
+
+        // Only enable message input if connected and joined a session
+        const canSendMessages = isConnected && currentSessionId;
+        messageInput.disabled = !canSendMessages;
+        sendButton.disabled = !canSendMessages;
+      }
+
+      function addMessage(content, type) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message', `${type}-message`);
+        messageElement.textContent = content;
+        messagesContainer.appendChild(messageElement);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+      function connect() {
+        // Connect to the server
+        const serverUrl = 'http://localhost:3000'; // Change this to match your server URL
+        socket = io(serverUrl, {
+          transports: ['websocket'],
+          path: undefined, // Let Socket.IO use default path
+        });
+
+        // Set up event listeners
+        socket.on('connect', () => {
+          updateStatus('Connected', true);
+          addMessage('Connected to server', 'system');
+        });
+
+        socket.on('disconnect', () => {
+          updateStatus('Disconnected', false);
+          addMessage('Disconnected from server', 'system');
+          currentSessionId = '';
+        });
+
+        socket.on('messageReceived', (data) => {
+          addMessage(`Message received (ID: ${data.messageId})`, 'system');
+        });
+
+        socket.on('messageResponse', (data) => {
+          addMessage(`AI: ${data.message}`, 'ai');
+        });
+
+        socket.on('messageChunk', (data) => {
+          // For streaming responses
+          const chunkElement = document.createElement('span');
+          chunkElement.textContent = data.chunk;
+
+          // Find or create the current message container
+          let currentMessageElement = messagesContainer.querySelector('.ai-message.current');
+          if (!currentMessageElement) {
+            currentMessageElement = document.createElement('div');
+            currentMessageElement.classList.add('message', 'ai-message', 'current');
+            currentMessageElement.textContent = 'AI: ';
+            messagesContainer.appendChild(currentMessageElement);
+          }
+
+          currentMessageElement.appendChild(chunkElement);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+
+        socket.on('messageComplete', () => {
+          // Mark the current message as complete
+          const currentMessageElement = messagesContainer.querySelector('.ai-message.current');
+          if (currentMessageElement) {
+            currentMessageElement.classList.remove('current');
+          }
+        });
+
+        socket.on('sessionJoined', (data) => {
+          addMessage(`Joined session: ${data.sessionId}`, 'system');
+          currentSessionId = data.sessionId;
+          updateStatus('Connected', true); // Update UI to enable message input
+        });
+
+        socket.on('error', (error) => {
+          addMessage(`Error: ${error.message}`, 'system');
+          console.error('Socket error:', error);
+        });
+      }
+
+      // Event listeners for buttons
+      connectButton.addEventListener('click', () => {
+        connect();
+      });
+
+      disconnectButton.addEventListener('click', () => {
+        if (socket) {
+          socket.disconnect();
+          updateStatus('Disconnected', false);
+        }
+      });
+
+      joinSessionButton.addEventListener('click', () => {
+        const sessionId = sessionIdInput.value.trim();
+        if (socket && sessionId) {
+          socket.emit('joinSession', { sessionId });
+          addMessage(`Joining session: ${sessionId}`, 'system');
+        } else {
+          addMessage('Please connect to the server first and provide a session ID', 'system');
+        }
+      });
+
+      sendButton.addEventListener('click', () => {
+        sendMessage();
+      });
+
+      messageInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+          sendMessage();
+        }
+      });
+
+      function sendMessage() {
+        const message = messageInput.value.trim();
+        if (socket && message && currentSessionId) {
+          socket.emit('sendMessage', {
+            sessionId: currentSessionId,
+            message: message,
+          });
+          addMessage(`You: ${message}`, 'user');
+          messageInput.value = '';
+        }
+      }
+    </script>
+  </body>
+</html>

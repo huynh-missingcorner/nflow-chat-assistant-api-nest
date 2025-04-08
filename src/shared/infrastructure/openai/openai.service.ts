@@ -69,13 +69,15 @@ export class OpenAIService implements OnModuleInit {
     const config = { ...this.config, ...options };
 
     try {
-      const response = await this.openai.chat.completions.create({
+      const requestBody = {
         model: config.model,
         messages,
         max_tokens: config.maxTokens,
         temperature: config.temperature,
         ...(options?.responseFormat && { response_format: options.responseFormat }),
-      });
+        ...(options?.tools && { tools: options.tools }),
+      };
+      const response = await this.openai.chat.completions.create(requestBody);
 
       return response.choices[0]?.message?.content || '';
     } catch (error: unknown) {

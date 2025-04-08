@@ -31,4 +31,5 @@ export type JsonSchemaFormat = {
 
 export interface ChatCompletionOptions extends Partial<OpenAIConfig> {
   responseFormat?: JsonSchemaFormat;
+  tools?: any[];
 }

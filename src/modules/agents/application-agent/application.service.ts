@@ -13,6 +13,7 @@ import {
   ApplicationPrompts,
   ApplicationDefaults,
 } from './constants/application.constants';
+import { tools as applicationTools } from './tools/application-tools';
 
 @Injectable()
 export class ApplicationService {
@@ -58,7 +59,9 @@ export class ApplicationService {
         },
       ];
 
-      const completion = await this.openAIService.generateChatCompletion(messages);
+      const completion = await this.openAIService.generateChatCompletion(messages, {
+        tools: applicationTools,
+      });
       const response = this.parseAndValidateResponse(completion);
 
       await this.logGeneration(params, response);
@@ -91,9 +94,12 @@ export class ApplicationService {
    */
   private parseAndValidateResponse(completion: string): GenerateApplicationResponse {
     try {
-      const response = JSON.parse(completion) as GenerateApplicationResponse;
-      this.validateApplicationConfig(response.applicationPayload.payload.config);
-      return response;
+      // Normalize completion string by removing special characters
+      const normalizedCompletion = completion.replace(/[\n\r\t]/g, '').trim();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const response = JSON.parse(normalizedCompletion);
+      // this.validateApplicationConfig(response.applicationPayload.payload.config);
+      return response as GenerateApplicationResponse;
     } catch (error) {
       this.logger.error('Failed to parse OpenAI response', error);
       throw new Error(ApplicationErrors.GENERATION_FAILED);

@@ -1,7 +1,7 @@
 [
   {
     "name": "ApiAuthController_getLoginUrl",
-    "description": "Get sso login urlCall GET /auth/sso-url",
+    "description": "Get sso login url",
     "parameters": {
       "type": "object",
       "properties": {
@@ -44,7 +44,7 @@
   },
   {
     "name": "ApiAuthController_getLoginToken",
-    "description": "Get token from sso codeCall POST /auth/token",
+    "description": "Get token from sso code",
     "parameters": {
       "type": "object",
       "properties": {
@@ -96,7 +96,7 @@
   },
   {
     "name": "ApiAuthController_refreshToken",
-    "description": "Refresh token APICall POST /auth/token/refresh",
+    "description": "Refresh token API",
     "parameters": {
       "type": "object",
       "properties": {
@@ -140,7 +140,7 @@
   },
   {
     "name": "ApiAuthController_logout",
-    "description": "undefinedCall POST /auth/logout",
+    "description": "Call POST /auth/logout",
     "parameters": {
       "type": "object",
       "properties": {
@@ -179,7 +179,7 @@
   },
   {
     "name": "ApiMeController_getMe",
-    "description": "undefinedCall GET /me",
+    "description": "Call GET /me",
     "parameters": {
       "type": "object",
       "properties": {
@@ -218,7 +218,7 @@
   },
   {
     "name": "ApiMeController_putMe",
-    "description": "undefinedCall PUT /me",
+    "description": "Call PUT /me",
     "parameters": {
       "type": "object",
       "properties": {
@@ -257,7 +257,7 @@
   },
   {
     "name": "ApiAppViewerController_getApps",
-    "description": "Get list of apps for current userCall GET /apps",
+    "description": "Get list of apps for current user",
     "parameters": {
       "type": "object",
       "properties": {
@@ -316,7 +316,7 @@
   },
   {
     "name": "ApiAppViewerController_getApp",
-    "description": "Get list of app by idCall GET /apps/{appName}",
+    "description": "Get list of app by id",
     "parameters": {
       "type": "object",
       "properties": {
@@ -359,7 +359,7 @@
   },
   {
     "name": "ApiAppViewerController_getAppLayout",
-    "description": "Get app layout by NameCall GET /apps/{appName}/layouts/{layoutName}",
+    "description": "Get app layout by Name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -406,7 +406,7 @@
   },
   {
     "name": "ApiAppViewerController_getRecordLayout",
-    "description": "Get Record layout for objectCall GET /apps/{appName}/objects/{objName}",
+    "description": "Get Record layout for object",
     "parameters": {
       "type": "object",
       "properties": {
@@ -453,7 +453,7 @@
   },
   {
     "name": "ApiAppViewerController_triggerAction",
-    "description": "Trigger button componentCall POST /apps/{appName}/triggers/{layoutName}/{compId}",
+    "description": "Trigger button component",
     "parameters": {
       "type": "object",
       "properties": {
@@ -504,7 +504,7 @@
   },
   {
     "name": "ApiFlowRunnerDataController_searchFieldDataSource",
-    "description": "Serve data source for fieldCall POST /s/{ctxId}/d/{objName}/f/{field}/search",
+    "description": "Serve data source for field",
     "parameters": {
       "type": "object",
       "properties": {
@@ -600,7 +600,7 @@
   },
   {
     "name": "ApiFlowRunnerDataController_uploadFile",
-    "description": "Upload file for running flowCall POST /s/{ctxId}/d/{objName}/files/upload",
+    "description": "Upload file for running flow",
     "parameters": {
       "type": "object",
       "properties": {
@@ -651,7 +651,7 @@
   },
   {
     "name": "ApiDataController_listRecord",
-    "description": "List recordsCall POST /d/{objName}/search",
+    "description": "List records",
     "parameters": {
       "type": "object",
       "properties": {
@@ -765,7 +765,7 @@
   },
   {
     "name": "ApiDataController_countRecords",
-    "description": "Count recordsCall POST /d/{objName}/count",
+    "description": "Count records",
     "parameters": {
       "type": "object",
       "properties": {
@@ -837,7 +837,7 @@
   },
   {
     "name": "ApiDataController_getRecord",
-    "description": "Get recordCall GET /d/{objName}/{guid}",
+    "description": "Get record",
     "parameters": {
       "type": "object",
       "properties": {
@@ -884,7 +884,7 @@
   },
   {
     "name": "ApiDataController_updateRecord",
-    "description": "Update recordCall PUT /d/{objName}/{guid}",
+    "description": "Update record",
     "parameters": {
       "type": "object",
       "properties": {
@@ -931,7 +931,7 @@
   },
   {
     "name": "ApiDataController_deleteRecord",
-    "description": "Delete recordCall DELETE /d/{objName}/{guid}",
+    "description": "Delete record",
     "parameters": {
       "type": "object",
       "properties": {
@@ -978,7 +978,7 @@
   },
   {
     "name": "ApiDataController_searchFieldRelation",
-    "description": "List relation children dataCall POST /d/{objName}/{guid}/r/{relation}/search",
+    "description": "List relation children data",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1100,7 +1100,7 @@
   },
   {
     "name": "ApiDataController_countRelationChildren",
-    "description": "Count relation children dataCall POST /d/{objName}/{guid}/r/{relation}/count",
+    "description": "Count relation children data",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1180,7 +1180,7 @@
   },
   {
     "name": "ApiDataController_createRecord",
-    "description": "Create new recordCall POST /d/{objName}",
+    "description": "Create new record",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1223,7 +1223,7 @@
   },
   {
     "name": "ApiDataController_exportRecordsWithFilters",
-    "description": "Export records with queryCall POST /d/{objName}/export",
+    "description": "Export records with query",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1332,7 +1332,7 @@
   },
   {
     "name": "ApiDataController_importRecords",
-    "description": "Import recordsCall POST /d/{objName}/import",
+    "description": "Import records",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1375,7 +1375,7 @@
   },
   {
     "name": "ApiDataController_getAuditLogs",
-    "description": "Get audit logs for recordCall GET /d/{objName}/{guid}/audit-logs",
+    "description": "Get audit logs for record",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1422,7 +1422,7 @@
   },
   {
     "name": "ApiDataController_getAggregatedData",
-    "description": "Get aggregated dataCall POST /d/{objName}/aggregate",
+    "description": "Get aggregated data",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1477,7 +1477,7 @@
   },
   {
     "name": "ApiDataFieldController_searchFieldDataSource",
-    "description": "Serve data source for fieldCall POST /d/{objName}/f/{field}/search",
+    "description": "Serve data source for field",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1565,7 +1565,7 @@
   },
   {
     "name": "ApiDataSharingController_upsertSharing",
-    "description": "Set manual sharingCall POST /d/{objName}/{guid}/manual-sharing",
+    "description": "Set manual sharing",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1630,7 +1630,7 @@
   },
   {
     "name": "ApiDataSharingController_getSharing",
-    "description": "Get record's sharingCall GET /d/{objName}/{guid}/sharing",
+    "description": "Get record's sharing",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1677,7 +1677,7 @@
   },
   {
     "name": "DataFileController_uploadFileCreateRecord",
-    "description": "Upload file when create recordCall POST /d/{objName}/f/{field}/upload",
+    "description": "Upload file when create record",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1724,7 +1724,7 @@
   },
   {
     "name": "DataFileController_uploadFile",
-    "description": "Upload file when update recordCall POST /d/{objName}/{guid}/f/{field}/upload",
+    "description": "Upload file when update record",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1775,7 +1775,7 @@
   },
   {
     "name": "DataFileController_streamFile",
-    "description": "Stream fileCall GET /d/{objName}/{guid}/f/{field}/{fileId}",
+    "description": "Stream file",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1830,7 +1830,7 @@
   },
   {
     "name": "ApiDataCommentController_getComments",
-    "description": "List commentsCall GET /d/{objName}/{guid}/comments",
+    "description": "List comments",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1893,7 +1893,7 @@
   },
   {
     "name": "ApiDataCommentController_createComment",
-    "description": "Create commentCall POST /d/{objName}/{guid}/comments",
+    "description": "Create comment",
     "parameters": {
       "type": "object",
       "properties": {
@@ -1973,7 +1973,7 @@
   },
   {
     "name": "ApiDataCommentController_getComment",
-    "description": "Get comment by idCall GET /d/{objName}/{guid}/comments/{id}",
+    "description": "Get comment by id",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2024,7 +2024,7 @@
   },
   {
     "name": "ApiDataCommentController_updateComment",
-    "description": "Update commentCall PUT /d/{objName}/{guid}/comments/{id}",
+    "description": "Update comment",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2108,7 +2108,7 @@
   },
   {
     "name": "ApiDataCommentController_deleteComment",
-    "description": "Delete commentCall DELETE /d/{objName}/{guid}/comments/{id}",
+    "description": "Delete comment",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2159,7 +2159,7 @@
   },
   {
     "name": "ApiDataCommentController_streamFile",
-    "description": "Stream comment attachmentCall GET /d/{objName}/{guid}/comments/{id}/attachments/{fileId}",
+    "description": "Stream comment attachment",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2214,7 +2214,7 @@
   },
   {
     "name": "ApiDataCommentController_uploadFile",
-    "description": "Upload file when create recordCall POST /d/{objName}/{guid}/comments/upload",
+    "description": "Upload file when create record",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2261,7 +2261,7 @@
   },
   {
     "name": "ApiDataUserController_searchUsers",
-    "description": "Search usersCall POST /u/search",
+    "description": "Search users",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2313,7 +2313,7 @@
   },
   {
     "name": "ApiDataUserController_getUserById",
-    "description": "Get user by idCall GET /u/{id}",
+    "description": "Get user by id",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2356,7 +2356,7 @@
   },
   {
     "name": "ApiFlowTriggerController_executeFlow",
-    "description": "Trigger flow by flow nameCall POST /f/{flowName}",
+    "description": "Trigger flow by flow name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2403,7 +2403,7 @@
   },
   {
     "name": "ApiFlowTriggerController_getScreen",
-    "description": "Polling endpoint for screen layoutCall GET /s/{ctxId}",
+    "description": "Polling endpoint for screen layout",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2450,7 +2450,7 @@
   },
   {
     "name": "ApiFlowTriggerController_submitScreen",
-    "description": "Submit data to end screen flow itemCall POST /s/{ctxId}",
+    "description": "Submit data to end screen flow item",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2497,7 +2497,7 @@
   },
   {
     "name": "ApiFlowTriggerController_deprecatedUploadFile",
-    "description": "Upload image for running flowCall POST /s/{ctxId}/upload",
+    "description": "Upload image for running flow",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2544,7 +2544,7 @@
   },
   {
     "name": "ApiFlowTriggerController_uploadFile",
-    "description": "Upload fileCall POST /s/{ctxId}/files/upload",
+    "description": "Upload file",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2591,7 +2591,7 @@
   },
   {
     "name": "ApiFlowTriggerController_streamFile",
-    "description": "Download fileCall GET /s/{ctxId}/files/{fileId}",
+    "description": "Download file",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2642,7 +2642,7 @@
   },
   {
     "name": "ApiFlowRunnerScreenDataController_searchScreenComponentDs",
-    "description": "Serve data source for screen componentCall POST /s/{ctxId}/c/{compId}/search",
+    "description": "Serve data source for screen component",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2710,7 +2710,7 @@
   },
   {
     "name": "ApiNotificationController_getNotifications",
-    "description": "Get In-app notificationsCall GET /notifications/in-app",
+    "description": "Get In-app notifications",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2761,7 +2761,7 @@
   },
   {
     "name": "ApiNotificationController_getUnreadCount",
-    "description": "Get Unread CountCall GET /notifications/in-app/unread-count",
+    "description": "Get Unread Count",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2800,7 +2800,7 @@
   },
   {
     "name": "ApiNotificationController_markAllAsRead",
-    "description": "Mark all message readCall POST /notifications/in-app/read-all",
+    "description": "Mark all message read",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2839,7 +2839,7 @@
   },
   {
     "name": "ApiNotificationController_markAsRead",
-    "description": "Mark a message readCall POST /notifications/in-app/{id}/read",
+    "description": "Mark a message read",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2882,7 +2882,7 @@
   },
   {
     "name": "ApiNotificationController_markAsUnread",
-    "description": "Mark a message unreadCall POST /notifications/in-app/{id}/unread",
+    "description": "Mark a message unread",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2925,7 +2925,7 @@
   },
   {
     "name": "ShortenUrlController_genShort",
-    "description": "Create Short urlCall POST /shorten",
+    "description": "Create Short url",
     "parameters": {
       "type": "object",
       "properties": {
@@ -2977,7 +2977,7 @@
   },
   {
     "name": "ShortenUrlController_getLong",
-    "description": "Get Short urlCall GET /shorten/{short}",
+    "description": "Get Short url",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3020,7 +3020,7 @@
   },
   {
     "name": "ChatAIController_createMsg",
-    "description": "Create mock AI responseCall POST /chat/{id}/messages",
+    "description": "Create mock AI response",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3068,7 +3068,7 @@
   },
   {
     "name": "ChatAIController_getHistory",
-    "description": "Get ai chat historyCall GET /chat/{id}/messages",
+    "description": "Get ai chat history",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3123,7 +3123,7 @@
   },
   {
     "name": "ChatAIController_createSession",
-    "description": "Create a new sessionCall POST /chat",
+    "description": "Create a new session",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3167,7 +3167,7 @@
   },
   {
     "name": "ApiCommonBuilderController_getRelated",
-    "description": "Get entities referenceCall POST /builder/reference",
+    "description": "Get entities reference",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3224,7 +3224,7 @@
   },
   {
     "name": "ApiCommonBuilderController_searchLogs",
-    "description": "Search Audit LogsCall POST /builder/logs/search",
+    "description": "Search Audit Logs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3317,7 +3317,7 @@
   },
   {
     "name": "ApiCommonBuilderController_exportGraph",
-    "description": "Export Component GraphCall POST /builder/graph/export",
+    "description": "Export Component Graph",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3356,7 +3356,7 @@
   },
   {
     "name": "ApiExportImportBuilderController_importNew",
-    "description": "Import configsCall POST /builder/meta/import",
+    "description": "Import configs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3399,7 +3399,7 @@
   },
   {
     "name": "ApiExportImportBuilderController_exportNew",
-    "description": "Export configsCall POST /builder/meta/export",
+    "description": "Export configs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3489,7 +3489,7 @@
   },
   {
     "name": "ApiExportImportBuilderController_streamFile",
-    "description": "Stream import/export fileCall GET /builder/meta/jobs/{id}",
+    "description": "Stream import/export file",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3532,7 +3532,7 @@
   },
   {
     "name": "ApiExportImportBuilderController_retryJob",
-    "description": "Retry jobCall POST /builder/meta/jobs/{id}/retry",
+    "description": "Retry job",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3575,7 +3575,7 @@
   },
   {
     "name": "ApiExportImportBuilderController_getJobs",
-    "description": "Get import/export jobsCall GET /builder/meta/jobs",
+    "description": "Get import/export jobs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3626,7 +3626,7 @@
   },
   {
     "name": "ApiAppBuilderController_searchApps",
-    "description": "Get list applicationCall POST /builder/apps/search",
+    "description": "Get list application",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3697,7 +3697,7 @@
   },
   {
     "name": "ApiAppBuilderController_getApp",
-    "description": "Get application by idCall GET /builder/apps/{name}",
+    "description": "Get application by id",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3740,7 +3740,7 @@
   },
   {
     "name": "ApiAppBuilderController_updateApp",
-    "description": "Update applicationCall PUT /builder/apps/{name}",
+    "description": "Update application",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3817,7 +3817,7 @@
   },
   {
     "name": "ApiAppBuilderController_getAppPages",
-    "description": "Get available pages in app builderCall GET /builder/apps/{name}/pages",
+    "description": "Get available pages in app builder",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3860,7 +3860,7 @@
   },
   {
     "name": "ApiAppBuilderController_updateAppLayouts",
-    "description": "Order app pagesCall POST /builder/apps/{name}/order-pages",
+    "description": "Order app pages",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3911,7 +3911,7 @@
   },
   {
     "name": "ApiAppBuilderController_createApp",
-    "description": "Create new applicationCall POST /builder/apps",
+    "description": "Create new application",
     "parameters": {
       "type": "object",
       "properties": {
@@ -3988,7 +3988,7 @@
   },
   {
     "name": "ApiAppBuilderController_removeApps",
-    "description": "Remove applicationsCall POST /builder/apps/remove",
+    "description": "Remove applications",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4035,7 +4035,7 @@
   },
   {
     "name": "ApiAppBuilderController_recoverApps",
-    "description": "Recover applicationsCall POST /builder/apps/recover",
+    "description": "Recover applications",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4082,7 +4082,7 @@
   },
   {
     "name": "ApiAppBuilderController_getAuditLogs",
-    "description": "Get application's auditCall GET /builder/apps/{name}/audit-logs",
+    "description": "Get application's audit",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4125,7 +4125,7 @@
   },
   {
     "name": "ApiFlowDebugController_getExecutionCtxLogs",
-    "description": "Get latest execution context logsCall GET /flow-builder/{flowName}/debug-logs",
+    "description": "Get latest execution context logs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4168,7 +4168,7 @@
   },
   {
     "name": "ApiFlowDebugController_debugFlow",
-    "description": "Start flow debug sessionCall POST /flow-builder/debug",
+    "description": "Start flow debug session",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4228,7 +4228,7 @@
   },
   {
     "name": "ApiFlowDebugController_getDebugLogs",
-    "description": "Get detail log for debug sessionCall GET /flow-builder/debug-logs",
+    "description": "Get detail log for debug session",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4271,7 +4271,7 @@
   },
   {
     "name": "ApiIntegratedController_getList",
-    "description": "Get current integration listCall GET /integrated",
+    "description": "Get current integration list",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4318,7 +4318,7 @@
   },
   {
     "name": "ActionMetadataController_getList",
-    "description": "Get action meta listCall GET /integrations/action-metadata",
+    "description": "Get action meta list",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4381,7 +4381,7 @@
   },
   {
     "name": "ActionMetadataController_createActionMetadata",
-    "description": "Create Action metaCall POST /integrations/action-metadata",
+    "description": "Create Action meta",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4499,7 +4499,7 @@
   },
   {
     "name": "ActionMetadataController_getItem",
-    "description": "Get action meta by nameCall GET /integrations/action-metadata/{name}",
+    "description": "Get action meta by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4542,7 +4542,7 @@
   },
   {
     "name": "ActionMetadataController_updateActionMetadata",
-    "description": "Update action metaCall PUT /integrations/action-metadata/{name}",
+    "description": "Update action meta",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4660,7 +4660,7 @@
   },
   {
     "name": "ActionMetadataController_deleteActionMetadata",
-    "description": "Delete action metaCall DELETE /integrations/action-metadata/{name}",
+    "description": "Delete action meta",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4703,7 +4703,7 @@
   },
   {
     "name": "ActionMetadataController_testActionMetadata",
-    "description": "Test action meta by nameCall POST /integrations/action-metadata/{name}/test",
+    "description": "Test action meta by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4746,7 +4746,7 @@
   },
   {
     "name": "ActionMetadataController_remove",
-    "description": "Remove Actions MetaCall POST /integrations/action-metadata/remove",
+    "description": "Remove Actions Meta",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4793,7 +4793,7 @@
   },
   {
     "name": "ActionMetadataController_recover",
-    "description": "Recover Actions MetaCall POST /integrations/action-metadata/recover",
+    "description": "Recover Actions Meta",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4840,7 +4840,7 @@
   },
   {
     "name": "CredentialsController_getCredentials",
-    "description": "Get credentials listCall GET /integrations/credentials",
+    "description": "Get credentials list",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4907,7 +4907,7 @@
   },
   {
     "name": "CredentialsController_createCredential",
-    "description": "Create credentialCall POST /integrations/credentials",
+    "description": "Create credential",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4975,7 +4975,7 @@
   },
   {
     "name": "CredentialsController_getCredential",
-    "description": "Get credential by nameCall GET /integrations/credentials/{name}",
+    "description": "Get credential by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5018,7 +5018,7 @@
   },
   {
     "name": "CredentialsController_updateCredential",
-    "description": "Update credentialCall PUT /integrations/credentials/{name}",
+    "description": "Update credential",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5086,7 +5086,7 @@
   },
   {
     "name": "CredentialsController_deleteCredential",
-    "description": "Delete credentialCall POST /integrations/credentials/remove",
+    "description": "Delete credential",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5133,7 +5133,7 @@
   },
   {
     "name": "CredentialsController_recoverCredential",
-    "description": "Recover credentialCall POST /integrations/credentials/recover",
+    "description": "Recover credential",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5180,7 +5180,7 @@
   },
   {
     "name": "CredentialsController_getOauth2AuthUrl",
-    "description": "Get Oauth2 Auth UrlCall GET /integrations/credentials/{name}/auth-url",
+    "description": "Get Oauth2 Auth Url",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5227,7 +5227,7 @@
   },
   {
     "name": "CredentialsController_saveOauth2Token",
-    "description": "Save oauth2 tokenCall POST /integrations/credentials/{name}/token",
+    "description": "Save oauth2 token",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5279,7 +5279,7 @@
   },
   {
     "name": "CredentialsController_deleteCredentialData",
-    "description": "Delete credential dataCall DELETE /integrations/credentials/{name}/data",
+    "description": "Delete credential data",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5322,7 +5322,7 @@
   },
   {
     "name": "CredentialsController_getPerUserCredentialData",
-    "description": "Get encrypted per-user credential dataCall GET /integrations/credentials/{name}/data",
+    "description": "Get encrypted per-user credential data",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5365,7 +5365,7 @@
   },
   {
     "name": "ApiFlowNoteController_getNotes",
-    "description": "Get all notesCall GET /flows/{flowName}/templates/{version}/notes",
+    "description": "Get all notes",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5412,7 +5412,7 @@
   },
   {
     "name": "ApiFlowNoteController_createNote",
-    "description": "Create new noteCall POST /flows/{flowName}/templates/{version}/notes",
+    "description": "Create new note",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5468,7 +5468,7 @@
   },
   {
     "name": "ApiFlowNoteController_getNoteById",
-    "description": "Get note by IdCall GET /flows/{flowName}/templates/{version}/notes/{noteId}",
+    "description": "Get note by Id",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5519,7 +5519,7 @@
   },
   {
     "name": "ApiFlowNoteController_updateNote",
-    "description": "Update a noteCall PUT /flows/{flowName}/templates/{version}/notes/{noteId}",
+    "description": "Update a note",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5579,7 +5579,7 @@
   },
   {
     "name": "ApiFlowNoteController_removeNote",
-    "description": "Delete a noteCall DELETE /flows/{flowName}/templates/{version}/notes/{noteId}",
+    "description": "Delete a note",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5630,7 +5630,7 @@
   },
   {
     "name": "ApiFlowVariableController_getFlowInputVariableList",
-    "description": "Get list of Input VariablesCall GET /flows/{flowName}/templates/{version}/input-variables",
+    "description": "Get list of Input Variables",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5677,7 +5677,7 @@
   },
   {
     "name": "ApiFlowVariableController_getFlowVariableList",
-    "description": "Get list of VariablesCall GET /flows/{flowName}/templates/{version}/variables",
+    "description": "Get list of Variables",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5728,7 +5728,7 @@
   },
   {
     "name": "ApiFlowVariableController_addFlowVariable",
-    "description": "Add new variableCall POST /flows/{flowName}/templates/{version}/variables",
+    "description": "Add new variable",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5800,7 +5800,7 @@
   },
   {
     "name": "ApiFlowVariableController_updateFlowVariable",
-    "description": "Update variableCall PUT /flows/{flowName}/templates/{version}/variables/{varName}",
+    "description": "Update variable",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5872,7 +5872,7 @@
   },
   {
     "name": "ApiFlowVariableController_removeFlowVariable",
-    "description": "Remove variableCall DELETE /flows/{flowName}/templates/{version}/variables/{varName}",
+    "description": "Remove variable",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5923,7 +5923,7 @@
   },
   {
     "name": "ApiFlowVariableController_getVariableSchema",
-    "description": "Get schema of variableCall GET /flows/{flowName}/templates/{version}/variables/{varName}/schema",
+    "description": "Get schema of variable",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5974,7 +5974,7 @@
   },
   {
     "name": "ApiFlowItemController_getFlowItems",
-    "description": "Get Flow ItemsCall GET /flows/{flowName}/templates/{version}/items",
+    "description": "Get Flow Items",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6021,7 +6021,7 @@
   },
   {
     "name": "ApiFlowItemController_createFlowItem",
-    "description": "Create new FlowItemCall POST /flows/{flowName}/templates/{version}/items",
+    "description": "Create new FlowItem",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6068,7 +6068,7 @@
   },
   {
     "name": "ApiFlowItemController_getFlowItem",
-    "description": "Get FlowItem by IDCall GET /flows/{flowName}/templates/{version}/items/{flowItemName}",
+    "description": "Get FlowItem by ID",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6119,7 +6119,7 @@
   },
   {
     "name": "ApiFlowItemController_updateFlowItem",
-    "description": "Update FlowItemCall PUT /flows/{flowName}/templates/{version}/items/{flowItemName}",
+    "description": "Update FlowItem",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6170,7 +6170,7 @@
   },
   {
     "name": "ApiFlowItemController_deleteFlowItem",
-    "description": "Delete FlowItemCall DELETE /flows/{flowName}/templates/{version}/items/{flowItemName}",
+    "description": "Delete FlowItem",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6221,7 +6221,7 @@
   },
   {
     "name": "ApiFlowItemConnectionController_getFlowItemConnections",
-    "description": "Get Flow Item ConnectionsCall GET /flows/{flowName}/templates/{version}/connections",
+    "description": "Get Flow Item Connections",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6268,7 +6268,7 @@
   },
   {
     "name": "ApiFlowItemConnectionController_createFlowItemConnection",
-    "description": "Create new Flow Item ConnectionCall POST /flows/{flowName}/templates/{version}/connections",
+    "description": "Create new Flow Item Connection",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6336,7 +6336,7 @@
   },
   {
     "name": "ApiFlowItemConnectionController_updateFlowItemConnection",
-    "description": "Update Flow Item ConnectionCall PUT /flows/{flowName}/templates/{version}/connections/{id}",
+    "description": "Update Flow Item Connection",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6392,7 +6392,7 @@
   },
   {
     "name": "ApiFlowItemConnectionController_deleteFlowItemConnection",
-    "description": "Delete Flow Item ConnectionCall DELETE /flows/{flowName}/templates/{version}/connections/{id}",
+    "description": "Delete Flow Item Connection",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6443,7 +6443,7 @@
   },
   {
     "name": "ApiFlowController_getFlows",
-    "description": "Get FlowsCall POST /flows/search",
+    "description": "Get Flows",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6518,7 +6518,7 @@
   },
   {
     "name": "ApiFlowController_getFlow",
-    "description": "Get Flow by IDCall GET /flows/{flowName}",
+    "description": "Get Flow by ID",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6561,7 +6561,7 @@
   },
   {
     "name": "ApiFlowController_updateFlow",
-    "description": "Update FlowCall PUT /flows/{flowName}",
+    "description": "Update Flow",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6619,7 +6619,7 @@
   },
   {
     "name": "ApiFlowController_createFlow",
-    "description": "Create new Flow and First TemplateCall POST /flows",
+    "description": "Create new Flow and First Template",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6689,7 +6689,7 @@
   },
   {
     "name": "ApiFlowController_getFlowTemplates",
-    "description": "Get Templates for a flowCall GET /flows/{flowName}/templates",
+    "description": "Get Templates for a flow",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6732,7 +6732,7 @@
   },
   {
     "name": "ApiFlowController_getFlowTemplateAndData",
-    "description": "Get Flow Template and data flow builderCall GET /flows/{flowName}/templates/{version}",
+    "description": "Get Flow Template and data flow builder",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6779,7 +6779,7 @@
   },
   {
     "name": "ApiFlowController_updateTemplate",
-    "description": "Update Flow templateCall PUT /flows/{flowName}/templates/{version}",
+    "description": "Update Flow template",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6826,7 +6826,7 @@
   },
   {
     "name": "ApiFlowController_cloneTemplate",
-    "description": "Clone template FlowCall POST /flows/{flowName}/templates/{version}/clone",
+    "description": "Clone template Flow",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6890,7 +6890,7 @@
   },
   {
     "name": "ApiFlowController_activateTemplate",
-    "description": "Activate flow templateCall POST /flows/{flowName}/templates/{version}/activate",
+    "description": "Activate flow template",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6937,7 +6937,7 @@
   },
   {
     "name": "ApiFlowController_getLogs",
-    "description": "Get Activity logsCall POST /flows/logs",
+    "description": "Get Activity logs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6997,7 +6997,7 @@
   },
   {
     "name": "ApiFlowController_deactivateTemplate",
-    "description": "Deactivate flow templateCall POST /flows/{flowName}/templates/{version}/deactivate",
+    "description": "Deactivate flow template",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7044,7 +7044,7 @@
   },
   {
     "name": "ApiFlowController_remove",
-    "description": "Remove FlowsCall POST /flows/remove",
+    "description": "Remove Flows",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7091,7 +7091,7 @@
   },
   {
     "name": "ApiFlowController_recover",
-    "description": "Recover FlowsCall POST /flows/recover",
+    "description": "Recover Flows",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7138,7 +7138,7 @@
   },
   {
     "name": "ApiFlowBuilderController_getScreenFlow",
-    "description": "Get available screen flows for layout builderCall GET /flow-builder/screen-flows",
+    "description": "Get available screen flows for layout builder",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7213,7 +7213,7 @@
   },
   {
     "name": "ApiFlowBuilderController_getAssignmentOperators",
-    "description": "Get assignment operatorsCall GET /flow-builder/assignment-operators",
+    "description": "Get assignment operators",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7252,7 +7252,7 @@
   },
   {
     "name": "ApiFlowBuilderController_getFlowsForSub",
-    "description": "Get available flows for sub-flowCall GET /flow-builder/{flowName}/sub-flows",
+    "description": "Get available flows for sub-flow",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7331,7 +7331,7 @@
   },
   {
     "name": "ApiFlowBuilderController_getConditionOperators",
-    "description": "Get condition operatorsCall GET /flow-builder/condition-operators",
+    "description": "Get condition operators",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7370,7 +7370,7 @@
   },
   {
     "name": "RoleController_getRoles",
-    "description": "Get RolesCall GET /roles",
+    "description": "Get Roles",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7409,7 +7409,7 @@
   },
   {
     "name": "RoleController_createRole",
-    "description": "Create roleCall POST /roles",
+    "description": "Create role",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7461,7 +7461,7 @@
   },
   {
     "name": "RoleController_getRole",
-    "description": "Get Role by nameCall GET /roles/{name}",
+    "description": "Get Role by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7504,7 +7504,7 @@
   },
   {
     "name": "RoleController_updateRole",
-    "description": "Update roleCall PUT /roles/{name}",
+    "description": "Update role",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7556,7 +7556,7 @@
   },
   {
     "name": "RoleController_deleteRole",
-    "description": "Delete RoleCall DELETE /roles/{name}",
+    "description": "Delete Role",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7599,7 +7599,7 @@
   },
   {
     "name": "RoleController_getChildrenRoles",
-    "description": "Get Role's childrenCall GET /roles/{name}/children",
+    "description": "Get Role's children",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7642,7 +7642,7 @@
   },
   {
     "name": "ProfileController_getProfiles",
-    "description": "Get profilesCall GET /profiles",
+    "description": "Get profiles",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7701,7 +7701,7 @@
   },
   {
     "name": "ProfileController_createProfile",
-    "description": "Create profileCall POST /profiles",
+    "description": "Create profile",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7753,7 +7753,7 @@
   },
   {
     "name": "ProfileController_getProfile",
-    "description": "Get profile by nameCall GET /profiles/{name}",
+    "description": "Get profile by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7796,7 +7796,7 @@
   },
   {
     "name": "ProfileController_updateProfile",
-    "description": "Update profileCall PUT /profiles/{name}",
+    "description": "Update profile",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7848,7 +7848,7 @@
   },
   {
     "name": "ProfileController_deleteProfile",
-    "description": "Delete profileCall DELETE /profiles/{name}",
+    "description": "Delete profile",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7891,7 +7891,7 @@
   },
   {
     "name": "SharingRuleController_getRules",
-    "description": "Get sharing rulesCall GET /sharing-rules",
+    "description": "Get sharing rules",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7930,7 +7930,7 @@
   },
   {
     "name": "SharingRuleController_createRule",
-    "description": "Create sharing ruleCall POST /sharing-rules",
+    "description": "Create sharing rule",
     "parameters": {
       "type": "object",
       "properties": {
@@ -7998,7 +7998,7 @@
   },
   {
     "name": "SharingRuleController_getRule",
-    "description": "Get sharing rule by nameCall GET /sharing-rules/{name}",
+    "description": "Get sharing rule by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8041,7 +8041,7 @@
   },
   {
     "name": "SharingRuleController_updateRule",
-    "description": "Update sharing ruleCall PUT /sharing-rules/{name}",
+    "description": "Update sharing rule",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8109,7 +8109,7 @@
   },
   {
     "name": "SharingRuleController_deleteRule",
-    "description": "Delete sharing ruleCall DELETE /sharing-rules/{name}",
+    "description": "Delete sharing rule",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8152,7 +8152,7 @@
   },
   {
     "name": "ProfileAccessController_objectAccesses",
-    "description": "Get Profile Object accessesCall GET /profile-object/{name}",
+    "description": "Get Profile Object accesses",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8195,7 +8195,7 @@
   },
   {
     "name": "ProfileAccessController_upsertObjectAccesses",
-    "description": "Update Profile Object accessesCall PUT /profile-object/{name}",
+    "description": "Update Profile Object accesses",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8274,7 +8274,7 @@
   },
   {
     "name": "ProfileAccessController_getFeaturesAccess",
-    "description": "Get Profile Features accessesCall GET /profile-feature/{name}",
+    "description": "Get Profile Features accesses",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8317,7 +8317,7 @@
   },
   {
     "name": "ProfileAccessController_upsertFeatureAccesses",
-    "description": "Update Profile Features accessesCall PUT /profile-feature/{name}",
+    "description": "Update Profile Features accesses",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8396,7 +8396,7 @@
   },
   {
     "name": "DivisionController_getOrg",
-    "description": "Get divisionsCall GET /divisions",
+    "description": "Get divisions",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8435,7 +8435,7 @@
   },
   {
     "name": "DivisionController_create",
-    "description": "Create divisionCall POST /divisions",
+    "description": "Create division",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8487,7 +8487,7 @@
   },
   {
     "name": "DivisionController_getById",
-    "description": "Get division by nameCall GET /divisions/{name}",
+    "description": "Get division by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8530,7 +8530,7 @@
   },
   {
     "name": "DivisionController_update",
-    "description": "Update divisionCall PUT /divisions/{name}",
+    "description": "Update division",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8582,7 +8582,7 @@
   },
   {
     "name": "DivisionController_delete",
-    "description": "Delete divisionCall DELETE /divisions/{name}",
+    "description": "Delete division",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8625,7 +8625,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_getLayouts",
-    "description": "Search layoutsCall POST /builder/layouts/search",
+    "description": "Search layouts",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8704,7 +8704,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_getLayout",
-    "description": "Get layout by idCall GET /builder/layouts/{name}",
+    "description": "Get layout by id",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8747,7 +8747,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_updateLayout",
-    "description": "Update LayoutCall PUT /builder/layouts/{name}",
+    "description": "Update Layout",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8806,7 +8806,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_deleteLayout",
-    "description": "Delete LayoutCall DELETE /builder/layouts/{name}",
+    "description": "Delete Layout",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8849,7 +8849,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_getLayoutLogs",
-    "description": "Get layout audit logsCall GET /builder/layouts/{name}/audit-logs",
+    "description": "Get layout audit logs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8892,7 +8892,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_createLayout",
-    "description": "Create LayoutCall POST /builder/layouts",
+    "description": "Create Layout",
     "parameters": {
       "type": "object",
       "properties": {
@@ -8959,7 +8959,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_setDefaultForObject",
-    "description": "Set default record layout for MOCall POST /builder/layouts/{name}/object-default",
+    "description": "Set default record layout for MO",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9002,7 +9002,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_getScript",
-    "description": "Get layout scriptCall GET /builder/layouts/{name}/script",
+    "description": "Get layout script",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9045,7 +9045,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_updateScript",
-    "description": "Update layout scriptCall PUT /builder/layouts/{name}/script",
+    "description": "Update layout script",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9093,7 +9093,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_cloneLayout",
-    "description": "Clone LayoutCall POST /builder/layouts/{name}/clone",
+    "description": "Clone Layout",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9145,7 +9145,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_getAppLayouts",
-    "description": "Get assigned ApplicationsCall GET /builder/layouts/{name}/apps",
+    "description": "Get assigned Applications",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9188,7 +9188,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_assignAppsToPage",
-    "description": "Assign a layout to multiple applicationsCall POST /builder/layouts/{name}/apps",
+    "description": "Assign a layout to multiple applications",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9239,7 +9239,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_assignAppAndProfile",
-    "description": "Assign a Record Page to applications and profilesCall POST /builder/layouts/{name}/apps-profiles",
+    "description": "Assign a Record Page to applications and profiles",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9300,7 +9300,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_getAssignedAppAndProfile",
-    "description": "Get assigned applications and profiles for a Record PageCall GET /builder/layouts/{name}/apps-profiles",
+    "description": "Get assigned applications and profiles for a Record Page",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9343,7 +9343,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_getTriggers",
-    "description": "Get triggersCall GET /builder/layouts/{name}/triggers",
+    "description": "Get triggers",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9386,7 +9386,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_getGroupBy",
-    "description": "Get group-byCall POST /builder/layouts/{name}/group-by",
+    "description": "Get group-by",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9460,7 +9460,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_remove",
-    "description": "Remove LayoutsCall POST /builder/layouts/remove",
+    "description": "Remove Layouts",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9507,7 +9507,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_recover",
-    "description": "Recover LayoutsCall POST /builder/layouts/recover",
+    "description": "Recover Layouts",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9554,7 +9554,7 @@
   },
   {
     "name": "ApiLayoutBuilderController_getMutationLayout",
-    "description": "Get mutation layoutCall GET /builder/mutation-layout/{objName}",
+    "description": "Get mutation layout",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9601,7 +9601,7 @@
   },
   {
     "name": "FieldController_getField",
-    "description": "Get field by nameCall GET /mo/{objName}/fields/{name}",
+    "description": "Get field by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9648,7 +9648,7 @@
   },
   {
     "name": "FieldController_getFields",
-    "description": "Get all fields for MOCall GET /mo/{objName}/fields",
+    "description": "Get all fields for MO",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9691,7 +9691,7 @@
   },
   {
     "name": "FieldController_changeField",
-    "description": "C/U/D fieldCall POST /mo/{objName}/fields",
+    "description": "C/U/D field",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9767,7 +9767,7 @@
   },
   {
     "name": "FieldController_getObjRecordPages",
-    "description": "Get available record pages of a fieldCall GET /mo/{objName}/fields/{name}/record-pages",
+    "description": "Get available record pages of a field",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9814,7 +9814,7 @@
   },
   {
     "name": "ObjectController_getObject",
-    "description": "Get MO by nameCall GET /mo/{objName}",
+    "description": "Get MO by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9857,7 +9857,7 @@
   },
   {
     "name": "ObjectController_getObjects",
-    "description": "Get MOsCall POST /mo/search",
+    "description": "Get MOs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9932,7 +9932,7 @@
   },
   {
     "name": "ObjectController_changeObject",
-    "description": "C/U/D MOCall POST /mo",
+    "description": "C/U/D MO",
     "parameters": {
       "type": "object",
       "properties": {
@@ -9984,7 +9984,7 @@
   },
   {
     "name": "ObjectController_remove",
-    "description": "Remove ObjectsCall POST /mo/remove",
+    "description": "Remove Objects",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10031,7 +10031,7 @@
   },
   {
     "name": "ObjectController_recover",
-    "description": "Recover ObjectsCall POST /mo/recover",
+    "description": "Recover Objects",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10078,7 +10078,7 @@
   },
   {
     "name": "ObjectController_objLogs",
-    "description": "Get audit logsCall GET /mo/{objName}/audit-logs",
+    "description": "Get audit logs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10121,7 +10121,7 @@
   },
   {
     "name": "ValidationRuleController_getRule",
-    "description": "Get rule by nameCall GET /mo/{objName}/rules/{name}",
+    "description": "Get rule by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10168,7 +10168,7 @@
   },
   {
     "name": "ValidationRuleController_getRules",
-    "description": "Get rulesCall GET /mo/{objName}/rules",
+    "description": "Get rules",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10211,7 +10211,7 @@
   },
   {
     "name": "ValidationRuleController_changeRule",
-    "description": "C/U/D ruleCall POST /mo/{objName}/rules",
+    "description": "C/U/D rule",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10267,7 +10267,7 @@
   },
   {
     "name": "EventObjectController_getObjects",
-    "description": "Get EventsCall POST /events/search",
+    "description": "Get Events",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10346,7 +10346,7 @@
   },
   {
     "name": "EventObjectController_getObject",
-    "description": "Get MO by nameCall GET /events/{objName}",
+    "description": "Get MO by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10389,7 +10389,7 @@
   },
   {
     "name": "EventObjectController_changeObject",
-    "description": "C/U/D MOCall POST /events",
+    "description": "C/U/D MO",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10441,7 +10441,7 @@
   },
   {
     "name": "EventObjectController_remove",
-    "description": "Remove ObjectsCall POST /events/remove",
+    "description": "Remove Objects",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10488,7 +10488,7 @@
   },
   {
     "name": "EventObjectController_recover",
-    "description": "Recover ObjectsCall POST /events/recover",
+    "description": "Recover Objects",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10535,7 +10535,7 @@
   },
   {
     "name": "EventObjectController_objLogs",
-    "description": "Get audit logsCall GET /events/{objName}/audit-logs",
+    "description": "Get audit logs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10578,7 +10578,7 @@
   },
   {
     "name": "EventFieldController_changeField",
-    "description": "C/U/D fieldCall POST /events/{objName}/fields",
+    "description": "C/U/D field",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10654,7 +10654,7 @@
   },
   {
     "name": "EventFieldController_getFields",
-    "description": "Get all fields for MOCall GET /events/{objName}/fields",
+    "description": "Get all fields for MO",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10697,7 +10697,7 @@
   },
   {
     "name": "EventFieldController_getField",
-    "description": "Get field by nameCall GET /events/{objName}/fields/{name}",
+    "description": "Get field by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10744,7 +10744,7 @@
   },
   {
     "name": "EventFieldController_getObjRecordPages",
-    "description": "Get available record pages of a fieldCall GET /events/{objName}/fields/{name}/record-pages",
+    "description": "Get available record pages of a field",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10791,7 +10791,7 @@
   },
   {
     "name": "ExternalObjectController_getObject",
-    "description": "Get MO by nameCall GET /integrations/mo/{objName}",
+    "description": "Get MO by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10834,7 +10834,7 @@
   },
   {
     "name": "ExternalObjectController_getObjects",
-    "description": "Get MOsCall POST /integrations/mo/search",
+    "description": "Get MOs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10909,7 +10909,7 @@
   },
   {
     "name": "ExternalObjectController_changeObject",
-    "description": "C/U/D MOCall POST /integrations/mo",
+    "description": "C/U/D MO",
     "parameters": {
       "type": "object",
       "properties": {
@@ -10961,7 +10961,7 @@
   },
   {
     "name": "ExternalObjectController_remove",
-    "description": "Remove ObjectsCall POST /integrations/mo/remove",
+    "description": "Remove Objects",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11008,7 +11008,7 @@
   },
   {
     "name": "ExternalObjectController_recover",
-    "description": "Recover ObjectsCall POST /integrations/mo/recover",
+    "description": "Recover Objects",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11055,7 +11055,7 @@
   },
   {
     "name": "ExternalObjectController_objLogs",
-    "description": "Get audit logsCall GET /integrations/mo/{objName}/audit-logs",
+    "description": "Get audit logs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11098,7 +11098,7 @@
   },
   {
     "name": "ExternalFieldController_changeField",
-    "description": "C/U/D fieldCall POST /integrations/mo/{objName}/fields",
+    "description": "C/U/D field",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11174,7 +11174,7 @@
   },
   {
     "name": "ExternalFieldController_getFields",
-    "description": "Get all fields for MOCall GET /integrations/mo/{objName}/fields",
+    "description": "Get all fields for MO",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11217,7 +11217,7 @@
   },
   {
     "name": "ExternalFieldController_getField",
-    "description": "Get field by nameCall GET /integrations/mo/{objName}/fields/{name}",
+    "description": "Get field by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11264,7 +11264,7 @@
   },
   {
     "name": "ExternalFieldController_getObjRecordPages",
-    "description": "Get available record pages of a fieldCall GET /integrations/mo/{objName}/fields/{name}/record-pages",
+    "description": "Get available record pages of a field",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11311,7 +11311,7 @@
   },
   {
     "name": "CommonMetaBuilderController_getDataTypes",
-    "description": "Get Data TypesCall GET /builder/data-types/{objName}",
+    "description": "Get Data Types",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11354,7 +11354,7 @@
   },
   {
     "name": "CommonMetaBuilderController_getRollupOperations",
-    "description": "Get Rollup OperationsCall GET /builder/rollup-operations",
+    "description": "Get Rollup Operations",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11393,7 +11393,7 @@
   },
   {
     "name": "CommonMetaBuilderController_getObjects",
-    "description": "Get objects collectionCall GET /builder/obj",
+    "description": "Get objects collection",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11448,7 +11448,7 @@
   },
   {
     "name": "CommonMetaBuilderController_getSchema",
-    "description": "Get object schemaCall GET /builder/obj/{objName}/schema",
+    "description": "Get object schema",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11491,7 +11491,7 @@
   },
   {
     "name": "CommonMetaBuilderController_getAvailableIndirectRelations",
-    "description": "Get data for indirect relation fieldCall GET /builder/indirect-relations",
+    "description": "Get data for indirect relation field",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11534,7 +11534,7 @@
   },
   {
     "name": "CommonMetaBuilderController_getObjectsSchema",
-    "description": "Get schemas for schema viewerCall GET /builder/schema-viewer",
+    "description": "Get schemas for schema viewer",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11573,7 +11573,7 @@
   },
   {
     "name": "ExtendedObjectController_getExtendedObjects",
-    "description": "Get extended objectsCall GET /mo/{objName}/extended",
+    "description": "Get extended objects",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11616,7 +11616,7 @@
   },
   {
     "name": "ExtendedObjectController_changeExtendedObject",
-    "description": "C/U/D extendedCall POST /mo/{objName}/extended",
+    "description": "C/U/D extended",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11672,7 +11672,7 @@
   },
   {
     "name": "ExtendedObjectController_getExtendedObject",
-    "description": "Get extended by NameCall GET /mo/{objName}/extended/{extendedName}",
+    "description": "Get extended by Name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11719,7 +11719,7 @@
   },
   {
     "name": "ExtendedObjectController_changeField",
-    "description": "C/U/D extended fieldCall POST /mo/{objName}/extended/{extendedName}/fields",
+    "description": "C/U/D extended field",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11799,7 +11799,7 @@
   },
   {
     "name": "ExtendedObjectController_getExtendedFields",
-    "description": "Get extended fieldsCall GET /mo/{objName}/extended/{extendedName}/fields",
+    "description": "Get extended fields",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11846,7 +11846,7 @@
   },
   {
     "name": "ExtendedObjectController_getField",
-    "description": "Get extended field by nameCall GET /mo/{objName}/extended/{extendedName}/fields/{name}",
+    "description": "Get extended field by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11897,7 +11897,7 @@
   },
   {
     "name": "ObjectIndexController_getIndexes",
-    "description": "Get indexes configCall GET /mo/{objName}/indexes",
+    "description": "Get indexes config",
     "parameters": {
       "type": "object",
       "properties": {
@@ -11940,7 +11940,7 @@
   },
   {
     "name": "ObjectIndexController_createIndex",
-    "description": "Create Index configCall POST /mo/{objName}/indexes",
+    "description": "Create Index config",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12001,7 +12001,7 @@
   },
   {
     "name": "ObjectIndexController_getFields",
-    "description": "Get index by idCall GET /mo/{objName}/indexes/{name}",
+    "description": "Get index by id",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12048,7 +12048,7 @@
   },
   {
     "name": "ObjectIndexController_deleteIndex",
-    "description": "Delete Index configCall DELETE /mo/{objName}/indexes/{name}",
+    "description": "Delete Index config",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12095,7 +12095,7 @@
   },
   {
     "name": "ApiExtObjDataSrcController_getDataSourceConfigs",
-    "description": "Get source configsCall GET /integrations/mo/{objName}/data-sources",
+    "description": "Get source configs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12138,7 +12138,7 @@
   },
   {
     "name": "ApiExtObjDataSrcController_changeDataSourceConfig",
-    "description": "Update source configCall PUT /integrations/mo/{objName}/data-sources",
+    "description": "Update source config",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12238,7 +12238,7 @@
   },
   {
     "name": "ApiExtObjDataSrcController_getDataSourceConfigByAction",
-    "description": "Get source config by actionCall GET /integrations/mo/{objName}/data-sources/{action}",
+    "description": "Get source config by action",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12285,7 +12285,7 @@
   },
   {
     "name": "ApiExtObjDataSrcController_testDataSourceRequest",
-    "description": "Test source config by actionCall POST /integrations/mo/{objName}/data-sources/{action}/test",
+    "description": "Test source config by action",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12332,7 +12332,7 @@
   },
   {
     "name": "PickListController_getPickList",
-    "description": "Get pick list by nameCall GET /pick-lists/{name}",
+    "description": "Get pick list by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12375,7 +12375,7 @@
   },
   {
     "name": "PickListController_updatePickList",
-    "description": "Api to update pick listCall PUT /pick-lists/{name}",
+    "description": "Api to update pick list",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12478,7 +12478,7 @@
   },
   {
     "name": "PickListController_getPickLists",
-    "description": "Get pick listsCall POST /pick-lists/search",
+    "description": "Get pick lists",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12553,7 +12553,7 @@
   },
   {
     "name": "PickListController_createPickList",
-    "description": "Api to create new pick listCall POST /pick-lists",
+    "description": "Api to create new pick list",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12656,7 +12656,7 @@
   },
   {
     "name": "PickListController_activatePickList",
-    "description": "Api to active pick listCall PUT /pick-lists/{name}/activate",
+    "description": "Api to active pick list",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12699,7 +12699,7 @@
   },
   {
     "name": "PickListController_deactivatePickList",
-    "description": "Api to de-active pick listCall PUT /pick-lists/{name}/deactivate",
+    "description": "Api to de-active pick list",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12742,7 +12742,7 @@
   },
   {
     "name": "PickListController_getAuditLogs",
-    "description": "undefinedCall GET /pick-lists/{name}/audit-logs",
+    "description": "Call GET /pick-lists/{name}/audit-logs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12785,7 +12785,7 @@
   },
   {
     "name": "PickListController_remove",
-    "description": "Remove PickListsCall POST /pick-lists/remove",
+    "description": "Remove PickLists",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12832,7 +12832,7 @@
   },
   {
     "name": "PickListController_recover",
-    "description": "Recover PickListsCall POST /pick-lists/recover",
+    "description": "Recover PickLists",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12879,7 +12879,7 @@
   },
   {
     "name": "NotiTemplateController_getNotifications",
-    "description": "Get noti templatesCall GET /notifications/templates",
+    "description": "Get noti templates",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12934,7 +12934,7 @@
   },
   {
     "name": "NotiTemplateController_createTemplate",
-    "description": "Create noti templateCall POST /notifications/templates",
+    "description": "Create noti template",
     "parameters": {
       "type": "object",
       "properties": {
@@ -12994,7 +12994,7 @@
   },
   {
     "name": "NotiTemplateController_updateTemplate",
-    "description": "Update noti templateCall PUT /notifications/templates/{name}",
+    "description": "Update noti template",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13054,7 +13054,7 @@
   },
   {
     "name": "BuiltinActionController_list",
-    "description": "undefinedCall GET /integrations/builtins",
+    "description": "Call GET /integrations/builtins",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13101,7 +13101,7 @@
   },
   {
     "name": "BuiltinActionController_getDetail",
-    "description": "undefinedCall GET /integrations/builtins/{name}",
+    "description": "Call GET /integrations/builtins/{name}",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13148,7 +13148,7 @@
   },
   {
     "name": "BuiltinActionController_searchDynamicValues",
-    "description": "undefinedCall POST /integrations/builtins/{name}/dynamic-values/search",
+    "description": "Call POST /integrations/builtins/{name}/dynamic-values/search",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13208,7 +13208,7 @@
   },
   {
     "name": "BuiltinActionController_getIcon",
-    "description": "undefinedCall GET /integrations/builtins/icons/statics",
+    "description": "Call GET /integrations/builtins/icons/statics",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13251,7 +13251,7 @@
   },
   {
     "name": "ApiSystemController_getInfo",
-    "description": "Get system informationCall GET /info",
+    "description": "Get system information",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13290,7 +13290,7 @@
   },
   {
     "name": "ApiSystemController_getLocales",
-    "description": "Get locale listCall GET /locales",
+    "description": "Get locale list",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13329,7 +13329,7 @@
   },
   {
     "name": "ApiSystemController_getLanguageTranslations",
-    "description": "Get language translationsCall GET /translations/{language}",
+    "description": "Get language translations",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13372,7 +13372,7 @@
   },
   {
     "name": "ApiUsersController_getUsers",
-    "description": "Get UsersCall GET /users",
+    "description": "Get Users",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13431,7 +13431,7 @@
   },
   {
     "name": "ApiUsersController_searchUsers",
-    "description": "Search UsersCall POST /users/search",
+    "description": "Search Users",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13522,7 +13522,7 @@
   },
   {
     "name": "ApiUsersController_getUser",
-    "description": "Get user by idCall GET /users/{id}",
+    "description": "Get user by id",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13565,7 +13565,7 @@
   },
   {
     "name": "ApiUsersController_updateUser",
-    "description": "Update userCall PUT /users/{id}",
+    "description": "Update user",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13625,7 +13625,7 @@
   },
   {
     "name": "ApiUsersController_getUserLogs",
-    "description": "Get user logsCall GET /users/{id}/audit-logs",
+    "description": "Get user logs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13668,7 +13668,7 @@
   },
   {
     "name": "ApiUsersController_inviteUser",
-    "description": "Invite userCall POST /users/invite",
+    "description": "Invite user",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13728,7 +13728,7 @@
   },
   {
     "name": "ApiUsersController_activateUser",
-    "description": "Active userCall POST /users/{id}/activate",
+    "description": "Active user",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13771,7 +13771,7 @@
   },
   {
     "name": "ApiUsersController_deactivateUser",
-    "description": "Inactive userCall POST /users/{id}/deactivate",
+    "description": "Inactive user",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13814,7 +13814,7 @@
   },
   {
     "name": "ApiUsersController_assignProfiles",
-    "description": "Assign profiles for usersCall PUT /users/{id}/profiles",
+    "description": "Assign profiles for users",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13865,7 +13865,7 @@
   },
   {
     "name": "ApiUsersController_getUserAssignedProfiles",
-    "description": "Get user assigned profilesCall GET /users/{id}/profiles",
+    "description": "Get user assigned profiles",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13908,7 +13908,7 @@
   },
   {
     "name": "ApiOrgsController_getOrg",
-    "description": "Get current organization infoCall GET /organization",
+    "description": "Get current organization info",
     "parameters": {
       "type": "object",
       "properties": {
@@ -13947,7 +13947,7 @@
   },
   {
     "name": "ApiOrgsController_updateOrg",
-    "description": "Update current organization infoCall PUT /organization",
+    "description": "Update current organization info",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14015,7 +14015,7 @@
   },
   {
     "name": "ApiOrgsController_getOrgEnvs",
-    "description": "Get organization environmentsCall GET /organization/environments",
+    "description": "Get organization environments",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14054,7 +14054,7 @@
   },
   {
     "name": "ApiOrgsController_updateOrgEnvs",
-    "description": "Update organization environmentsCall PUT /organization/environments",
+    "description": "Update organization environments",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14098,7 +14098,7 @@
   },
   {
     "name": "ApiOrgsController_updateOrgLicense",
-    "description": "Update organization licenseCall POST /organization/license",
+    "description": "Update organization license",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14146,7 +14146,7 @@
   },
   {
     "name": "ApiOrgsController_upsertLanguageTranslations",
-    "description": "Upsert language translationsCall POST /organization/translations/{language}",
+    "description": "Upsert language translations",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14194,7 +14194,7 @@
   },
   {
     "name": "ApiOrgsController_deleteLanguageTranslations",
-    "description": "Delete language translationsCall DELETE /organization/translations/{language}",
+    "description": "Delete language translations",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14237,7 +14237,7 @@
   },
   {
     "name": "ApiTagController_getTags",
-    "description": "Get tagsCall GET /tags",
+    "description": "Get tags",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14288,7 +14288,7 @@
   },
   {
     "name": "ApiTagController_createTag",
-    "description": "Create tagCall POST /tags",
+    "description": "Create tag",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14340,7 +14340,7 @@
   },
   {
     "name": "ApiTagController_getTag",
-    "description": "Get tag by nameCall GET /tags/{name}",
+    "description": "Get tag by name",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14383,7 +14383,7 @@
   },
   {
     "name": "ApiTagController_updateTag",
-    "description": "Update tagCall PUT /tags/{name}",
+    "description": "Update tag",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14435,7 +14435,7 @@
   },
   {
     "name": "ApiTagController_deleteTag",
-    "description": "Delete tagCall DELETE /tags/{name}",
+    "description": "Delete tag",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14478,7 +14478,7 @@
   },
   {
     "name": "ApiTagController_getLogs",
-    "description": "Get tags audit logsCall GET /tags/{name}/audit-logs",
+    "description": "Get tags audit logs",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14521,7 +14521,7 @@
   },
   {
     "name": "ApiEmailProviderController_getAll",
-    "description": "Get All Email ProvidersCall GET /notifications/email-provider",
+    "description": "Get All Email Providers",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14560,7 +14560,7 @@
   },
   {
     "name": "ApiEmailProviderController_create",
-    "description": "Create Email ProviderCall POST /notifications/email-provider",
+    "description": "Create Email Provider",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14634,7 +14634,7 @@
   },
   {
     "name": "ApiEmailProviderController_getOne",
-    "description": "Get One Email ProviderCall GET /notifications/email-provider/{name}",
+    "description": "Get One Email Provider",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14677,7 +14677,7 @@
   },
   {
     "name": "ApiEmailProviderController_update",
-    "description": "Update Email ProviderCall PUT /notifications/email-provider/{name}",
+    "description": "Update Email Provider",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14755,7 +14755,7 @@
   },
   {
     "name": "MigrationAdapterController_getTenantVersion",
-    "description": "undefinedCall GET /current-version",
+    "description": "Call GET /current-version",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14794,7 +14794,7 @@
   },
   {
     "name": "MigrationAdapterController_scheduleSingleMigration",
-    "description": "undefinedCall POST /migration",
+    "description": "Call POST /migration",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14842,7 +14842,7 @@
   },
   {
     "name": "MigrationAdapterController_removePendingJob",
-    "description": "undefinedCall DELETE /migration",
+    "description": "Call DELETE /migration",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14881,7 +14881,7 @@
   },
   {
     "name": "MigrationAdapterController_getLatestJob",
-    "description": "undefinedCall GET /migration",
+    "description": "Call GET /migration",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14920,7 +14920,7 @@
   },
   {
     "name": "ApiErrorTemplateController_getErrorTemplates",
-    "description": "Get list error templatesCall GET /error-templates/{language}",
+    "description": "Get list error templates",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14939,7 +14939,7 @@
   },
   {
     "name": "ApiErrorTemplateController_getActions",
-    "description": "Get actionsCall GET /logs/actions",
+    "description": "Get actions",
     "parameters": {
       "type": "object",
       "properties": {},
@@ -14953,7 +14953,7 @@
   },
   {
     "name": "ApiDeprecatedMediaManagerController_getMediaInOrg",
-    "description": "Get media in Org (Deprecated)Call GET /media",
+    "description": "Get media in Org (Deprecated)",
     "parameters": {
       "type": "object",
       "properties": {
@@ -14988,7 +14988,7 @@
   },
   {
     "name": "ApiDeprecatedMediaManagerController_getSingleMedia",
-    "description": "Get media in Org by id (Deprecated)Call GET /media/{id}",
+    "description": "Get media in Org by id (Deprecated)",
     "parameters": {
       "type": "object",
       "properties": {
@@ -15007,7 +15007,7 @@
   },
   {
     "name": "ApiDeprecatedMediaManagerController_updateMedia",
-    "description": "Update media in Org by id (Deprecated)Call PUT /media/{id}",
+    "description": "Update media in Org by id (Deprecated)",
     "parameters": {
       "type": "object",
       "properties": {
@@ -15031,7 +15031,7 @@
   },
   {
     "name": "ApiDeprecatedMediaManagerController_createS3Config",
-    "description": "Config s3 credential for org (Deprecated)Call POST /media-config",
+    "description": "Config s3 credential for org (Deprecated)",
     "parameters": {
       "type": "object",
       "properties": {},
@@ -15062,7 +15062,7 @@
   },
   {
     "name": "ApiDeprecatedMediaManagerController_getS3Config",
-    "description": "Get s3 config of org (Deprecated)Call GET /media-config",
+    "description": "Get s3 config of org (Deprecated)",
     "parameters": {
       "type": "object",
       "properties": {},
@@ -15076,7 +15076,7 @@
   },
   {
     "name": "ApiDeprecatedMediaController_uploadFile",
-    "description": "Upload image (Deprecated)Call POST /upload-file",
+    "description": "Upload image (Deprecated)",
     "parameters": {
       "type": "object",
       "properties": {},
@@ -15090,7 +15090,7 @@
   },
   {
     "name": "ApiDeprecatedMediaPublicController_serveStaticFile",
-    "description": "Get image (Deprecated)Call GET /assets/{orgId}/{id}",
+    "description": "Get image (Deprecated)",
     "parameters": {
       "type": "object",
       "properties": {

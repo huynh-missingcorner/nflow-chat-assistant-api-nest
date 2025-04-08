@@ -2,9 +2,10 @@ import { Module, Logger } from '@nestjs/common';
 import { CoordinatorService } from './coordinator.service';
 import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
 import { IntentModule } from '../agents/intent-agent/intent.module';
+import { ApplicationModule } from '../agents/application-agent/application.module';
 
 @Module({
-  imports: [OpenAIModule, IntentModule],
+  imports: [OpenAIModule, IntentModule, ApplicationModule],
   providers: [CoordinatorService, Logger],
   exports: [CoordinatorService],
 })

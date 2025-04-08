@@ -1,29 +1,29 @@
-export interface ChatMessageDto {
+export interface WebSocketChatMessageDto {
   sessionId: string;
   message: string;
 }
 
-export interface ChatResponseDto {
+export interface WebSocketChatResponseDto {
   message: string;
   timestamp: string;
 }
 
-export interface MessageChunkDto {
+export interface WebSocketMessageChunkDto {
   chunk: string;
   timestamp: string;
 }
 
-export interface SessionJoinDto {
+export interface WebSocketSessionJoinDto {
   sessionId: string;
   timestamp: string;
 }
 
-export interface MessageAckDto {
+export interface WebSocketMessageAckDto {
   messageId: string;
   timestamp: string;
 }
 
-export interface ErrorDto {
+export interface WebSocketErrorDto {
   message: string;
   error: string;
 }

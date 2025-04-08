@@ -8,7 +8,6 @@ import { CoordinatorModule } from './modules/coordinator/coordinator.module';
 import { HistoryModule } from './modules/history/history.module';
 import { SharedModule } from './shared/shared.module';
 import { ChatSessionModule } from './modules/chat-session/chat-session.module';
-import { WebsocketModule } from './modules/websocket/websocket.module';
 
 @Module({
   imports: [
@@ -19,7 +18,6 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
     HistoryModule,
     SharedModule,
     ChatSessionModule,
-    WebsocketModule,
   ],
   controllers: [AppController],
   providers: [AppService],

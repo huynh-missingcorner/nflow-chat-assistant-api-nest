@@ -1,19 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ChatService as AppChatService } from '../chat/chat.service';
-import { ChatRequestDto } from '../chat/dto/chat-request.dto';
-import { ChatResponseDto } from '../chat/dto/chat-response.dto';
+import { ChatService } from './chat.service';
+import { ChatRequestDto } from './dto/chat-request.dto';
 
 @Injectable()
-export class ChatService {
-  private readonly logger = new Logger(ChatService.name);
+export class WebsocketService {
+  private readonly logger = new Logger(WebsocketService.name);
 
-  constructor(private readonly appChatService: AppChatService) {}
+  constructor(private readonly chatService: ChatService) {}
 
   /**
-   * Process a user message and prepare it for agent processing
+   * Process a user message via WebSocket and prepare it for agent processing
    */
   async processMessage(sessionId: string, message: string): Promise<string> {
-    this.logger.log(`Processing message for session ${sessionId}: ${message}`);
+    this.logger.log(`Processing WebSocket message for session ${sessionId}: ${message}`);
 
     try {
       const chatRequest: ChatRequestDto = {
@@ -21,7 +20,7 @@ export class ChatService {
         message,
       };
 
-      const response: ChatResponseDto = await this.appChatService.processMessage(chatRequest);
+      const response = await this.chatService.processMessage(chatRequest);
 
       // If there's an app URL, include it in the response
       if (response.appUrl) {
@@ -31,20 +30,19 @@ export class ChatService {
       return response.reply;
     } catch (error: unknown) {
       if (error instanceof Error) {
-        this.logger.error(`Error processing message: ${error.message}`);
+        this.logger.error(`Error processing WebSocket message: ${error.message}`);
         return `Sorry, there was an error processing your message: ${error.message}`;
       }
-      this.logger.error('Unknown error occurred');
+      this.logger.error('Unknown error occurred processing WebSocket message');
       return 'Sorry, an unexpected error occurred while processing your message';
     }
   }
 
   /**
-   * Stream a response to the client
+   * Stream a response to the WebSocket client
    */
   async streamResponse(sessionId: string, message: string): Promise<string[]> {
-    // This is a placeholder for streaming responses
-    // In the future, this will stream tokens from the agent system
+    this.logger.debug(`Streaming response for session ${sessionId}`);
     await new Promise((resolve) => setTimeout(resolve, 100)); // Mock async operation
     return message.split(' ').map((word) => word + ' ');
   }

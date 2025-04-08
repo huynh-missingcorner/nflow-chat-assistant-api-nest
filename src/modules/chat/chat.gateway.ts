@@ -10,14 +10,14 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
-import { ChatService } from './chat.service';
+import { WebsocketService } from './websocket.service';
 import {
-  ChatMessageDto,
-  ChatResponseDto,
-  MessageAckDto,
-  SessionJoinDto,
-  ErrorDto,
-} from './interfaces/chat.interface';
+  WebSocketChatMessageDto,
+  WebSocketChatResponseDto,
+  WebSocketMessageAckDto,
+  WebSocketSessionJoinDto,
+  WebSocketErrorDto,
+} from './dto/websocket.dto';
 
 @WebSocketGateway({
   cors: {
@@ -27,7 +27,7 @@ import {
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ChatGateway.name);
 
-  constructor(private readonly chatService: ChatService) {}
+  constructor(private readonly websocketService: WebsocketService) {}
 
   @WebSocketServer()
   server: Server;
@@ -49,30 +49,33 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('sendMessage')
   async handleMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: ChatMessageDto,
+    @MessageBody() payload: WebSocketChatMessageDto,
   ): Promise<void> {
     this.logger.debug(`Received message from ${client.id}: ${JSON.stringify(payload)}`);
 
     try {
       // First, acknowledge receipt
-      const ack: MessageAckDto = {
+      const ack: WebSocketMessageAckDto = {
         messageId: Date.now().toString(),
         timestamp: new Date().toISOString(),
       };
       client.emit('messageReceived', ack);
 
       // Process the message
-      const response = await this.chatService.processMessage(payload.sessionId, payload.message);
+      const response = await this.websocketService.processMessage(
+        payload.sessionId,
+        payload.message,
+      );
 
       // Option 1: Simple response
-      const chatResponse: ChatResponseDto = {
+      const chatResponse: WebSocketChatResponseDto = {
         message: response,
         timestamp: new Date().toISOString(),
       };
       this.server.to(payload.sessionId).emit('messageResponse', chatResponse);
 
       // Option 2: Stream the response (commented out for now)
-      // const chunks = await this.chatService.streamResponse(
+      // const chunks = await this.websocketService.streamResponse(
       //   payload.sessionId,
       //   response,
       // );
@@ -91,14 +94,14 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     } catch (error: unknown) {
       if (error instanceof Error) {
         this.logger.error(`Error processing message: ${error.message}`);
-        const errorResponse: ErrorDto = {
+        const errorResponse: WebSocketErrorDto = {
           message: 'Failed to process your message',
           error: error.message,
         };
         client.emit('error', errorResponse);
       } else {
         this.logger.error('Unknown error occurred');
-        const errorResponse: ErrorDto = {
+        const errorResponse: WebSocketErrorDto = {
           message: 'An unexpected error occurred',
           error: 'Unknown error',
         };
@@ -116,7 +119,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.logger.log(`Client ${client.id} joined session: ${payload.sessionId}`);
 
     // Acknowledge the join
-    const response: SessionJoinDto = {
+    const response: WebSocketSessionJoinDto = {
       sessionId: payload.sessionId,
       timestamp: new Date().toISOString(),
     };

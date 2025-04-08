@@ -17,6 +17,7 @@ datasource db {
 model ChatSession {
   id        String   @id @default(uuid())
   title     String
+  archived  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

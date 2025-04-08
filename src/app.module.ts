@@ -7,6 +7,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { CoordinatorModule } from './modules/coordinator/coordinator.module';
 import { HistoryModule } from './modules/history/history.module';
 import { SharedModule } from './shared/shared.module';
+import { ChatSessionModule } from './modules/chat-session/chat-session.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SharedModule } from './shared/shared.module';
     CoordinatorModule,
     HistoryModule,
     SharedModule,
+    ChatSessionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -11,6 +11,8 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { ChatWebsocketService } from './chat-websocket.service';
+import { ChatMessageService } from './chat-message.service';
+import { MessageRole } from './dto/chat-message.dto';
 import {
   WebSocketChatMessageDto,
   WebSocketChatResponseDto,
@@ -27,7 +29,10 @@ import {
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ChatGateway.name);
 
-  constructor(private readonly chatWebsocketService: ChatWebsocketService) {}
+  constructor(
+    private readonly chatWebsocketService: ChatWebsocketService,
+    private readonly chatMessageService: ChatMessageService,
+  ) {}
 
   @WebSocketServer()
   server: Server;
@@ -61,13 +66,27 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       };
       client.emit('messageReceived', ack);
 
+      // Save the user message to history
+      await this.chatMessageService.create({
+        sessionId: payload.sessionId,
+        content: payload.message,
+        role: MessageRole.USER,
+      });
+
       // Process the message
       const response = await this.chatWebsocketService.processMessage(
         payload.sessionId,
         payload.message,
       );
 
-      // Option 1: Simple response
+      // Save the assistant response to history
+      await this.chatMessageService.create({
+        sessionId: payload.sessionId,
+        content: response,
+        role: MessageRole.ASSISTANT,
+      });
+
+      // Send response back to client
       const chatResponse: WebSocketChatResponseDto = {
         message: response,
         timestamp: new Date().toISOString(),
@@ -110,6 +129,37 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
   }
 
+  @SubscribeMessage('getSessionMessages')
+  async handleGetSessionMessages(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { sessionId: string },
+  ): Promise<void> {
+    try {
+      const messages = await this.chatMessageService.findAllBySessionId(payload.sessionId);
+      client.emit('sessionMessages', {
+        sessionId: payload.sessionId,
+        messages,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        this.logger.error(`Error fetching session messages: ${error.message}`);
+        const errorResponse: WebSocketErrorDto = {
+          message: 'Failed to fetch session messages',
+          error: error.message,
+        };
+        client.emit('error', errorResponse);
+      } else {
+        this.logger.error('Unknown error occurred fetching session messages');
+        const errorResponse: WebSocketErrorDto = {
+          message: 'An unexpected error occurred',
+          error: 'Unknown error',
+        };
+        client.emit('error', errorResponse);
+      }
+    }
+  }
+
   @SubscribeMessage('joinSession')
   async handleJoinSession(
     @ConnectedSocket() client: Socket,
@@ -124,6 +174,22 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       timestamp: new Date().toISOString(),
     };
     client.emit('sessionJoined', response);
+
+    // Send existing messages for this session
+    try {
+      const messages = await this.chatMessageService.findAllBySessionId(payload.sessionId);
+      client.emit('sessionMessages', {
+        sessionId: payload.sessionId,
+        messages,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? `Error fetching session messages: ${error.message}`
+          : 'Unknown error occurred fetching session messages';
+      this.logger.error(errorMessage);
+    }
   }
 
   @SubscribeMessage('leaveSession')

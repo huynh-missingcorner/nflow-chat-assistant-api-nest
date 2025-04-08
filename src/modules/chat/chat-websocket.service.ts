@@ -3,8 +3,8 @@ import { ChatService } from './chat.service';
 import { ChatRequestDto } from './dto/chat-request.dto';
 
 @Injectable()
-export class WebsocketService {
-  private readonly logger = new Logger(WebsocketService.name);
+export class ChatWebsocketService {
+  private readonly logger = new Logger(ChatWebsocketService.name);
 
   constructor(private readonly chatService: ChatService) {}
 

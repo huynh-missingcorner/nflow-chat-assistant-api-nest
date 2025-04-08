@@ -10,7 +10,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
-import { WebsocketService } from './websocket.service';
+import { ChatWebsocketService } from './chat-websocket.service';
 import {
   WebSocketChatMessageDto,
   WebSocketChatResponseDto,
@@ -27,7 +27,7 @@ import {
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ChatGateway.name);
 
-  constructor(private readonly websocketService: WebsocketService) {}
+  constructor(private readonly chatWebsocketService: ChatWebsocketService) {}
 
   @WebSocketServer()
   server: Server;
@@ -62,7 +62,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       client.emit('messageReceived', ack);
 
       // Process the message
-      const response = await this.websocketService.processMessage(
+      const response = await this.chatWebsocketService.processMessage(
         payload.sessionId,
         payload.message,
       );
@@ -75,7 +75,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       this.server.to(payload.sessionId).emit('messageResponse', chatResponse);
 
       // Option 2: Stream the response (commented out for now)
-      // const chunks = await this.websocketService.streamResponse(
+      // const chunks = await this.chatWebsocketService.streamResponse(
       //   payload.sessionId,
       //   response,
       // );

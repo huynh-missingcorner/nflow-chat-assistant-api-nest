@@ -11,13 +11,13 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { ChatMessageService } from './chat-message.service';
+import { ChatMessageService } from '../services/chat-message.service';
 import {
   CreateMessageDto,
   MessageResponseDto,
   UpdateMessageDto,
   DeleteMessageResponseDto,
-} from './dto/chat-message.dto';
+} from '../dto/chat-message.dto';
 
 @ApiTags('Chat Messages')
 @Controller('chat-messages')

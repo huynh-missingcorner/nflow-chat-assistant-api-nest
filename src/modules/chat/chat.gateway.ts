@@ -10,8 +10,8 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
-import { ChatWebsocketService } from './chat-websocket.service';
-import { ChatMessageService } from './chat-message.service';
+import { ChatWebsocketService } from './services/chat-websocket.service';
+import { ChatMessageService } from './services/chat-message.service';
 import { MessageRole } from './dto/chat-message.dto';
 import {
   WebSocketChatMessageDto,

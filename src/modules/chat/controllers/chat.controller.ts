@@ -1,8 +1,8 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ChatService } from './chat.service';
-import { ChatRequestDto } from './dto/chat-request.dto';
-import { ChatResponseDto } from './dto/chat-response.dto';
+import { ChatService } from '../services/chat.service';
+import { ChatRequestDto } from '../dto/chat-request.dto';
+import { ChatResponseDto } from '../dto/chat-response.dto';
 
 @ApiTags('Chat')
 @Controller('chat')

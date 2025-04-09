@@ -1,11 +1,11 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service';
+import { PrismaService } from '../../../shared/infrastructure/prisma/prisma.service';
 import {
   CreateMessageDto,
   MessageResponseDto,
   UpdateMessageDto,
   MessageRole,
-} from './dto/chat-message.dto';
+} from '../dto/chat-message.dto';
 import { Role } from '@prisma/client';
 
 @Injectable()
@@ -54,6 +54,14 @@ export class ChatMessageService {
   async create(createMessageDto: CreateMessageDto): Promise<MessageResponseDto> {
     try {
       const { sessionId, content, role } = createMessageDto;
+
+      const session = await this.prisma.chatSession.findUnique({
+        where: { id: sessionId },
+      });
+
+      if (!session) {
+        throw new NotFoundException(`Session with ID ${sessionId} not found`);
+      }
 
       const message = await this.prisma.message.create({
         data: {

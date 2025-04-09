@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ChatRequestDto } from '../dto/chat-request.dto';
 import { ChatService } from './chat.service';
-import { ChatRequestDto } from './dto/chat-request.dto';
 
 @Injectable()
 export class ChatWebsocketService {

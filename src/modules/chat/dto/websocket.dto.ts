@@ -27,3 +27,9 @@ export interface WebSocketErrorDto {
   message: string;
   error: string;
 }
+
+export interface WebSocketSessionTitleUpdatedDto {
+  sessionId: string;
+  title: string;
+  timestamp: string;
+}

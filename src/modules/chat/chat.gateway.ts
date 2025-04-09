@@ -13,12 +13,14 @@ import { Logger } from '@nestjs/common';
 import { ChatWebsocketService } from './services/chat-websocket.service';
 import { ChatMessageService } from './services/chat-message.service';
 import { MessageRole } from './dto/chat-message.dto';
+import { OnEvent } from '@nestjs/event-emitter';
 import {
   WebSocketChatMessageDto,
   WebSocketChatResponseDto,
   WebSocketMessageAckDto,
   WebSocketSessionJoinDto,
   WebSocketErrorDto,
+  WebSocketSessionTitleUpdatedDto,
 } from './dto/websocket.dto';
 
 @WebSocketGateway({
@@ -49,6 +51,30 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   handleDisconnect(client: Socket): void {
     const { id } = client;
     this.logger.log(`Client disconnected: ${id}`);
+  }
+
+  /**
+   * Listen for session.title.updated events and emit session title updates to clients
+   */
+  @OnEvent('session.title.updated')
+  handleSessionTitleUpdated(payload: { sessionId: string; title: string }): void {
+    const { sessionId, title } = payload;
+    this.emitSessionTitleUpdate(sessionId, title);
+  }
+
+  /**
+   * Emit a session title update event to all clients in the session
+   * @param sessionId The session ID
+   * @param title The new session title
+   */
+  private emitSessionTitleUpdate(sessionId: string, title: string): void {
+    const titleUpdate: WebSocketSessionTitleUpdatedDto = {
+      sessionId,
+      title,
+      timestamp: new Date().toISOString(),
+    };
+    this.server.to(sessionId).emit('sessionTitleUpdated', titleUpdate);
+    this.logger.debug(`Emitted title update for session ${sessionId}: ${title}`);
   }
 
   @SubscribeMessage('sendMessage')

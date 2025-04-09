@@ -8,10 +8,12 @@ import { CoordinatorModule } from './modules/coordinator/coordinator.module';
 import { HistoryModule } from './modules/history/history.module';
 import { SharedModule } from './shared/shared.module';
 import { ChatSessionModule } from './modules/chat-session/chat-session.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
     ConfigModule,
+    EventEmitterModule.forRoot(),
     InfrastructureModule,
     ChatModule,
     CoordinatorModule,

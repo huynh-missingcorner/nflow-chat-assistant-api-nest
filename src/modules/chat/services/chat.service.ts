@@ -6,6 +6,7 @@ import { ChatResponseDto } from '../dto/chat-response.dto';
 import { PrismaService } from 'src/shared/infrastructure/prisma/prisma.service';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ChatService {
@@ -16,6 +17,7 @@ export class ChatService {
     private readonly historyService: HistoryService,
     private readonly prisma: PrismaService,
     private readonly openaiService: OpenAIService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -73,5 +75,8 @@ export class ChatService {
     });
 
     this.logger.log(`Updated title for session ${sessionId} to: ${title}`);
+
+    // Emit a session.title.updated event
+    this.eventEmitter.emit('session.title.updated', { sessionId, title });
   }
 }

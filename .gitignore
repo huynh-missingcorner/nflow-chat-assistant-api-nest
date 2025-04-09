@@ -61,3 +61,6 @@ uploads/*
 
 # Linting and formatting
 .eslintcache
+
+# Local scripts
+openai-to-functions.js

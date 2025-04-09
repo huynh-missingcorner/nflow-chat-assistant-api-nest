@@ -10,7 +10,7 @@ async function bootstrap() {
   // Enable CORS for REST API and WebSockets
   app.enableCors({
     origin: process.env.CORS_ORIGIN || '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
   });
 

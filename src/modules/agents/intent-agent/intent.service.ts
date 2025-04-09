@@ -1,15 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ExtractedIntent, ExtractIntentParams } from './types/intent.types';
-import { IntentPrompts } from './prompts/intent.prompts';
 import { IntentErrors } from './constants/intent.constants';
-import { ContextLoaderService } from 'src/shared/services/context-loader.service';
+import { ContextLoaderService, ContextFile } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
+import { tools } from './tools/intent-tools';
+import { ChatCompletionOptions } from 'src/shared/infrastructure/openai/openai.types';
 
 @Injectable()
 export class IntentService {
   private readonly logger = new Logger(IntentService.name);
   private readonly AGENT_PATH = AGENT_PATHS.INTENT;
+  private readonly CONTEXTS_PATH = 'contexts';
 
   constructor(
     private readonly openAIService: OpenAIService,
@@ -23,22 +25,23 @@ export class IntentService {
    */
   async extractIntent(params: ExtractIntentParams): Promise<ExtractedIntent> {
     try {
-      const context = await this.contextLoader.loadContext(this.AGENT_PATH);
+      const combinedContext = await this.loadAgentContexts();
 
       const messages = [
         {
           role: 'system' as const,
-          content: `${IntentPrompts.FEATURE_EXTRACTION}\n\n${context}`,
+          content: combinedContext,
         },
         ...(params.chatContext || []),
         { role: 'user' as const, content: params.message },
-        {
-          role: 'system' as const,
-          content: IntentPrompts.RESPONSE_FORMAT,
-        },
       ];
 
-      const response = await this.openAIService.generateChatCompletion(messages);
+      const options: ChatCompletionOptions = {
+        tools,
+        tool_choice: 'auto',
+      };
+
+      const response = await this.openAIService.generateChatCompletion(messages, options);
 
       try {
         const parsedResponse = JSON.parse(response) as ExtractedIntent;
@@ -51,6 +54,26 @@ export class IntentService {
     } catch (error) {
       this.logger.error('Intent extraction failed', error);
       throw new Error(IntentErrors.EXTRACTION_ERROR);
+    }
+  }
+
+  /**
+   * Loads and combines all context files for the intent agent
+   * @returns Combined context content as string
+   * @private
+   */
+  private async loadAgentContexts(): Promise<string> {
+    try {
+      const contextFiles = await this.contextLoader.loadContextDirectory(
+        `${this.AGENT_PATH}/${this.CONTEXTS_PATH}`,
+      );
+
+      return contextFiles
+        .map((file: ContextFile) => `# ${file.name}\n\n${file.content}`)
+        .join('\n\n---\n\n');
+    } catch (error) {
+      this.logger.error('Failed to load agent contexts', error);
+      throw new Error(IntentErrors.CONTEXT_LOAD_ERROR);
     }
   }
 

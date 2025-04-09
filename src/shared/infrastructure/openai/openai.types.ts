@@ -1,4 +1,7 @@
+import { ResponseFormatJSONObject, ResponseFormatJSONSchema } from 'openai/resources/shared.mjs';
+import { ResponseFormatText } from 'openai/resources/shared.mjs';
 import { OpenAIConfig } from './openai.config';
+import { ChatCompletionToolChoiceOption } from 'openai/resources/index.mjs';
 
 export interface OpenAIError extends Error {
   response?: {
@@ -32,4 +35,10 @@ export type JsonSchemaFormat = {
 export interface ChatCompletionOptions extends Partial<OpenAIConfig> {
   responseFormat?: JsonSchemaFormat;
   tools?: any[];
+  tool_choice?: ChatCompletionToolChoiceOption;
+  response_format?:
+    | ResponseFormatText
+    | ResponseFormatJSONSchema
+    | ResponseFormatJSONObject
+    | undefined;
 }

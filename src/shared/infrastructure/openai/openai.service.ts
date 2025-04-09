@@ -76,6 +76,8 @@ export class OpenAIService implements OnModuleInit {
         temperature: config.temperature,
         ...(options?.responseFormat && { response_format: options.responseFormat }),
         ...(options?.tools && { tools: options.tools }),
+        ...(options?.response_format && { response_format: options.response_format }),
+        ...(options?.tool_choice && { tool_choice: options.tool_choice }),
       };
       const response = await this.openai.chat.completions.create(requestBody);
 

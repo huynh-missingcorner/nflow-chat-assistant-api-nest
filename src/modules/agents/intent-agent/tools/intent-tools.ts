@@ -1,4 +1,27 @@
-export const tools = [
+import { ChatCompletionTool } from 'openai/resources/index.mjs';
+
+export interface IntentTask {
+  agent: 'ApplicationAgent' | 'ObjectAgent' | 'LayoutAgent' | 'FlowAgent';
+  description: string;
+  data: Record<string, unknown>;
+  dependsOn?: ('ApplicationAgent' | 'ObjectAgent' | 'LayoutAgent' | 'FlowAgent')[];
+}
+
+export interface IntentPlan {
+  summary: string;
+  tasks: IntentTask[];
+}
+
+export interface IntentToolResponse {
+  id: string;
+  type: 'function';
+  function: {
+    name: 'create_intent_plan';
+    arguments: string; // JSON string containing IntentPlan
+  };
+}
+
+export const tools: ChatCompletionTool[] = [
   {
     type: 'function',
     function: {

@@ -61,9 +61,14 @@ export class ApplicationService {
 
       const completion = await this.openAIService.generateChatCompletion(messages, {
         tools: applicationTools,
+        tool_choice: 'auto',
       });
-      const response = this.parseAndValidateResponse(completion);
 
+      if (!completion.content) {
+        throw new Error(ApplicationErrors.GENERATION_FAILED);
+      }
+
+      const response = this.parseAndValidateResponse(completion.content);
       await this.logGeneration(params, response);
 
       return response;

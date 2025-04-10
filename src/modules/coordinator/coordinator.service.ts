@@ -28,7 +28,7 @@ export class CoordinatorService {
         chatContext,
       });
 
-      const reply = await this.openAIService.generateChatCompletion([
+      const response = await this.openAIService.generateChatCompletion([
         {
           role: 'system',
           content:
@@ -40,8 +40,12 @@ export class CoordinatorService {
         },
       ]);
 
+      if (!response.content) {
+        throw new Error('Failed to generate response');
+      }
+
       return {
-        reply,
+        reply: response.content,
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';

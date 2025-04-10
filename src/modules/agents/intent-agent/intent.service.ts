@@ -4,8 +4,7 @@ import { ExtractedIntent, ExtractIntentParams } from './types/intent.types';
 import { IntentErrors } from './constants/intent.constants';
 import { ContextLoaderService, ContextFile } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { tools } from './tools/intent-tools';
-import { ChatCompletionOptions } from 'src/shared/infrastructure/openai/openai.types';
+import { tools, IntentToolResponse, IntentPlan } from './tools/intent-tools';
 
 @Injectable()
 export class IntentService {
@@ -23,7 +22,7 @@ export class IntentService {
    * @param params The extraction parameters containing message and optional chat context
    * @returns Structured intent data including features, components, and summary
    */
-  async extractIntent(params: ExtractIntentParams): Promise<ExtractedIntent> {
+  async extractIntent(params: ExtractIntentParams): Promise<IntentPlan> {
     try {
       const combinedContext = await this.loadAgentContexts();
 
@@ -36,17 +35,20 @@ export class IntentService {
         { role: 'user' as const, content: params.message },
       ];
 
-      const options: ChatCompletionOptions = {
+      const options = {
         tools,
-        tool_choice: 'auto',
+        tool_choice: { type: 'function', function: { name: 'create_intent_plan' } } as const,
       };
 
-      const response = await this.openAIService.generateChatCompletion(messages, options);
+      const response = await this.openAIService.generateFunctionCompletion(messages, options);
+      if (!response.toolCalls?.[0]) {
+        throw new Error(IntentErrors.EXTRACTION_ERROR);
+      }
 
+      const toolCall = response.toolCalls[0] as IntentToolResponse;
       try {
-        const parsedResponse = JSON.parse(response) as ExtractedIntent;
-        this.validateExtractedIntent(parsedResponse);
-        return parsedResponse;
+        const intentPlan = JSON.parse(toolCall.function.arguments) as IntentPlan;
+        return intentPlan;
       } catch (parseError) {
         this.logger.error('Failed to parse OpenAI response', parseError);
         throw new Error(IntentErrors.PARSE_ERROR);

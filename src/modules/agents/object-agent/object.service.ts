@@ -54,7 +54,10 @@ export class ObjectService {
       ];
 
       const completion = await this.openAIService.generateChatCompletion(messages);
-      const response = this.parseAndValidateResponse(completion, params.applicationId);
+      if (!completion.content) {
+        throw new Error(ObjectErrors.GENERATION_FAILED);
+      }
+      const response = this.parseAndValidateResponse(completion.content, params.applicationId);
 
       await this.logGeneration(params, response);
 

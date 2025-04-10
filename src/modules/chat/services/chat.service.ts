@@ -62,21 +62,25 @@ export class ChatService {
     }
 
     // Update the session title based on the first user message by using OpenAI
-    const title = await this.openaiService.generateChatCompletion([
+    const titleResponse = await this.openaiService.generateChatCompletion([
       {
         role: 'system',
         content: `Generate a short, concise title (maximum 6 words) for a chat conversation that starts with this user message, only the text, no quotes: "${message}"`,
       },
     ]);
 
+    if (!titleResponse.content) {
+      throw new Error('Failed to generate title');
+    }
+
     await this.prisma.chatSession.update({
       where: { id: sessionId },
-      data: { title },
+      data: { title: titleResponse.content },
     });
 
-    this.logger.log(`Updated title for session ${sessionId} to: ${title}`);
+    this.logger.log(`Updated title for session ${sessionId} to: ${titleResponse.content}`);
 
     // Emit a session.title.updated event
-    this.eventEmitter.emit('session.title.updated', { sessionId, title });
+    this.eventEmitter.emit('session.title.updated', { sessionId, title: titleResponse.content });
   }
 }

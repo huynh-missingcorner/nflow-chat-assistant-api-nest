@@ -5,6 +5,7 @@ export const ObjectErrors = {
   INVALID_REFERENCE: 'Invalid object reference configuration',
   INVALID_VALIDATION: 'Invalid field validation configuration',
   OPENAI_ERROR: 'Error communicating with OpenAI service',
+  CONTEXT_LOAD_ERROR: 'Failed to load agent contexts',
 } as const;
 
 export const ObjectPrompts = {

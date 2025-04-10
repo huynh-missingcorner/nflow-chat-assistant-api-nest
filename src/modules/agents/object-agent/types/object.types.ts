@@ -43,11 +43,8 @@ export interface ObjectDefinition {
 }
 
 export interface GenerateObjectsParams {
-  features: string[];
-  components: string[];
-  applicationId: string;
-  sessionId: string;
-  messageId: string;
+  action: 'create' | 'update' | 'remove' | 'recover';
+  objects: (string | ObjectDefinition)[];
 }
 
 export interface ObjectPayload {
@@ -59,10 +56,21 @@ export interface ObjectPayload {
   };
 }
 
+export interface ToolCallPayload {
+  functionName: string;
+  arguments: Record<string, unknown>;
+}
+
+export interface ObjectToolCall {
+  order: number;
+  toolCall: ToolCallPayload;
+  dependsOn?: string[]; // Names of functions this call depends on
+}
+
 export interface GenerateObjectsResponse {
-  objectPayload: ObjectPayload;
-  suggestedNextSteps: Array<{
-    agent: 'layout' | 'flow';
-    reason: string;
-  }>;
+  toolCalls: ObjectToolCall[];
+  metadata?: {
+    appUrl?: string;
+    additionalInfo?: Record<string, unknown>;
+  };
 }

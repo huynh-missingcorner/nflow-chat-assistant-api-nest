@@ -1,10 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import { ExtractedIntent, ExtractIntentParams } from './types/intent.types';
+import {
+  ExtractedIntent,
+  ExtractIntentParams,
+  IntentPlan,
+  IntentToolResponse,
+} from './types/intent.types';
 import { IntentErrors } from './constants/intent.constants';
 import { ContextLoaderService, ContextFile } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { tools, IntentToolResponse, IntentPlan } from './tools/intent-tools';
+import { tools } from './tools/intent-tools';
 
 @Injectable()
 export class IntentService {

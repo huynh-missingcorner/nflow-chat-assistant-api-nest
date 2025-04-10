@@ -53,4 +53,5 @@ export interface GenerateApplicationResponse {
     agent: 'object' | 'layout' | 'flow';
     reason: string;
   }>;
+  appUrl?: string;
 }

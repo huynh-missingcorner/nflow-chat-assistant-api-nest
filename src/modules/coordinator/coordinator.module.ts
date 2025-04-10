@@ -3,9 +3,12 @@ import { CoordinatorService } from './coordinator.service';
 import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
 import { IntentModule } from '../agents/intent-agent/intent.module';
 import { ApplicationModule } from '../agents/application-agent/application.module';
+import { LayoutModule } from '../agents/layout-agent/layout.module';
+import { FlowModule } from '../agents/flow-agent/flow.module';
+import { ObjectModule } from '../agents/object-agent/object.module';
 
 @Module({
-  imports: [OpenAIModule, IntentModule, ApplicationModule],
+  imports: [OpenAIModule, IntentModule, ApplicationModule, ObjectModule, LayoutModule, FlowModule],
   providers: [CoordinatorService, Logger],
   exports: [CoordinatorService],
 })

@@ -1,0 +1,43 @@
+{
+  "summary": "Create a simple personal financial application in Nflow",
+  "tasks": [
+    {
+      "agent": "ApplicationAgent",
+      "description": "Create the Personal Finance app",
+      "data": {
+        "name": "Personal Finance",
+        "description": "Track income, expenses, and savings"
+      }
+    },
+    {
+      "agent": "ObjectAgent",
+      "description": "Create objects to track income, expenses, and savings",
+      "data": {
+        "objects": ["Income", "Expense", "Savings"]
+      },
+      "dependsOn": ["ApplicationAgent"]
+    },
+    {
+      "agent": "LayoutAgent",
+      "description": "Create pages to add and view transactions and savings",
+      "data": {
+        "pages": ["Add Expense", "Add Income", "View Transactions", "View Savings"],
+        "bindings": {
+          "Expense": "View Transactions",
+          "Income": "View Transactions",
+          "Savings": "View Savings"
+        }
+      },
+      "dependsOn": ["ObjectAgent"]
+    },
+    {
+      "agent": "FlowAgent",
+      "description": "Trigger when an expense is added to update savings",
+      "data": {
+        "trigger": "Expense added",
+        "action": "Update savings balance"
+      },
+      "dependsOn": ["ObjectAgent"]
+    }
+  ]
+}

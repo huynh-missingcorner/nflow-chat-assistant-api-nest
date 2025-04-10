@@ -44,7 +44,7 @@ export interface ObjectDefinition {
 
 export interface GenerateObjectsParams {
   action: 'create' | 'update' | 'remove' | 'recover';
-  objects: (string | ObjectDefinition)[];
+  objects: string[];
 }
 
 export interface ObjectPayload {
@@ -64,15 +64,49 @@ export interface ToolCallPayload {
 export interface ObjectToolCall {
   order: number;
   toolCall: ToolCallPayload;
-  dependsOn?: string[]; // Names of functions this call depends on
 }
 
 export interface GenerateObjectsResponse {
   toolCalls: ObjectToolCall[];
   metadata?: {
-    appUrl?: string;
+    totalObjects?: number;
+    generatedAt?: string;
+    schemas?: ObjectSchema[];
     additionalInfo?: Record<string, unknown>;
-    totalObjects: number;
-    generatedAt: string;
   };
+}
+
+/**
+ * Represents a field in an object schema
+ */
+export interface ObjectSchemaField {
+  name: string;
+  type: string;
+  displayName: string;
+  description: string;
+  required: boolean;
+  searchable: boolean;
+  attributes?: {
+    isUnique?: boolean;
+    defaultValue?: unknown;
+    validation?: Record<string, unknown>;
+    [key: string]: unknown;
+  };
+}
+
+/**
+ * Represents a complete object schema design
+ */
+export interface ObjectSchema {
+  name: string;
+  displayName: string;
+  description: string;
+  primaryField: string;
+  fields: ObjectSchemaField[];
+  relationships?: Array<{
+    type: 'oneToOne' | 'oneToMany' | 'manyToOne' | 'manyToMany';
+    targetObject: string;
+    fieldName: string;
+    description: string;
+  }>;
 }

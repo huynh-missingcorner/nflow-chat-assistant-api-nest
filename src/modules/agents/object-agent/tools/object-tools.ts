@@ -5,38 +5,10 @@ export const tools: ChatCompletionTool[] = [
     type: 'function',
     function: {
       name: 'ObjectController_changeObject',
-      description: 'Create/Update/Delete/Recover Object',
+      description: 'Create new Object',
       parameters: {
         type: 'object',
         properties: {
-          'x-nc-lang': {
-            type: 'string',
-            description: 'current user language',
-            enum: ['en', 'vi'],
-            default: 'en',
-          },
-          'x-nc-tenant': {
-            type: 'string',
-            description: 'org tenant',
-          },
-          'x-nc-payload': {
-            type: 'string',
-            description: 'Payload with one of JSON.stringify(object) then Base64',
-          },
-          'x-nc-date': {
-            type: 'string',
-            description: 'Timestamp of current date time',
-          },
-          'x-nc-signature': {
-            type: 'string',
-            description:
-              'Required fields: algorithm, headers, signature. Algorithm only support HmacSHA256, headers: all header need to sign seperated by space, signature: HMAC SHA-256 of headers value seperated by "\n" in base64 format.',
-          },
-          'x-nc-digest': {
-            type: 'string',
-            description:
-              'HMAC SHA-256 of the body content in base64 format, use JSON.stringify to convert body to string, add "SHA-256=" at the beginning',
-          },
           data: {
             type: 'object',
             properties: {
@@ -101,38 +73,10 @@ export const tools: ChatCompletionTool[] = [
     type: 'function',
     function: {
       name: 'FieldController_changeField',
-      description: 'Create/Update/Delete/Recover Fields in Object',
+      description: 'Create new Field in Object',
       parameters: {
         type: 'object',
         properties: {
-          'x-nc-lang': {
-            type: 'string',
-            description: 'current user language',
-            enum: ['en', 'vi'],
-            default: 'en',
-          },
-          'x-nc-tenant': {
-            type: 'string',
-            description: 'org tenant',
-          },
-          'x-nc-payload': {
-            type: 'string',
-            description: 'Payload with one of JSON.stringify(object) then Base64',
-          },
-          'x-nc-date': {
-            type: 'string',
-            description: 'Timestamp of current date time',
-          },
-          'x-nc-signature': {
-            type: 'string',
-            description:
-              'Required fields: algorithm, headers, signature. Algorithm only support HmacSHA256, headers: all header need to sign seperated by space, signature: HMAC SHA-256 of headers value seperated by "\n" in base64 format.',
-          },
-          'x-nc-digest': {
-            type: 'string',
-            description:
-              'HMAC SHA-256 of the body content in base64 format, use JSON.stringify to convert body to string, add "SHA-256=" at the beginning',
-          },
           objName: {
             type: 'string',
             description: 'Object name',
@@ -396,3 +340,141 @@ export const tools: ChatCompletionTool[] = [
     },
   },
 ];
+
+export const schemaDesignerTool: ChatCompletionTool = {
+  type: 'function',
+  function: {
+    name: 'SchemaDesigner_designSchema',
+    description: 'Design database schemas for objects following best practices',
+    parameters: {
+      type: 'object',
+      properties: {
+        schemas: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: {
+                type: 'string',
+                description: 'The name of the object',
+              },
+              displayName: {
+                type: 'string',
+                description: 'User-friendly display name',
+              },
+              description: {
+                type: 'string',
+                description: 'Detailed description of the object purpose',
+              },
+              primaryField: {
+                type: 'string',
+                description: 'The main identifier field for this object',
+              },
+              fields: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: {
+                      type: 'string',
+                      description: 'Field name in camelCase',
+                    },
+                    type: {
+                      type: 'string',
+                      enum: [
+                        'numeric',
+                        'text',
+                        'dateTime',
+                        'boolean',
+                        'pickList',
+                        'json',
+                        'generated',
+                        'currency',
+                        'externalRelation',
+                        'relation',
+                        'objectReference',
+                        'flowReference',
+                        'rollup',
+                        'file',
+                      ],
+                      description: 'Field type',
+                    },
+                    displayName: {
+                      type: 'string',
+                      description: 'User-friendly display name for the field',
+                    },
+                    description: {
+                      type: 'string',
+                      description: 'Detailed description of the field purpose',
+                    },
+                    required: {
+                      type: 'boolean',
+                      description: 'Whether this field is required',
+                    },
+                    searchable: {
+                      type: 'boolean',
+                      description: 'Whether this field should be searchable',
+                    },
+                    attributes: {
+                      type: 'object',
+                      properties: {
+                        isUnique: {
+                          type: 'boolean',
+                          description: 'Whether this field should have unique values',
+                        },
+                        defaultValue: {
+                          type: 'string',
+                          description: 'Default value for the field',
+                        },
+                        validation: {
+                          type: 'object',
+                          description: 'Validation rules for the field',
+                        },
+                      },
+                    },
+                  },
+                  required: [
+                    'name',
+                    'type',
+                    'displayName',
+                    'description',
+                    'required',
+                    'searchable',
+                  ],
+                },
+              },
+              relationships: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    type: {
+                      type: 'string',
+                      enum: ['oneToOne', 'oneToMany', 'manyToOne', 'manyToMany'],
+                      description: 'Type of relationship',
+                    },
+                    targetObject: {
+                      type: 'string',
+                      description: 'Name of the related object',
+                    },
+                    fieldName: {
+                      type: 'string',
+                      description: 'Name of the field that represents this relationship',
+                    },
+                    description: {
+                      type: 'string',
+                      description: 'Description of the relationship',
+                    },
+                  },
+                  required: ['type', 'targetObject', 'fieldName', 'description'],
+                },
+              },
+            },
+            required: ['name', 'displayName', 'description', 'primaryField', 'fields'],
+          },
+        },
+      },
+      required: ['schemas'],
+    },
+  },
+};

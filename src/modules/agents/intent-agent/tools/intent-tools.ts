@@ -11,26 +11,22 @@ export const tools: ChatCompletionTool[] = [
         properties: {
           summary: {
             type: 'string',
-            description: 'A short summary of the goal or app to be built',
+            description: 'A short summary of the app or use case the user wants to build',
           },
           tasks: {
             type: 'array',
-            description: 'Step-by-step plan for what each agent should do',
+            description: 'List of tasks, each executed by a specific domain agent',
             items: {
               type: 'object',
               properties: {
                 agent: {
                   type: 'string',
+                  description: 'Which agent should perform this task',
                   enum: ['ApplicationAgent', 'ObjectAgent', 'LayoutAgent', 'FlowAgent'],
-                  description: 'The responsible agent for the task',
                 },
                 description: {
                   type: 'string',
-                  description: 'Natural language description of what this task does',
-                },
-                data: {
-                  type: 'object',
-                  description: 'JSON payload to pass to the downstream domain agent',
+                  description: 'A human-readable explanation of the task',
                 },
                 dependsOn: {
                   type: 'array',
@@ -38,7 +34,83 @@ export const tools: ChatCompletionTool[] = [
                     type: 'string',
                     enum: ['ApplicationAgent', 'ObjectAgent', 'LayoutAgent', 'FlowAgent'],
                   },
-                  description: 'Other agent names this task depends on',
+                  description: 'Optional list of agents this task depends on',
+                },
+                data: {
+                  description: 'Task-specific payload depending on the agent',
+                  oneOf: [
+                    {
+                      title: 'ApplicationAgentData',
+                      type: 'object',
+                      properties: {
+                        action: { type: 'string', enum: ['create'] },
+                        name: { type: 'string' },
+                        description: { type: 'string' },
+                        icon: { type: 'string', description: 'Optional icon for the app' },
+                        visibility: {
+                          type: 'string',
+                          enum: ['public', 'private'],
+                          default: 'private',
+                        },
+                        slug: { type: 'string', description: 'Optional unique identifier' },
+                      },
+                      required: ['action', 'name'],
+                    },
+                    {
+                      title: 'ObjectAgentData',
+                      type: 'object',
+                      properties: {
+                        action: { type: 'string', enum: ['create'] },
+                        objects: {
+                          type: 'array',
+                          items: {
+                            oneOf: [
+                              { type: 'string' },
+                              {
+                                type: 'object',
+                                properties: {
+                                  name: { type: 'string' },
+                                  description: { type: 'string' },
+                                },
+                                required: ['name'],
+                              },
+                            ],
+                          },
+                        },
+                      },
+                      required: ['action', 'objects'],
+                    },
+                    {
+                      title: 'LayoutAgentData',
+                      type: 'object',
+                      properties: {
+                        action: { type: 'string', enum: ['create'] },
+                        pages: {
+                          type: 'array',
+                          items: { type: 'string' },
+                        },
+                        bindings: {
+                          type: 'object',
+                          additionalProperties: { type: 'string' },
+                          description: 'Map objects to page names',
+                        },
+                      },
+                      required: ['action', 'pages', 'bindings'],
+                    },
+                    {
+                      title: 'FlowAgentData',
+                      type: 'object',
+                      properties: {
+                        action: { type: 'string', enum: ['create'] },
+                        trigger: { type: 'string', description: 'Event that starts the flow' },
+                        actionLogic: {
+                          type: 'string',
+                          description: 'What should happen in the flow',
+                        },
+                      },
+                      required: ['action', 'trigger', 'actionLogic'],
+                    },
+                  ],
                 },
               },
               required: ['agent', 'description', 'data'],

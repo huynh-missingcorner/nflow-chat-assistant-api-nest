@@ -1,43 +1,42 @@
 {
-  "summary": "Create a simple personal financial application in Nflow",
+  "summary": "Build a simple personal financial application",
   "tasks": [
     {
       "agent": "ApplicationAgent",
-      "description": "Create the Personal Finance app",
+      "description": "Create the personal finance app",
       "data": {
+        "action": "create",
         "name": "Personal Finance",
-        "description": "Track income, expenses, and savings"
+        "description": "Track expenses and income"
       }
     },
     {
       "agent": "ObjectAgent",
-      "description": "Create objects to track income, expenses, and savings",
+      "description": "Create objects to track income and expenses",
       "data": {
-        "objects": ["Income", "Expense", "Savings"]
-      },
-      "dependsOn": ["ApplicationAgent"]
+        "action": "create",
+        "objects": ["Income", "Expense"]
+      }
     },
     {
       "agent": "LayoutAgent",
-      "description": "Create pages to add and view transactions and savings",
+      "description": "Create pages to add and view transactions",
       "data": {
-        "pages": ["Add Expense", "Add Income", "View Transactions", "View Savings"],
+        "action": "create",
+        "pages": ["Add Expense", "Transaction List"],
         "bindings": {
-          "Expense": "View Transactions",
-          "Income": "View Transactions",
-          "Savings": "View Savings"
+          "Expense": "Transaction List"
         }
-      },
-      "dependsOn": ["ObjectAgent"]
+      }
     },
     {
       "agent": "FlowAgent",
-      "description": "Trigger when an expense is added to update savings",
+      "description": "Trigger when a transaction is added to update balance",
       "data": {
-        "trigger": "Expense added",
-        "action": "Update savings balance"
-      },
-      "dependsOn": ["ObjectAgent"]
+        "action": "create",
+        "trigger": "Transaction added",
+        "actionLogic": "Update balance"
+      }
     }
   ]
 }

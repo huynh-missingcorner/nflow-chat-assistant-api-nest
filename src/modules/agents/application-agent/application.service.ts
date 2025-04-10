@@ -42,7 +42,13 @@ export class ApplicationService {
         },
       ];
 
-      const options = { tools: applicationTools, tool_choice: 'auto' as const };
+      const options = {
+        tools: applicationTools,
+        tool_choice: {
+          type: 'function',
+          function: { name: 'ApiAppBuilderController_createApp' },
+        } as const,
+      };
 
       const completion = await this.openAIService.generateFunctionCompletion(messages, options);
       if (!completion.toolCalls?.length) {

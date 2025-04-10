@@ -72,5 +72,7 @@ export interface GenerateObjectsResponse {
   metadata?: {
     appUrl?: string;
     additionalInfo?: Record<string, unknown>;
+    totalObjects: number;
+    generatedAt: string;
   };
 }

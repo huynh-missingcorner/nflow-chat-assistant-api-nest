@@ -101,7 +101,7 @@ export const tools: ChatCompletionTool[] = [
     type: 'function',
     function: {
       name: 'FieldController_changeField',
-      description: 'C/U/D field',
+      description: 'Create/Update/Delete/Recover Fields in Object',
       parameters: {
         type: 'object',
         properties: {

@@ -1,345 +1,344 @@
 import { ChatCompletionTool } from 'openai/resources/index.mjs';
 
-export const tools: ChatCompletionTool[] = [
-  {
-    type: 'function',
-    function: {
-      name: 'ObjectController_changeObject',
-      description: 'Create new Object',
-      parameters: {
-        type: 'object',
-        properties: {
-          data: {
-            type: 'object',
-            properties: {
-              displayName: {
-                type: 'string',
-                description: '',
-              },
-              recordName: {
-                type: 'object',
-                properties: {
-                  label: {
-                    type: 'string',
-                    description: '',
-                  },
-                  type: {
-                    type: 'string',
-                    description: '',
-                    enum: ['text'],
-                  },
-                },
-                required: [],
-              },
-              owd: {
-                type: 'string',
-                description: '',
-                enum: ['PublicRead', 'PublicReadWrite', 'Private'],
-              },
-              tagNames: {
-                type: 'array',
-                items: {
-                  type: 'string',
-                  description: '',
-                },
-              },
-              name: {
-                type: 'string',
-                description: '',
-              },
-              description: {
-                type: 'string',
-                description: '',
-              },
-            },
-            required: ['displayName', 'recordName', 'name'],
-            description: '',
-          },
-          action: {
-            type: 'string',
-            description: '',
-            enum: ['create', 'update', 'delete', 'recover'],
-          },
-          name: {
-            type: 'string',
-            description: '',
-          },
+export const createNewFieldTool: ChatCompletionTool = {
+  type: 'function',
+  function: {
+    name: 'FieldController_changeField',
+    description: 'Create new Field in Object',
+    parameters: {
+      type: 'object',
+      properties: {
+        objName: {
+          type: 'string',
+          description: 'Object name',
         },
-        required: ['action'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'FieldController_changeField',
-      description: 'Create new Field in Object',
-      parameters: {
-        type: 'object',
-        properties: {
-          objName: {
-            type: 'string',
-            description: 'Object name',
-          },
-          data: {
-            type: 'object',
-            properties: {
-              typeName: {
-                type: 'string',
-                description: '',
-                enum: [
-                  'numeric',
-                  'text',
-                  'dateTime',
-                  'boolean',
-                  'pickList',
-                  'json',
-                  'generated',
-                  'currency',
-                  'externalRelation',
-                  'relation',
-                  'objectReference',
-                  'flowReference',
-                  'rollup',
-                  'file',
-                ],
-              },
-              isRequired: {
-                type: 'boolean',
-                description: '',
-                default: false,
-              },
-              isExternalId: {
-                type: 'boolean',
-                description: '',
-                default: false,
-              },
-              value: {
-                type: 'string',
-                description:
-                  'value can be: \n\n    For relation/externalRelation: targetObjectName\n    For indirectRelation: targetObjectName.externalFieldName\n    For rollup: ChildObjectName.relationFieldName.rollupFieldName\n  ',
-              },
-              pickListName: {
-                type: 'string',
-                description: '',
-              },
-              name: {
-                type: 'string',
-                description: '',
-              },
-              displayName: {
-                type: 'string',
-                description: '',
-              },
-              attributes: {
-                type: 'object',
-                properties: {
-                  filters: {
-                    type: 'array',
-                    items: {
-                      type: 'array',
-                      items: {
-                        type: 'object',
-                        properties: {
-                          fieldName: {
-                            type: 'string',
-                            description: '',
-                          },
-                          operator: {
-                            type: 'string',
-                            description: '',
-                            enum: [
-                              '===',
-                              '!==',
-                              'isIn',
-                              'isNotIn',
-                              'notContains',
-                              'contains',
-                              'between',
-                              '<=',
-                              '>=',
-                              '<',
-                              '>',
-                              'isNull',
-                              'isNotNull',
-                            ],
-                          },
-                          value: {
-                            type: 'string',
-                            description: '',
-                          },
-                        },
-                        required: ['fieldName', 'operator'],
-                      },
-                    },
-                  },
-                  defaultValue: {
-                    type: 'object',
-                    properties: {},
-                    required: [],
-                  },
-                  onDelete: {
-                    type: 'string',
-                    description: "Use with relation field. 'SET_NULL' requires 'isRequired'=false",
-                    enum: ['noAction', 'setNull', 'cascade'],
-                  },
-                  sensitivity: {
-                    type: 'string',
-                    description:
-                      "Currently applied for short text only. 'Partial' will only expose the last 4 characters. 'All' will hide everything & return '****'",
-                    enum: ['none', 'partial', 'all'],
-                  },
-                  pickListLvl: {
-                    type: 'number',
-                    description: 'Levels of picklist items, only applicable for single selection',
-                  },
-                  subType: {
-                    type: 'string',
-                    description: '',
-                  },
-                  template: {
-                    type: 'string',
-                    description: '',
-                  },
-                  isUnique: {
-                    type: 'boolean',
-                    description: '',
-                  },
-                  isSearchable: {
-                    type: 'boolean',
-                    description: '',
-                  },
-                  isSortable: {
-                    type: 'boolean',
-                    description: '',
-                  },
-                  objectNames: {
-                    type: 'array',
-                    items: {
-                      type: 'string',
-                      description: '',
-                    },
-                  },
-                  includeExtended: {
-                    type: 'boolean',
-                    description: '',
-                  },
-                  operation: {
-                    type: 'string',
-                    description: '',
-                    enum: ['sum', 'count'],
-                  },
-                  fileSizeLimit: {
-                    type: 'number',
-                    description: '',
-                  },
-                  fileTypes: {
-                    type: 'array',
-                    items: {
-                      type: 'string',
-                      description: '',
-                      enum: [
-                        'application/pdf',
-                        'application/msword',
-                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                        'application/vnd.ms-excel',
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                        'application/vnd.ms-powerpoint',
-                        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                        'text/plain',
-                        'text/csv',
-                        'text/markdown',
-                        'image/jpeg',
-                        'image/png',
-                        'image/gif',
-                        'video/mp4',
-                        'audio/mpeg',
-                        'video/quicktime',
-                        'video/x-flv',
-                        'video/x-matroska',
-                        'audio/x-ms-wma',
-                        'audio/m4a',
-                        'video/x-m4v',
-                      ],
-                    },
-                  },
-                  numberFormat: {
-                    type: 'object',
-                    properties: {
-                      precision: {
-                        type: 'number',
-                        description: '',
-                      },
-                      locale: {
-                        type: 'string',
-                        description: '',
-                      },
-                      separator: {
-                        type: 'string',
-                        description: '',
-                      },
-                      useShorthandNotation: {
-                        type: 'boolean',
-                        description: '',
-                      },
-                    },
-                    required: [],
-                  },
-                  formatter: {
-                    type: 'object',
-                    description: '',
-                  },
-                },
-                required: [],
-              },
-              pickListId: {
-                type: 'string',
-                description: '',
-              },
-              description: {
-                type: 'string',
-                description: '',
-              },
+        data: {
+          type: 'object',
+          properties: {
+            typeName: {
+              type: 'string',
+              description: '',
+              enum: [
+                'numeric',
+                'text',
+                'dateTime',
+                'boolean',
+                'pickList',
+                'json',
+                'generated',
+                'currency',
+                'externalRelation',
+                'relation',
+                'objectReference',
+                'flowReference',
+                'rollup',
+                'file',
+              ],
             },
-            required: ['typeName', 'name', 'displayName', 'attributes'],
-            description: '',
-          },
-          updateLayouts: {
-            type: 'array',
-            items: {
+            isRequired: {
+              type: 'boolean',
+              description: '',
+              default: false,
+            },
+            isExternalId: {
+              type: 'boolean',
+              description: '',
+              default: false,
+            },
+            value: {
+              type: 'string',
+              description:
+                'value can be: \n\n    For relation/externalRelation: targetObjectName\n    For indirectRelation: targetObjectName.externalFieldName\n    For rollup: ChildObjectName.relationFieldName.rollupFieldName\n  ',
+            },
+            pickListName: {
+              type: 'string',
+              description: '',
+            },
+            name: {
+              type: 'string',
+              description: '',
+            },
+            displayName: {
+              type: 'string',
+              description: '',
+            },
+            attributes: {
               type: 'object',
               properties: {
-                layoutId: {
+                filters: {
+                  type: 'array',
+                  items: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        fieldName: {
+                          type: 'string',
+                          description: '',
+                        },
+                        operator: {
+                          type: 'string',
+                          description: '',
+                          enum: [
+                            '===',
+                            '!==',
+                            'isIn',
+                            'isNotIn',
+                            'notContains',
+                            'contains',
+                            'between',
+                            '<=',
+                            '>=',
+                            '<',
+                            '>',
+                            'isNull',
+                            'isNotNull',
+                          ],
+                        },
+                        value: {
+                          type: 'string',
+                          description: '',
+                        },
+                      },
+                      required: ['fieldName', 'operator'],
+                    },
+                  },
+                },
+                defaultValue: {
+                  type: 'object',
+                  properties: {},
+                  required: [],
+                },
+                onDelete: {
+                  type: 'string',
+                  description: "Use with relation field. 'SET_NULL' requires 'isRequired'=false",
+                  enum: ['noAction', 'setNull', 'cascade'],
+                },
+                sensitivity: {
+                  type: 'string',
+                  description:
+                    "Currently applied for short text only. 'Partial' will only expose the last 4 characters. 'All' will hide everything & return '****'",
+                  enum: ['none', 'partial', 'all'],
+                },
+                pickListLvl: {
+                  type: 'number',
+                  description: 'Levels of picklist items, only applicable for single selection',
+                },
+                subType: {
                   type: 'string',
                   description: '',
                 },
-                componentIds: {
+                template: {
+                  type: 'string',
+                  description: '',
+                },
+                isUnique: {
+                  type: 'boolean',
+                  description: '',
+                },
+                isSearchable: {
+                  type: 'boolean',
+                  description: '',
+                },
+                isSortable: {
+                  type: 'boolean',
+                  description: '',
+                },
+                objectNames: {
                   type: 'array',
                   items: {
                     type: 'string',
                     description: '',
                   },
                 },
+                includeExtended: {
+                  type: 'boolean',
+                  description: '',
+                },
+                operation: {
+                  type: 'string',
+                  description: '',
+                  enum: ['sum', 'count'],
+                },
+                fileSizeLimit: {
+                  type: 'number',
+                  description: '',
+                },
+                fileTypes: {
+                  type: 'array',
+                  items: {
+                    type: 'string',
+                    description: '',
+                    enum: [
+                      'application/pdf',
+                      'application/msword',
+                      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                      'application/vnd.ms-excel',
+                      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                      'application/vnd.ms-powerpoint',
+                      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                      'text/plain',
+                      'text/csv',
+                      'text/markdown',
+                      'image/jpeg',
+                      'image/png',
+                      'image/gif',
+                      'video/mp4',
+                      'audio/mpeg',
+                      'video/quicktime',
+                      'video/x-flv',
+                      'video/x-matroska',
+                      'audio/x-ms-wma',
+                      'audio/m4a',
+                      'video/x-m4v',
+                    ],
+                  },
+                },
+                numberFormat: {
+                  type: 'object',
+                  properties: {
+                    precision: {
+                      type: 'number',
+                      description: '',
+                    },
+                    locale: {
+                      type: 'string',
+                      description: '',
+                    },
+                    separator: {
+                      type: 'string',
+                      description: '',
+                    },
+                    useShorthandNotation: {
+                      type: 'boolean',
+                      description: '',
+                    },
+                  },
+                  required: [],
+                },
+                formatter: {
+                  type: 'object',
+                  description: '',
+                },
               },
-              required: ['layoutId', 'componentIds'],
+              required: [],
             },
-            description: '',
+            pickListId: {
+              type: 'string',
+              description: '',
+            },
+            description: {
+              type: 'string',
+              description: '',
+            },
           },
-          action: {
-            type: 'string',
-            description: '',
-            enum: ['create', 'update', 'delete', 'recover'],
-          },
-          name: {
-            type: 'string',
-            description: '',
-          },
+          required: ['typeName', 'name', 'displayName', 'attributes'],
+          description: '',
         },
-        required: ['objName', 'action'],
+        updateLayouts: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              layoutId: {
+                type: 'string',
+                description: '',
+              },
+              componentIds: {
+                type: 'array',
+                items: {
+                  type: 'string',
+                  description: '',
+                },
+              },
+            },
+            required: ['layoutId', 'componentIds'],
+          },
+          description: '',
+        },
+        action: {
+          type: 'string',
+          description: '',
+          enum: ['create', 'update', 'delete', 'recover'],
+        },
+        name: {
+          type: 'string',
+          description: '',
+        },
       },
+      required: ['objName', 'action'],
     },
   },
-];
+};
+
+export const createNewObjectTool: ChatCompletionTool = {
+  type: 'function',
+  function: {
+    name: 'ObjectController_changeObject',
+    description: 'Create new Object',
+    parameters: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'object',
+          properties: {
+            displayName: {
+              type: 'string',
+              description: '',
+            },
+            recordName: {
+              type: 'object',
+              properties: {
+                label: {
+                  type: 'string',
+                  description: '',
+                },
+                type: {
+                  type: 'string',
+                  description: '',
+                  enum: ['text'],
+                },
+              },
+              required: [],
+            },
+            owd: {
+              type: 'string',
+              description: '',
+              enum: ['PublicRead', 'PublicReadWrite', 'Private'],
+            },
+            tagNames: {
+              type: 'array',
+              items: {
+                type: 'string',
+                description: '',
+              },
+            },
+            name: {
+              type: 'string',
+              description: '',
+            },
+            description: {
+              type: 'string',
+              description: '',
+            },
+          },
+          required: ['displayName', 'recordName', 'name'],
+          description: '',
+        },
+        action: {
+          type: 'string',
+          description: '',
+          enum: ['create', 'update', 'delete', 'recover'],
+        },
+        name: {
+          type: 'string',
+          description: '',
+        },
+      },
+      required: ['action'],
+    },
+  },
+};
 
 export const schemaDesignerTool: ChatCompletionTool = {
   type: 'function',

@@ -9,7 +9,7 @@ import {
   ObjectToolCall,
 } from './types/object.types';
 import { ObjectErrors } from './constants/object.constants';
-import { tools as objectTools, schemaDesignerTool } from './tools/object-tools';
+import { createNewFieldTool, createNewObjectTool, schemaDesignerTool } from './tools/object-tools';
 
 @Injectable()
 export class ObjectService {
@@ -144,7 +144,7 @@ Generate the exact tool calls needed to implement these schemas in the Nflow pla
     ];
 
     const options = {
-      tools: objectTools,
+      tools: [createNewObjectTool, createNewFieldTool],
       tool_choice: 'auto' as const,
       temperature: 0.5, // Lower temperature for more precise tool calls
       max_tokens: 2000,

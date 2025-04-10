@@ -8,13 +8,8 @@ import {
   GenerateApplicationResponse,
   ApplicationConfig,
 } from './types/application.types';
-import {
-  ApplicationErrors,
-  ApplicationPrompts,
-  ApplicationDefaults,
-} from './constants/application.constants';
+import { ApplicationErrors, ApplicationDefaults } from './constants/application.constants';
 import { tools as applicationTools } from './tools/application-tools';
-import { IntentToolResponse } from '../intent-agent/types/intent.types';
 
 @Injectable()
 export class ApplicationService {
@@ -47,34 +42,36 @@ export class ApplicationService {
         },
         {
           role: 'user' as const,
-          content: `${ApplicationPrompts.FEATURE_ANALYSIS}\n\nApplication: ${JSON.stringify(
-            params,
-            null,
-            2,
-          )}`,
-        },
-        {
-          role: 'system' as const,
-          content: ApplicationPrompts.RESPONSE_FORMAT,
+          content: `Application Parameters: ${JSON.stringify(params, null, 2)}`,
         },
       ];
 
       const options = { tools: applicationTools, tool_choice: 'auto' as const };
 
       const completion = await this.openAIService.generateFunctionCompletion(messages, options);
-      if (!completion.toolCalls?.[0]) {
+      if (!completion.toolCalls?.length) {
         throw new Error(ApplicationErrors.GENERATION_FAILED);
       }
 
-      const toolCall = completion.toolCalls[0] as IntentToolResponse;
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const taskParams = JSON.parse(toolCall.function.arguments);
-        return taskParams as GenerateApplicationResponse;
-      } catch (parseError) {
-        this.logger.error('Failed to parse OpenAI response', parseError);
-        throw new Error(ApplicationErrors.GENERATION_FAILED);
-      }
+      // Process all tool calls and organize them
+      const toolCalls = completion.toolCalls.map((toolCall, index) => {
+        const functionCall = toolCall.function;
+        return {
+          order: index,
+          toolCall: {
+            functionName: functionCall.name,
+            arguments: JSON.parse(functionCall.arguments) as Record<string, unknown>,
+          },
+        };
+      });
+
+      // Return structured response with all tool calls
+      return {
+        toolCalls,
+        metadata: {
+          // Additional metadata can be added here
+        },
+      };
     } catch (error) {
       this.logger.error('Application generation failed', error);
       throw new Error(error instanceof Error ? error.message : ApplicationErrors.GENERATION_FAILED);

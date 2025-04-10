@@ -118,7 +118,7 @@ export class CoordinatorService {
             'applicationPayload' in result &&
             'appUrl' in result
           ) {
-            appUrl = result.appUrl;
+            appUrl = result.appUrl as string;
           }
 
           // Remove executed task from the queue

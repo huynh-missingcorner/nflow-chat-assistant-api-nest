@@ -43,11 +43,36 @@ export interface ApplicationPayload {
   };
 }
 
+export interface ToolCallPayload {
+  functionName: string;
+  arguments: Record<string, unknown>;
+}
+
+export interface ApplicationToolCall {
+  order: number;
+  toolCall: ToolCallPayload;
+  dependsOn?: string[]; // Names of functions this call depends on
+}
+
 export interface GenerateApplicationResponse {
-  applicationPayload: ApplicationPayload;
-  suggestedNextSteps: Array<{
-    agent: 'object' | 'layout' | 'flow';
-    reason: string;
-  }>;
-  appUrl?: string;
+  toolCalls: ApplicationToolCall[];
+  metadata?: {
+    appUrl?: string;
+    additionalInfo?: Record<string, unknown>;
+  };
+}
+
+export interface ExecutorAgentParams {
+  toolCalls: ApplicationToolCall[];
+  metadata?: Record<string, unknown>;
+}
+
+interface OpenAIFunctionCall {
+  name: string;
+  arguments: string;
+}
+
+export interface OpenAIToolCall {
+  type: 'function';
+  function: OpenAIFunctionCall;
 }

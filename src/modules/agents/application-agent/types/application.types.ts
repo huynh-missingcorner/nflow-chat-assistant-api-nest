@@ -28,13 +28,9 @@ export interface ApplicationConfig {
 }
 
 export interface GenerateApplicationParams {
-  intent: {
-    features: string[];
-    components: string[];
-    summary: string;
-  };
-  sessionId: string;
-  messageId: string;
+  action: 'create' | 'update' | 'remove' | 'recover';
+  name: string;
+  description: string;
 }
 
 export interface ApplicationPayload {

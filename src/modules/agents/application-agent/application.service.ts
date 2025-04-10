@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { PrismaService } from 'src/shared/infrastructure/prisma/prisma.service';
-import { ContextLoaderService } from 'src/shared/services/context-loader.service';
+import { ContextFile, ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import {
   GenerateApplicationParams,
@@ -14,11 +14,13 @@ import {
   ApplicationDefaults,
 } from './constants/application.constants';
 import { tools as applicationTools } from './tools/application-tools';
+import { IntentToolResponse } from '../intent-agent/types/intent.types';
 
 @Injectable()
 export class ApplicationService {
   private readonly logger = new Logger(ApplicationService.name);
   private readonly AGENT_PATH = AGENT_PATHS.APPLICATION;
+  private readonly CONTEXTS_PATH = 'contexts';
 
   constructor(
     private readonly openAIService: OpenAIService,
@@ -35,20 +37,18 @@ export class ApplicationService {
     params: GenerateApplicationParams,
   ): Promise<GenerateApplicationResponse> {
     try {
-      this.validateIntent(params.intent);
-
       // Load context from file
-      const context = await this.contextLoader.loadContext(this.AGENT_PATH);
+      const combinedContext = await this.loadAgentContexts();
 
       const messages = [
         {
           role: 'system' as const,
-          content: `${ApplicationPrompts.SYSTEM_CONTEXT}\n\n${context}`,
+          content: combinedContext,
         },
         {
           role: 'user' as const,
-          content: `${ApplicationPrompts.FEATURE_ANALYSIS}\n\nIntent: ${JSON.stringify(
-            params.intent,
+          content: `${ApplicationPrompts.FEATURE_ANALYSIS}\n\nApplication: ${JSON.stringify(
+            params,
             null,
             2,
           )}`,
@@ -59,36 +59,40 @@ export class ApplicationService {
         },
       ];
 
-      const completion = await this.openAIService.generateChatCompletion(messages, {
-        tools: applicationTools,
-        tool_choice: 'auto',
-      });
+      const options = { tools: applicationTools, tool_choice: 'auto' as const };
 
-      if (!completion.content) {
+      const completion = await this.openAIService.generateFunctionCompletion(messages, options);
+      if (!completion.toolCalls?.[0]) {
         throw new Error(ApplicationErrors.GENERATION_FAILED);
       }
 
-      const response = this.parseAndValidateResponse(completion.content);
-      await this.logGeneration(params, response);
-
-      return response;
+      const toolCall = completion.toolCalls[0] as IntentToolResponse;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const taskParams = JSON.parse(toolCall.function.arguments);
+        return taskParams as GenerateApplicationResponse;
+      } catch (parseError) {
+        this.logger.error('Failed to parse OpenAI response', parseError);
+        throw new Error(ApplicationErrors.GENERATION_FAILED);
+      }
     } catch (error) {
       this.logger.error('Application generation failed', error);
       throw new Error(error instanceof Error ? error.message : ApplicationErrors.GENERATION_FAILED);
     }
   }
 
-  /**
-   * Validate the intent data structure
-   * @param intent User intent data
-   */
-  private validateIntent(intent: GenerateApplicationParams['intent']): void {
-    if (!intent || !Array.isArray(intent.features) || !Array.isArray(intent.components)) {
-      throw new Error(ApplicationErrors.INVALID_INTENT);
-    }
+  private async loadAgentContexts(): Promise<string> {
+    try {
+      const contextFiles = await this.contextLoader.loadContextDirectory(
+        `${this.AGENT_PATH}/${this.CONTEXTS_PATH}`,
+      );
 
-    if (intent.features.length === 0 || intent.components.length === 0) {
-      throw new Error(ApplicationErrors.MISSING_REQUIRED_FEATURES);
+      return contextFiles
+        .map((file: ContextFile) => `# ${file.name}\n\n${file.content}`)
+        .join('\n\n---\n\n');
+    } catch (error) {
+      this.logger.error('Failed to load agent contexts', error);
+      throw new Error(ApplicationErrors.CONTEXT_LOAD_ERROR);
     }
   }
 
@@ -148,12 +152,12 @@ export class ApplicationService {
       await this.prisma.agentResult.create({
         data: {
           agentType: 'APPLICATION_AGENT',
-          sessionId: params.sessionId,
-          messageId: params.messageId,
-          input: JSON.stringify(params.intent),
+          sessionId: crypto.randomUUID(),
+          messageId: crypto.randomUUID(),
+          input: JSON.stringify(params),
           output: JSON.stringify(response),
           status: 'COMPLETED',
-          duration: 0, // TODO: Add actual duration tracking
+          duration: 0,
         },
       });
     } catch (error) {

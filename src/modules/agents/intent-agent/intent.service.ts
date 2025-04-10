@@ -9,7 +9,7 @@ import {
 import { IntentErrors } from './constants/intent.constants';
 import { ContextLoaderService, ContextFile } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { tools } from './tools/intent-tools';
+import { tools as intentTools } from './tools/intent-tools';
 
 @Injectable()
 export class IntentService {
@@ -41,7 +41,7 @@ export class IntentService {
       ];
 
       const options = {
-        tools,
+        tools: intentTools,
         tool_choice: { type: 'function', function: { name: 'create_intent_plan' } } as const,
       };
 

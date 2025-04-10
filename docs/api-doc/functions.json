@@ -660,11 +660,15 @@
           "enum": ["ASC", "DESC"]
         },
         "nextFromCursor": {
-          "type": "string",
+          "type": "object",
+          "properties": {},
+          "required": [],
           "description": ""
         },
         "prevFromCursor": {
-          "type": "string",
+          "type": "object",
+          "properties": {},
+          "required": [],
           "description": ""
         },
         "offset": {
@@ -1017,11 +1021,15 @@
           "enum": ["ASC", "DESC"]
         },
         "nextFromCursor": {
-          "type": "string",
+          "type": "object",
+          "properties": {},
+          "required": [],
           "description": ""
         },
         "prevFromCursor": {
-          "type": "string",
+          "type": "object",
+          "properties": {},
+          "required": [],
           "description": ""
         },
         "offset": {
@@ -3702,8 +3710,10 @@
           "description": ""
         },
         "customProps": {
-          "type": "string",
-          "description": "Base64 custom properties"
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "description": ""
         },
         "displayName": {
           "type": "string",
@@ -3862,8 +3872,10 @@
           "description": "HMAC SHA-256 of the body content in base64 format, use JSON.stringify to convert body to string, add \"SHA-256=\" at the beginning"
         },
         "customProps": {
-          "type": "string",
-          "description": "Base64 custom properties"
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "description": ""
         },
         "name": {
           "type": "string",
@@ -4106,7 +4118,18 @@
           "description": "HMAC SHA-256 of the body content in base64 format, use JSON.stringify to convert body to string, add \"SHA-256=\" at the beginning"
         },
         "input": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "guid": {
+              "type": "string",
+              "description": "Record guid to trigger data flow"
+            },
+            "payload": {
+              "type": "object",
+              "description": "Payload to update record in Record Update flow"
+            }
+          },
+          "required": ["guid"],
           "description": ""
         },
         "triggerBy": {
@@ -4370,8 +4393,9 @@
                       "enum": ["string", "number", "object", "array", "boolean"]
                     },
                     "default": {
-                      "type": "string",
-                      "description": ""
+                      "type": "object",
+                      "properties": {},
+                      "required": []
                     },
                     "isRequired": {
                       "type": "boolean",
@@ -4515,8 +4539,9 @@
                       "enum": ["string", "number", "object", "array", "boolean"]
                     },
                     "default": {
-                      "type": "string",
-                      "description": ""
+                      "type": "object",
+                      "properties": {},
+                      "required": []
                     },
                     "isRequired": {
                       "type": "boolean",
@@ -4826,7 +4851,55 @@
           "default": "Current nflow tenant's host"
         },
         "credential": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": ""
+            },
+            "password": {
+              "type": "string",
+              "description": ""
+            },
+            "additionalConfig": {
+              "type": "object",
+              "description": ""
+            },
+            "endpoint": {
+              "type": "string",
+              "description": ""
+            },
+            "clientId": {
+              "type": "string",
+              "description": ""
+            },
+            "clientSecret": {
+              "type": "string",
+              "description": ""
+            },
+            "accessTokenUrl": {
+              "type": "string",
+              "description": ""
+            },
+            "authUrl": {
+              "type": "string",
+              "description": ""
+            },
+            "scope": {
+              "type": "string",
+              "description": ""
+            },
+            "authQueryParameters": {
+              "type": "string",
+              "description": ""
+            },
+            "grantType": {
+              "type": "string",
+              "description": "",
+              "enum": ["pkce", "authorizationCode", "clientCredentials"]
+            }
+          },
+          "required": ["endpoint", "clientId", "clientSecret", "accessTokenUrl", "grantType"],
           "description": ""
         },
         "name": {
@@ -4937,7 +5010,55 @@
           "default": "Current nflow tenant's host"
         },
         "credential": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": ""
+            },
+            "password": {
+              "type": "string",
+              "description": ""
+            },
+            "additionalConfig": {
+              "type": "object",
+              "description": ""
+            },
+            "endpoint": {
+              "type": "string",
+              "description": ""
+            },
+            "clientId": {
+              "type": "string",
+              "description": ""
+            },
+            "clientSecret": {
+              "type": "string",
+              "description": ""
+            },
+            "accessTokenUrl": {
+              "type": "string",
+              "description": ""
+            },
+            "authUrl": {
+              "type": "string",
+              "description": ""
+            },
+            "scope": {
+              "type": "string",
+              "description": ""
+            },
+            "authQueryParameters": {
+              "type": "string",
+              "description": ""
+            },
+            "grantType": {
+              "type": "string",
+              "description": "",
+              "enum": ["pkce", "authorizationCode", "clientCredentials"]
+            }
+          },
+          "required": ["endpoint", "clientId", "clientSecret", "accessTokenUrl", "grantType"],
           "description": ""
         },
         "displayName": {
@@ -5638,7 +5759,48 @@
           ]
         },
         "attributes": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "defaultValue": {
+              "type": "object",
+              "properties": {},
+              "required": []
+            },
+            "pickListName": {
+              "type": "string",
+              "description": ""
+            },
+            "isMulti": {
+              "type": "boolean",
+              "description": ""
+            },
+            "recordObjectName": {
+              "type": "string",
+              "description": ""
+            },
+            "itemType": {
+              "type": "string",
+              "description": "",
+              "enum": [
+                "boolean",
+                "date",
+                "date-time",
+                "float",
+                "integer",
+                "json",
+                "record",
+                "string",
+                "time",
+                "media-url",
+                "null"
+              ]
+            },
+            "recordEventName": {
+              "type": "string",
+              "description": ""
+            }
+          },
+          "required": ["pickListName", "recordObjectName", "itemType", "recordEventName"],
           "description": ""
         },
         "isForInput": {
@@ -5727,7 +5889,48 @@
           ]
         },
         "attributes": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "defaultValue": {
+              "type": "object",
+              "properties": {},
+              "required": []
+            },
+            "pickListName": {
+              "type": "string",
+              "description": ""
+            },
+            "isMulti": {
+              "type": "boolean",
+              "description": ""
+            },
+            "recordObjectName": {
+              "type": "string",
+              "description": ""
+            },
+            "itemType": {
+              "type": "string",
+              "description": "",
+              "enum": [
+                "boolean",
+                "date",
+                "date-time",
+                "float",
+                "integer",
+                "json",
+                "record",
+                "string",
+                "time",
+                "media-url",
+                "null"
+              ]
+            },
+            "recordEventName": {
+              "type": "string",
+              "description": ""
+            }
+          },
+          "required": ["pickListName", "recordObjectName", "itemType", "recordEventName"],
           "description": ""
         },
         "isForInput": {
@@ -5927,9 +6130,76 @@
         "version": {
           "type": "string",
           "description": ""
+        },
+        "attributes": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "description": ""
+            },
+            "modelName": {
+              "type": "string",
+              "description": ""
+            },
+            "modelParameters": {
+              "type": "object",
+              "description": ""
+            },
+            "credentialName": {
+              "type": "string",
+              "description": ""
+            },
+            "responseType": {
+              "type": "string",
+              "description": ""
+            },
+            "instructions": {
+              "type": "string",
+              "description": "System context for the model"
+            }
+          },
+          "required": [
+            "provider",
+            "modelName",
+            "modelParameters",
+            "credentialName",
+            "responseType"
+          ],
+          "description": ""
+        },
+        "type": {
+          "type": "string",
+          "description": "",
+          "enum": ["ai-model"],
+          "default": "ai-model"
+        },
+        "name": {
+          "type": "string",
+          "description": ""
+        },
+        "displayName": {
+          "type": "string",
+          "description": ""
+        },
+        "description": {
+          "type": "string",
+          "description": ""
+        },
+        "nodeAttributes": {
+          "type": "object",
+          "description": ""
         }
       },
-      "required": ["flowName", "version"]
+      "required": [
+        "flowName",
+        "version",
+        "attributes",
+        "type",
+        "name",
+        "displayName",
+        "nodeAttributes"
+      ]
     }
   },
   {
@@ -6023,9 +6293,64 @@
         "flowItemName": {
           "type": "string",
           "description": ""
+        },
+        "attributes": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "description": ""
+            },
+            "modelName": {
+              "type": "string",
+              "description": ""
+            },
+            "modelParameters": {
+              "type": "object",
+              "description": ""
+            },
+            "credentialName": {
+              "type": "string",
+              "description": ""
+            },
+            "responseType": {
+              "type": "string",
+              "description": ""
+            },
+            "instructions": {
+              "type": "string",
+              "description": "System context for the model"
+            }
+          },
+          "required": [
+            "provider",
+            "modelName",
+            "modelParameters",
+            "credentialName",
+            "responseType"
+          ],
+          "description": ""
+        },
+        "type": {
+          "type": "string",
+          "description": "",
+          "enum": ["ai-model"],
+          "default": "ai-model"
+        },
+        "displayName": {
+          "type": "string",
+          "description": ""
+        },
+        "nodeAttributes": {
+          "type": "object",
+          "description": ""
+        },
+        "description": {
+          "type": "string",
+          "description": ""
         }
       },
-      "required": ["flowName", "version", "flowItemName"]
+      "required": ["flowName", "version", "flowItemName", "type"]
     }
   },
   {
@@ -6648,9 +6973,47 @@
         "version": {
           "type": "string",
           "description": ""
+        },
+        "type": {
+          "type": "string",
+          "description": "",
+          "enum": ["ai-chat"],
+          "default": "ai-chat"
+        },
+        "attributes": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "description": ""
+        },
+        "displayName": {
+          "type": "string",
+          "description": ""
+        },
+        "triggerType": {
+          "type": "string",
+          "description": "",
+          "enum": ["public", "private", "by-profile"]
+        },
+        "profileNames": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": ""
+          },
+          "description": ""
+        },
+        "description": {
+          "type": "string",
+          "description": ""
+        },
+        "runAsContext": {
+          "type": "string",
+          "description": "",
+          "enum": ["system", "dynamic"]
         }
       },
-      "required": ["flowName", "version"]
+      "required": ["flowName", "version", "type"]
     }
   },
   {
@@ -7733,7 +8096,32 @@
           "description": "HMAC SHA-256 of the body content in base64 format, use JSON.stringify to convert body to string, add \"SHA-256=\" at the beginning"
         },
         "attributes": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "notImplement": {
+              "type": "boolean",
+              "description": ""
+            },
+            "shareFromRoleName": {
+              "type": "string",
+              "description": ""
+            },
+            "shareFromType": {
+              "type": "string",
+              "description": "",
+              "enum": ["role", "role-and-subordinates"]
+            },
+            "shareToRoleName": {
+              "type": "string",
+              "description": ""
+            },
+            "shareToType": {
+              "type": "string",
+              "description": "",
+              "enum": ["role", "role-and-subordinates"]
+            }
+          },
+          "required": ["shareFromRoleName", "shareFromType", "shareToRoleName", "shareToType"],
           "description": ""
         },
         "name": {
@@ -7843,7 +8231,32 @@
           "description": ""
         },
         "attributes": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "notImplement": {
+              "type": "boolean",
+              "description": ""
+            },
+            "shareFromRoleName": {
+              "type": "string",
+              "description": ""
+            },
+            "shareFromType": {
+              "type": "string",
+              "description": "",
+              "enum": ["role", "role-and-subordinates"]
+            },
+            "shareToRoleName": {
+              "type": "string",
+              "description": ""
+            },
+            "shareToType": {
+              "type": "string",
+              "description": "",
+              "enum": ["role", "role-and-subordinates"]
+            }
+          },
+          "required": ["shareFromRoleName", "shareFromType", "shareToRoleName", "shareToType"],
           "description": ""
         },
         "type": {
@@ -9124,16 +9537,18 @@
         "groupBys": {
           "type": "array",
           "items": {
-            "type": "string",
-            "description": ""
+            "type": "object",
+            "properties": {},
+            "required": []
           },
           "description": ""
         },
         "excludes": {
           "type": "array",
           "items": {
-            "type": "string",
-            "description": ""
+            "type": "object",
+            "properties": {},
+            "required": []
           },
           "description": ""
         },
@@ -9406,7 +9821,224 @@
           "description": "Object name"
         },
         "data": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "typeName": {
+              "type": "string",
+              "description": "",
+              "enum": [
+                "numeric",
+                "text",
+                "dateTime",
+                "boolean",
+                "pickList",
+                "json",
+                "generated",
+                "currency",
+                "externalRelation",
+                "relation",
+                "objectReference",
+                "flowReference",
+                "rollup",
+                "file"
+              ]
+            },
+            "isRequired": {
+              "type": "boolean",
+              "description": "",
+              "default": false
+            },
+            "isExternalId": {
+              "type": "boolean",
+              "description": "",
+              "default": false
+            },
+            "value": {
+              "type": "string",
+              "description": "value can be: \n\n    For relation/externalRelation: targetObjectName\n    For indirectRelation: targetObjectName.externalFieldName\n    For rollup: ChildObjectName.relationFieldName.rollupFieldName\n  "
+            },
+            "pickListName": {
+              "type": "string",
+              "description": ""
+            },
+            "name": {
+              "type": "string",
+              "description": ""
+            },
+            "displayName": {
+              "type": "string",
+              "description": ""
+            },
+            "attributes": {
+              "type": "object",
+              "properties": {
+                "filters": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "fieldName": {
+                          "type": "string",
+                          "description": ""
+                        },
+                        "operator": {
+                          "type": "string",
+                          "description": "",
+                          "enum": [
+                            "===",
+                            "!==",
+                            "isIn",
+                            "isNotIn",
+                            "notContains",
+                            "contains",
+                            "between",
+                            "<=",
+                            ">=",
+                            "<",
+                            ">",
+                            "isNull",
+                            "isNotNull"
+                          ]
+                        },
+                        "value": {
+                          "type": "string",
+                          "description": ""
+                        }
+                      },
+                      "required": ["fieldName", "operator"]
+                    }
+                  }
+                },
+                "defaultValue": {
+                  "type": "object",
+                  "properties": {},
+                  "required": []
+                },
+                "onDelete": {
+                  "type": "string",
+                  "description": "Use with relation field. 'SET_NULL' requires 'isRequired'=false",
+                  "enum": ["noAction", "setNull", "cascade"]
+                },
+                "sensitivity": {
+                  "type": "string",
+                  "description": "Currently applied for short text only. 'Partial' will only expose the last 4 characters. 'All' will hide everything & return '****'",
+                  "enum": ["none", "partial", "all"]
+                },
+                "pickListLvl": {
+                  "type": "number",
+                  "description": "Levels of picklist items, only applicable for single selection"
+                },
+                "subType": {
+                  "type": "string",
+                  "description": ""
+                },
+                "template": {
+                  "type": "string",
+                  "description": ""
+                },
+                "isUnique": {
+                  "type": "boolean",
+                  "description": ""
+                },
+                "isSearchable": {
+                  "type": "boolean",
+                  "description": ""
+                },
+                "isSortable": {
+                  "type": "boolean",
+                  "description": ""
+                },
+                "objectNames": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": ""
+                  }
+                },
+                "includeExtended": {
+                  "type": "boolean",
+                  "description": ""
+                },
+                "operation": {
+                  "type": "string",
+                  "description": "",
+                  "enum": ["sum", "count"]
+                },
+                "fileSizeLimit": {
+                  "type": "number",
+                  "description": ""
+                },
+                "fileTypes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "",
+                    "enum": [
+                      "application/pdf",
+                      "application/msword",
+                      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                      "application/vnd.ms-excel",
+                      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                      "application/vnd.ms-powerpoint",
+                      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                      "text/plain",
+                      "text/csv",
+                      "text/markdown",
+                      "image/jpeg",
+                      "image/png",
+                      "image/gif",
+                      "video/mp4",
+                      "audio/mpeg",
+                      "video/quicktime",
+                      "video/x-flv",
+                      "video/x-matroska",
+                      "audio/x-ms-wma",
+                      "audio/m4a",
+                      "video/x-m4v"
+                    ]
+                  }
+                },
+                "numberFormat": {
+                  "type": "object",
+                  "properties": {
+                    "precision": {
+                      "type": "number",
+                      "description": ""
+                    },
+                    "locale": {
+                      "type": "string",
+                      "description": ""
+                    },
+                    "separator": {
+                      "type": "string",
+                      "description": ""
+                    },
+                    "useShorthandNotation": {
+                      "type": "boolean",
+                      "description": ""
+                    }
+                  },
+                  "required": []
+                },
+                "formatter": {
+                  "type": "object",
+                  "description": ""
+                }
+              },
+              "required": []
+            },
+            "pickListId": {
+              "type": "string",
+              "description": ""
+            },
+            "description": {
+              "type": "string",
+              "description": ""
+            }
+          },
+          "required": ["typeName", "name", "displayName", "attributes"],
           "description": ""
         },
         "updateLayouts": {
@@ -9637,7 +10269,49 @@
           "description": "HMAC SHA-256 of the body content in base64 format, use JSON.stringify to convert body to string, add \"SHA-256=\" at the beginning"
         },
         "data": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "displayName": {
+              "type": "string",
+              "description": ""
+            },
+            "recordName": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string",
+                  "description": ""
+                },
+                "type": {
+                  "type": "string",
+                  "description": "",
+                  "enum": ["text"]
+                }
+              },
+              "required": []
+            },
+            "owd": {
+              "type": "string",
+              "description": "",
+              "enum": ["PublicRead", "PublicReadWrite", "Private"]
+            },
+            "tagNames": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "description": ""
+              }
+            },
+            "name": {
+              "type": "string",
+              "description": ""
+            },
+            "description": {
+              "type": "string",
+              "description": ""
+            }
+          },
+          "required": ["displayName", "recordName", "name"],
           "description": ""
         },
         "action": {
@@ -9902,7 +10576,75 @@
           "description": "Object name"
         },
         "data": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "displayName": {
+              "type": "string",
+              "description": ""
+            },
+            "script": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "fieldName": {
+                          "type": "string",
+                          "description": ""
+                        },
+                        "operator": {
+                          "type": "string",
+                          "description": "",
+                          "enum": [
+                            "===",
+                            "!==",
+                            "isDefined",
+                            "isEmpty",
+                            "isNotEmpty",
+                            "isIn",
+                            "isNotIn",
+                            "isNegative",
+                            "isPositive",
+                            "<=",
+                            ">=",
+                            "<",
+                            ">",
+                            "minDate",
+                            "maxDate",
+                            "contains",
+                            "notContains"
+                          ]
+                        },
+                        "value": {
+                          "type": "string",
+                          "description": ""
+                        }
+                      },
+                      "required": ["fieldName", "operator"]
+                    }
+                  }
+                },
+                "required": ["rules"]
+              }
+            },
+            "errorMessage": {
+              "type": "string",
+              "description": ""
+            },
+            "name": {
+              "type": "string",
+              "description": ""
+            },
+            "description": {
+              "type": "string",
+              "description": ""
+            }
+          },
+          "required": ["displayName", "script", "errorMessage", "name"],
           "description": ""
         },
         "action": {
@@ -10072,7 +10814,49 @@
           "description": "HMAC SHA-256 of the body content in base64 format, use JSON.stringify to convert body to string, add \"SHA-256=\" at the beginning"
         },
         "data": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "displayName": {
+              "type": "string",
+              "description": ""
+            },
+            "recordName": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string",
+                  "description": ""
+                },
+                "type": {
+                  "type": "string",
+                  "description": "",
+                  "enum": ["text"]
+                }
+              },
+              "required": []
+            },
+            "owd": {
+              "type": "string",
+              "description": "",
+              "enum": ["PublicRead", "PublicReadWrite", "Private"]
+            },
+            "tagNames": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "description": ""
+              }
+            },
+            "name": {
+              "type": "string",
+              "description": ""
+            },
+            "description": {
+              "type": "string",
+              "description": ""
+            }
+          },
+          "required": ["displayName", "recordName", "name"],
           "description": ""
         },
         "action": {
@@ -10253,7 +11037,224 @@
           "description": "Object name"
         },
         "data": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "typeName": {
+              "type": "string",
+              "description": "",
+              "enum": [
+                "numeric",
+                "text",
+                "dateTime",
+                "boolean",
+                "pickList",
+                "json",
+                "generated",
+                "currency",
+                "externalRelation",
+                "relation",
+                "objectReference",
+                "flowReference",
+                "rollup",
+                "file"
+              ]
+            },
+            "isRequired": {
+              "type": "boolean",
+              "description": "",
+              "default": false
+            },
+            "isExternalId": {
+              "type": "boolean",
+              "description": "",
+              "default": false
+            },
+            "value": {
+              "type": "string",
+              "description": "value can be: \n\n    For relation/externalRelation: targetObjectName\n    For indirectRelation: targetObjectName.externalFieldName\n    For rollup: ChildObjectName.relationFieldName.rollupFieldName\n  "
+            },
+            "pickListName": {
+              "type": "string",
+              "description": ""
+            },
+            "name": {
+              "type": "string",
+              "description": ""
+            },
+            "displayName": {
+              "type": "string",
+              "description": ""
+            },
+            "attributes": {
+              "type": "object",
+              "properties": {
+                "filters": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "fieldName": {
+                          "type": "string",
+                          "description": ""
+                        },
+                        "operator": {
+                          "type": "string",
+                          "description": "",
+                          "enum": [
+                            "===",
+                            "!==",
+                            "isIn",
+                            "isNotIn",
+                            "notContains",
+                            "contains",
+                            "between",
+                            "<=",
+                            ">=",
+                            "<",
+                            ">",
+                            "isNull",
+                            "isNotNull"
+                          ]
+                        },
+                        "value": {
+                          "type": "string",
+                          "description": ""
+                        }
+                      },
+                      "required": ["fieldName", "operator"]
+                    }
+                  }
+                },
+                "defaultValue": {
+                  "type": "object",
+                  "properties": {},
+                  "required": []
+                },
+                "onDelete": {
+                  "type": "string",
+                  "description": "Use with relation field. 'SET_NULL' requires 'isRequired'=false",
+                  "enum": ["noAction", "setNull", "cascade"]
+                },
+                "sensitivity": {
+                  "type": "string",
+                  "description": "Currently applied for short text only. 'Partial' will only expose the last 4 characters. 'All' will hide everything & return '****'",
+                  "enum": ["none", "partial", "all"]
+                },
+                "pickListLvl": {
+                  "type": "number",
+                  "description": "Levels of picklist items, only applicable for single selection"
+                },
+                "subType": {
+                  "type": "string",
+                  "description": ""
+                },
+                "template": {
+                  "type": "string",
+                  "description": ""
+                },
+                "isUnique": {
+                  "type": "boolean",
+                  "description": ""
+                },
+                "isSearchable": {
+                  "type": "boolean",
+                  "description": ""
+                },
+                "isSortable": {
+                  "type": "boolean",
+                  "description": ""
+                },
+                "objectNames": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": ""
+                  }
+                },
+                "includeExtended": {
+                  "type": "boolean",
+                  "description": ""
+                },
+                "operation": {
+                  "type": "string",
+                  "description": "",
+                  "enum": ["sum", "count"]
+                },
+                "fileSizeLimit": {
+                  "type": "number",
+                  "description": ""
+                },
+                "fileTypes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "",
+                    "enum": [
+                      "application/pdf",
+                      "application/msword",
+                      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                      "application/vnd.ms-excel",
+                      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                      "application/vnd.ms-powerpoint",
+                      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                      "text/plain",
+                      "text/csv",
+                      "text/markdown",
+                      "image/jpeg",
+                      "image/png",
+                      "image/gif",
+                      "video/mp4",
+                      "audio/mpeg",
+                      "video/quicktime",
+                      "video/x-flv",
+                      "video/x-matroska",
+                      "audio/x-ms-wma",
+                      "audio/m4a",
+                      "video/x-m4v"
+                    ]
+                  }
+                },
+                "numberFormat": {
+                  "type": "object",
+                  "properties": {
+                    "precision": {
+                      "type": "number",
+                      "description": ""
+                    },
+                    "locale": {
+                      "type": "string",
+                      "description": ""
+                    },
+                    "separator": {
+                      "type": "string",
+                      "description": ""
+                    },
+                    "useShorthandNotation": {
+                      "type": "boolean",
+                      "description": ""
+                    }
+                  },
+                  "required": []
+                },
+                "formatter": {
+                  "type": "object",
+                  "description": ""
+                }
+              },
+              "required": []
+            },
+            "pickListId": {
+              "type": "string",
+              "description": ""
+            },
+            "description": {
+              "type": "string",
+              "description": ""
+            }
+          },
+          "required": ["typeName", "name", "displayName", "attributes"],
           "description": ""
         },
         "action": {
@@ -10568,7 +11569,49 @@
           "description": "HMAC SHA-256 of the body content in base64 format, use JSON.stringify to convert body to string, add \"SHA-256=\" at the beginning"
         },
         "data": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "displayName": {
+              "type": "string",
+              "description": ""
+            },
+            "recordName": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string",
+                  "description": ""
+                },
+                "type": {
+                  "type": "string",
+                  "description": "",
+                  "enum": ["text"]
+                }
+              },
+              "required": []
+            },
+            "owd": {
+              "type": "string",
+              "description": "",
+              "enum": ["PublicRead", "PublicReadWrite", "Private"]
+            },
+            "tagNames": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "description": ""
+              }
+            },
+            "name": {
+              "type": "string",
+              "description": ""
+            },
+            "description": {
+              "type": "string",
+              "description": ""
+            }
+          },
+          "required": ["displayName", "recordName", "name"],
           "description": ""
         },
         "action": {
@@ -10749,7 +11792,141 @@
           "description": "Object name"
         },
         "data": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "isRequired": {
+              "type": "boolean",
+              "description": "",
+              "default": false
+            },
+            "isExternalId": {
+              "type": "boolean",
+              "description": "",
+              "default": false
+            },
+            "value": {
+              "type": "string",
+              "description": "value can be: \n\n    For relation/externalRelation: targetObjectName\n    For indirectRelation: targetObjectName.externalFieldName\n    For rollup: ChildObjectName.relationFieldName.rollupFieldName\n  "
+            },
+            "pickListName": {
+              "type": "string",
+              "description": ""
+            },
+            "typeName": {
+              "type": "string",
+              "description": "",
+              "enum": [
+                "numeric",
+                "text",
+                "dateTime",
+                "boolean",
+                "pickList",
+                "json",
+                "currency",
+                "externalRelation",
+                "indirectRelation",
+                "relation",
+                "file"
+              ]
+            },
+            "attributes": {
+              "type": "object",
+              "properties": {
+                "filters": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "fieldName": {
+                          "type": "string",
+                          "description": ""
+                        },
+                        "operator": {
+                          "type": "string",
+                          "description": "",
+                          "enum": [
+                            "===",
+                            "!==",
+                            "isIn",
+                            "isNotIn",
+                            "notContains",
+                            "contains",
+                            "between",
+                            "<=",
+                            ">=",
+                            "<",
+                            ">",
+                            "isNull",
+                            "isNotNull"
+                          ]
+                        },
+                        "value": {
+                          "type": "string",
+                          "description": ""
+                        }
+                      },
+                      "required": ["fieldName", "operator"]
+                    }
+                  }
+                },
+                "sensitivity": {
+                  "type": "string",
+                  "description": "Currently applied for short text only. 'Partial' will only expose the last 4 characters. 'All' will hide everything & return '****'",
+                  "enum": ["none", "partial", "all"]
+                },
+                "subType": {
+                  "type": "string",
+                  "description": ""
+                },
+                "numberFormat": {
+                  "type": "object",
+                  "properties": {
+                    "precision": {
+                      "type": "number",
+                      "description": ""
+                    },
+                    "locale": {
+                      "type": "string",
+                      "description": ""
+                    },
+                    "separator": {
+                      "type": "string",
+                      "description": ""
+                    },
+                    "useShorthandNotation": {
+                      "type": "boolean",
+                      "description": ""
+                    }
+                  },
+                  "required": []
+                },
+                "formatter": {
+                  "type": "object",
+                  "description": ""
+                }
+              },
+              "required": []
+            },
+            "name": {
+              "type": "string",
+              "description": ""
+            },
+            "displayName": {
+              "type": "string",
+              "description": ""
+            },
+            "description": {
+              "type": "string",
+              "description": ""
+            },
+            "pickListId": {
+              "type": "string",
+              "description": ""
+            }
+          },
+          "required": ["typeName", "attributes", "name", "displayName"],
           "description": ""
         },
         "action": {
@@ -11238,7 +12415,22 @@
           "description": "Object name"
         },
         "data": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": ""
+            },
+            "displayName": {
+              "type": "string",
+              "description": ""
+            },
+            "name": {
+              "type": "string",
+              "description": ""
+            }
+          },
+          "required": ["displayName", "name"],
           "description": ""
         },
         "action": {
@@ -11339,7 +12531,224 @@
           "description": ""
         },
         "data": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "typeName": {
+              "type": "string",
+              "description": "",
+              "enum": [
+                "numeric",
+                "text",
+                "dateTime",
+                "boolean",
+                "pickList",
+                "json",
+                "generated",
+                "currency",
+                "externalRelation",
+                "relation",
+                "objectReference",
+                "flowReference",
+                "rollup",
+                "file"
+              ]
+            },
+            "isRequired": {
+              "type": "boolean",
+              "description": "",
+              "default": false
+            },
+            "isExternalId": {
+              "type": "boolean",
+              "description": "",
+              "default": false
+            },
+            "value": {
+              "type": "string",
+              "description": "value can be: \n\n    For relation/externalRelation: targetObjectName\n    For indirectRelation: targetObjectName.externalFieldName\n    For rollup: ChildObjectName.relationFieldName.rollupFieldName\n  "
+            },
+            "pickListName": {
+              "type": "string",
+              "description": ""
+            },
+            "name": {
+              "type": "string",
+              "description": ""
+            },
+            "displayName": {
+              "type": "string",
+              "description": ""
+            },
+            "attributes": {
+              "type": "object",
+              "properties": {
+                "filters": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "fieldName": {
+                          "type": "string",
+                          "description": ""
+                        },
+                        "operator": {
+                          "type": "string",
+                          "description": "",
+                          "enum": [
+                            "===",
+                            "!==",
+                            "isIn",
+                            "isNotIn",
+                            "notContains",
+                            "contains",
+                            "between",
+                            "<=",
+                            ">=",
+                            "<",
+                            ">",
+                            "isNull",
+                            "isNotNull"
+                          ]
+                        },
+                        "value": {
+                          "type": "string",
+                          "description": ""
+                        }
+                      },
+                      "required": ["fieldName", "operator"]
+                    }
+                  }
+                },
+                "defaultValue": {
+                  "type": "object",
+                  "properties": {},
+                  "required": []
+                },
+                "onDelete": {
+                  "type": "string",
+                  "description": "Use with relation field. 'SET_NULL' requires 'isRequired'=false",
+                  "enum": ["noAction", "setNull", "cascade"]
+                },
+                "sensitivity": {
+                  "type": "string",
+                  "description": "Currently applied for short text only. 'Partial' will only expose the last 4 characters. 'All' will hide everything & return '****'",
+                  "enum": ["none", "partial", "all"]
+                },
+                "pickListLvl": {
+                  "type": "number",
+                  "description": "Levels of picklist items, only applicable for single selection"
+                },
+                "subType": {
+                  "type": "string",
+                  "description": ""
+                },
+                "template": {
+                  "type": "string",
+                  "description": ""
+                },
+                "isUnique": {
+                  "type": "boolean",
+                  "description": ""
+                },
+                "isSearchable": {
+                  "type": "boolean",
+                  "description": ""
+                },
+                "isSortable": {
+                  "type": "boolean",
+                  "description": ""
+                },
+                "objectNames": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": ""
+                  }
+                },
+                "includeExtended": {
+                  "type": "boolean",
+                  "description": ""
+                },
+                "operation": {
+                  "type": "string",
+                  "description": "",
+                  "enum": ["sum", "count"]
+                },
+                "fileSizeLimit": {
+                  "type": "number",
+                  "description": ""
+                },
+                "fileTypes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "description": "",
+                    "enum": [
+                      "application/pdf",
+                      "application/msword",
+                      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                      "application/vnd.ms-excel",
+                      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                      "application/vnd.ms-powerpoint",
+                      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                      "text/plain",
+                      "text/csv",
+                      "text/markdown",
+                      "image/jpeg",
+                      "image/png",
+                      "image/gif",
+                      "video/mp4",
+                      "audio/mpeg",
+                      "video/quicktime",
+                      "video/x-flv",
+                      "video/x-matroska",
+                      "audio/x-ms-wma",
+                      "audio/m4a",
+                      "video/x-m4v"
+                    ]
+                  }
+                },
+                "numberFormat": {
+                  "type": "object",
+                  "properties": {
+                    "precision": {
+                      "type": "number",
+                      "description": ""
+                    },
+                    "locale": {
+                      "type": "string",
+                      "description": ""
+                    },
+                    "separator": {
+                      "type": "string",
+                      "description": ""
+                    },
+                    "useShorthandNotation": {
+                      "type": "boolean",
+                      "description": ""
+                    }
+                  },
+                  "required": []
+                },
+                "formatter": {
+                  "type": "object",
+                  "description": ""
+                }
+              },
+              "required": []
+            },
+            "pickListId": {
+              "type": "string",
+              "description": ""
+            },
+            "description": {
+              "type": "string",
+              "description": ""
+            }
+          },
+          "required": ["typeName", "name", "displayName", "attributes"],
           "description": ""
         },
         "updateLayouts": {
@@ -12507,7 +13916,54 @@
           "description": "HMAC SHA-256 of the body content in base64 format, use JSON.stringify to convert body to string, add \"SHA-256=\" at the beginning"
         },
         "config": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": ""
+            },
+            "body": {
+              "type": "string",
+              "description": ""
+            },
+            "url": {
+              "type": "string",
+              "description": ""
+            },
+            "from": {
+              "type": "string",
+              "description": ""
+            },
+            "to": {
+              "type": "string",
+              "description": ""
+            },
+            "cc": {
+              "type": "string",
+              "description": ""
+            },
+            "bcc": {
+              "type": "string",
+              "description": ""
+            },
+            "subject": {
+              "type": "string",
+              "description": ""
+            },
+            "html": {
+              "type": "string",
+              "description": ""
+            },
+            "text": {
+              "type": "string",
+              "description": ""
+            },
+            "provider": {
+              "type": "string",
+              "description": ""
+            }
+          },
+          "required": ["from", "subject", "provider"],
           "description": ""
         },
         "name": {
@@ -12568,7 +14024,54 @@
           "description": ""
         },
         "config": {
-          "type": "string",
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": ""
+            },
+            "body": {
+              "type": "string",
+              "description": ""
+            },
+            "url": {
+              "type": "string",
+              "description": ""
+            },
+            "from": {
+              "type": "string",
+              "description": ""
+            },
+            "to": {
+              "type": "string",
+              "description": ""
+            },
+            "cc": {
+              "type": "string",
+              "description": ""
+            },
+            "bcc": {
+              "type": "string",
+              "description": ""
+            },
+            "subject": {
+              "type": "string",
+              "description": ""
+            },
+            "html": {
+              "type": "string",
+              "description": ""
+            },
+            "text": {
+              "type": "string",
+              "description": ""
+            },
+            "provider": {
+              "type": "string",
+              "description": ""
+            }
+          },
+          "required": ["from", "subject", "provider"],
           "description": ""
         },
         "displayName": {

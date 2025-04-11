@@ -42,9 +42,15 @@ export interface ObjectDefinition {
   };
 }
 
+export interface ObjectParams {
+  name: string;
+  description: string;
+  requiredFields: string[];
+}
+
 export interface GenerateObjectsParams {
   action: 'create' | 'update' | 'remove' | 'recover';
-  objects: string[];
+  objects: ObjectParams[];
 }
 
 export interface ObjectPayload {

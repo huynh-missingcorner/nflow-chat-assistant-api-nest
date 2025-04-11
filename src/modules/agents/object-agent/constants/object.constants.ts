@@ -58,6 +58,30 @@ Requirements:
 5. Important: Do not include any fields like createdAt, updatedAt, guid, etc.
 
 Objects to design:`,
+
+  OBJECT_CREATION_PROMPT: `Generate tool calls to create the following objects in the Nflow platform. For each object, generate an ObjectController_changeObject call with appropriate parameters.
+
+Requirements:
+1. Set proper displayName and description
+2. Configure recordName settings
+3. Set appropriate access level (owd)
+4. Include relevant tags if needed
+5. Action should be: {action}
+
+Objects to create:
+{schemas}`,
+
+  FIELD_CREATION_PROMPT: `Generate tool calls to create fields for the following object schema in the Nflow platform. For each field, generate a FieldController_changeField call with appropriate parameters.
+
+Requirements:
+1. Map schema field types to platform field types correctly
+2. Set proper displayName and description
+3. Configure field attributes based on schema
+4. Maintain field order from schema
+5. Action should be: {action}
+
+Object Schema:
+{schema}`,
 } as const;
 
 export const ObjectDefaults = {

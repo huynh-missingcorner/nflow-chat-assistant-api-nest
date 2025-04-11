@@ -64,17 +64,13 @@ export const tools: ChatCompletionTool[] = [
                         objects: {
                           type: 'array',
                           items: {
-                            oneOf: [
-                              { type: 'string' },
-                              {
-                                type: 'object',
-                                properties: {
-                                  name: { type: 'string' },
-                                  description: { type: 'string' },
-                                },
-                                required: ['name'],
-                              },
-                            ],
+                            type: 'object',
+                            properties: {
+                              name: { type: 'string' },
+                              description: { type: 'string' },
+                              requiredFields: { type: 'array', items: { type: 'string' } },
+                            },
+                            required: ['name', 'description', 'requiredFields'],
                           },
                         },
                       },

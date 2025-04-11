@@ -7,6 +7,7 @@ import {
   GenerateObjectsResponse,
   ObjectSchema,
   ObjectToolCall,
+  ToolCallPayload,
 } from './types/object.types';
 import { ObjectErrors, ObjectPrompts } from './constants/object.constants';
 import { createNewFieldTool, createNewObjectTool, schemaDesignerTool } from './tools/object-tools';
@@ -106,56 +107,130 @@ export class ObjectService {
     action: string,
     schemas: ObjectSchema[],
   ): Promise<ObjectToolCall[]> {
+    try {
+      // Step 1: Generate object creation tool calls
+      const objectToolCalls = await this.generateObjectCreationCalls(action, schemas);
+
+      // Step 2: Generate field creation tool calls for each object
+      const fieldToolCalls = await this.generateFieldCreationCalls(action, schemas);
+
+      // Combine and order all tool calls
+      const allToolCalls: ToolCallPayload[] = [...objectToolCalls, ...fieldToolCalls];
+
+      return allToolCalls.map((toolCall, index) => ({
+        order: index + 1,
+        toolCall,
+      }));
+    } catch (error) {
+      this.logger.error('Failed to generate tool calls', error);
+      throw new Error(ObjectErrors.TOOL_CALLS_GENERATION_FAILED);
+    }
+  }
+
+  /**
+   * Generate tool calls for creating objects
+   */
+  private async generateObjectCreationCalls(
+    action: string,
+    schemas: ObjectSchema[],
+  ): Promise<ToolCallPayload[]> {
     const combinedContext = await this.loadAgentContexts();
+    const prompt = (ObjectPrompts.OBJECT_CREATION_PROMPT as string)
+      .replace('{action}', action)
+      .replace('{schemas}', JSON.stringify(schemas, null, 2));
 
-    const toolCallPrompt = `As a Nflow platform expert, generate the necessary tool calls to implement these database schemas: ${JSON.stringify(schemas, null, 2)}
-
-Requirements:
-1. For each object:
-   - First generate ObjectController_changeObject call to create the object
-   - Then generate FieldController_changeField calls for each field
-2. Ensure proper ordering of operations
-3. Use the correct field types and attributes
-4. Set the action as: ${action}
-
-Generate the exact tool calls needed to implement these schemas in the Nflow platform.`;
-
-    const toolCallMessages = [
+    const messages = [
       {
         role: 'system' as const,
         content: combinedContext,
       },
       {
         role: 'user' as const,
-        content: toolCallPrompt,
+        content: prompt,
       },
     ];
 
     const options = {
-      tools: [createNewObjectTool, createNewFieldTool],
-      tool_choice: 'auto' as const,
-      temperature: 0.5, // Lower temperature for more precise tool calls
-      max_tokens: 5000,
+      tools: [createNewObjectTool],
+      tool_choice: {
+        type: 'function',
+        function: { name: 'ObjectController_changeObject' },
+      } as const,
+      temperature: 0.5,
+      max_tokens: 4000,
     };
 
-    const completion = await this.openAIService.generateFunctionCompletion(
-      toolCallMessages,
-      options,
-    );
+    const completion = await this.openAIService.generateFunctionCompletion(messages, options);
     if (!completion.toolCalls?.length) {
       throw new Error(ObjectErrors.TOOL_CALLS_GENERATION_FAILED);
     }
 
-    return completion.toolCalls.map((toolCall, index) => {
-      const functionCall = toolCall.function;
-      return {
-        order: index + 1,
-        toolCall: {
-          functionName: functionCall.name,
-          arguments: JSON.parse(functionCall.arguments) as Record<string, unknown>,
-        },
-      };
-    });
+    return completion.toolCalls.map((toolCall) => ({
+      functionName: toolCall.function.name,
+      arguments: JSON.parse(toolCall.function.arguments) as Record<string, unknown>,
+    }));
+  }
+
+  /**
+   * Generate tool calls for creating fields for each object
+   */
+  private async generateFieldCreationCalls(
+    action: string,
+    schemas: ObjectSchema[],
+  ): Promise<ToolCallPayload[]> {
+    const combinedContext = await this.loadAgentContexts();
+    const allFieldToolCalls: ToolCallPayload[] = [];
+
+    // Process each schema
+    for (const schema of schemas) {
+      // Process each field in the schema
+      for (const field of schema.fields) {
+        const messages = [
+          {
+            role: 'system' as const,
+            content: combinedContext,
+          },
+          {
+            role: 'user' as const,
+            content: `Create a field with these specifications for object "${schema.name}":
+${JSON.stringify(field, null, 2)}
+
+Requirements:
+1. Set objName to "${schema.name}"
+2. Set action to "${action}"
+3. Map the field type correctly
+4. Include all field attributes`,
+          },
+        ];
+
+        const options = {
+          tools: [createNewFieldTool],
+          tool_choice: {
+            type: 'function',
+            function: { name: 'FieldController_changeField' },
+          } as const,
+          temperature: 0.5,
+          max_tokens: 4000,
+        };
+
+        const completion = await this.openAIService.generateFunctionCompletion(messages, options);
+        if (!completion.toolCalls?.length) {
+          this.logger.warn(
+            `No field tool call generated for field ${field.name} in object ${schema.name}`,
+          );
+          continue;
+        }
+
+        const fieldToolCalls = completion.toolCalls.map((toolCall) => ({
+          functionName: toolCall.function.name,
+          arguments: JSON.parse(toolCall.function.arguments) as Record<string, unknown>,
+        }));
+
+        allFieldToolCalls.push(...fieldToolCalls);
+      }
+    }
+
+    return allFieldToolCalls;
   }
 
   private async loadAgentContexts(): Promise<string> {

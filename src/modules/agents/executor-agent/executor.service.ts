@@ -124,7 +124,12 @@ export class ExecutorService {
         await this.delay(this.defaultOptions.retryDelay);
         return this.executeToolCall(call, callTime + 1);
       }
-      throw error;
+
+      // Log final failure and return null instead of throwing
+      this.logger.error(
+        `Tool call ${call.toolCall.functionName} failed after ${this.defaultOptions.retryAttempts} retries`,
+      );
+      return null;
     }
   }
 

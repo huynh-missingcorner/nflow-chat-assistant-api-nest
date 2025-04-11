@@ -91,6 +91,7 @@ export interface ChangeFieldRequest {
       defaultValue?: Record<string, any>;
       onDelete?: 'noAction' | 'setNull' | 'cascade';
       sensitivity?: 'none' | 'partial' | 'all';
+      subType: string;
     };
     description?: string;
   };

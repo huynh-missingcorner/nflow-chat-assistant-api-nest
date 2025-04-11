@@ -6,9 +6,18 @@ import { ApplicationModule } from '../agents/application-agent/application.modul
 import { LayoutModule } from '../agents/layout-agent/layout.module';
 import { FlowModule } from '../agents/flow-agent/flow.module';
 import { ObjectModule } from '../agents/object-agent/object.module';
+import { ExecutorModule } from '../agents/executor-agent/executor.module';
 
 @Module({
-  imports: [OpenAIModule, IntentModule, ApplicationModule, ObjectModule, LayoutModule, FlowModule],
+  imports: [
+    OpenAIModule,
+    IntentModule,
+    ApplicationModule,
+    ObjectModule,
+    LayoutModule,
+    FlowModule,
+    ExecutorModule,
+  ],
   providers: [CoordinatorService, Logger],
   exports: [CoordinatorService],
 })

@@ -262,6 +262,7 @@ This document shows example inputs and expected JSON outputs for the Object Agen
 
 ## ✅ Notes
 
+- `name` should be slugified for system use and must be unique, add a random number before the name if needed. For example: transform `income` to `income123`
 - `recordName.label` is typically the primary identifier field (e.g. `"name"`, `"title"`, `"category"`)
 - `owd` (object-level sharing setting) should default to `"PublicRead"` unless otherwise stated.
 - Headers (`x-nc-*`) should be filled by the Execution Agent.

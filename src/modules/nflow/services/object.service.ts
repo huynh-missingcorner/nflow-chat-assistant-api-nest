@@ -25,8 +25,11 @@ export class NFlowObjectService {
   }
 
   async changeObject(data: ChangeObjectRequest) {
+    const { name, ...rest } = data;
+    console.log(name, rest);
+    rest.data.name = rest.data.name.toLocaleLowerCase();
     const response = await firstValueFrom(
-      this.httpService.post('/mo', data, { headers: this.headers }),
+      this.httpService.post(`${this.baseUrl}/mo`, rest, { headers: this.headers }),
     );
     return response.data;
   }
@@ -34,7 +37,9 @@ export class NFlowObjectService {
   async changeField(data: ChangeFieldRequest) {
     const { objName, ...rest } = data;
     const response = await firstValueFrom(
-      this.httpService.post(`/mo/${objName}/fields`, rest, { headers: this.headers }),
+      this.httpService.post(`${this.baseUrl}/mo/${objName}/fields`, rest, {
+        headers: this.headers,
+      }),
     );
     return response.data;
   }

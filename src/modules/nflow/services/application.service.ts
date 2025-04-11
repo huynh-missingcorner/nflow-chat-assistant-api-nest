@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
@@ -9,6 +9,7 @@ import { CreateAppRequest, UpdateAppRequest } from '../types/api.types';
 @Injectable()
 export class NFlowApplicationService {
   private readonly baseUrl: string;
+  private readonly logger = new Logger(NFlowApplicationService.name);
 
   constructor(
     private readonly httpService: HttpService,
@@ -26,7 +27,11 @@ export class NFlowApplicationService {
 
   async createApp(data: CreateAppRequest) {
     const response = await firstValueFrom(
-      this.httpService.post('/builder/apps', data, { headers: this.headers }),
+      this.httpService.post(
+        `${this.baseUrl}/builder/apps`,
+        { ...data, profiles: ['admin'], credentials: [] },
+        { headers: this.headers },
+      ),
     );
     return response.data;
   }
@@ -34,7 +39,11 @@ export class NFlowApplicationService {
   async updateApp(data: UpdateAppRequest) {
     const { name, ...updateData } = data;
     const response = await firstValueFrom(
-      this.httpService.patch(`/builder/apps/${name}`, updateData, { headers: this.headers }),
+      this.httpService.patch(
+        `${this.baseUrl}/builder/apps/${name}`,
+        { ...updateData, profiles: ['admin'], credentials: [] },
+        { headers: this.headers },
+      ),
     );
     return response.data;
   }

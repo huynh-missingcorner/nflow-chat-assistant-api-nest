@@ -14,11 +14,10 @@ import {
   GenerateObjectsParams,
   GenerateObjectsResponse,
 } from '../agents/object-agent/types/object.types';
-import {
-  GenerateLayoutsParams,
-  GenerateLayoutsResponse,
-} from '../agents/layout-agent/types/layout.types';
-import { GenerateFlowsParams, GenerateFlowsResponse } from '../agents/flow-agent/types/flow.types';
+import { GenerateLayoutsResponse } from '../agents/layout-agent/types/layout.types';
+import { GenerateFlowsResponse } from '../agents/flow-agent/types/flow.types';
+import { ExecutorService } from '../agents/executor-agent/executor.service';
+import { ProcessedTasks } from '../agents/executor-agent/types/executor.types';
 
 @Injectable()
 export class CoordinatorService {
@@ -31,6 +30,7 @@ export class CoordinatorService {
     private readonly layoutService: LayoutService,
     private readonly flowService: FlowService,
     private readonly openAIService: OpenAIService,
+    private readonly executorService: ExecutorService,
   ) {}
 
   /**
@@ -53,6 +53,8 @@ export class CoordinatorService {
       // Process tasks in order based on dependencies
       const processedTasks = await this.processTasksInOrder(intentPlan);
 
+      const executionResult = await this.executorService.execute(processedTasks.results);
+
       // Generate a response summarizing what was done
       const response = await this.openAIService.generateChatCompletion([
         {
@@ -62,7 +64,7 @@ export class CoordinatorService {
         },
         {
           role: 'user',
-          content: `Here is what was done: ${JSON.stringify(processedTasks)}`,
+          content: `Here is what was done: ${JSON.stringify({ processedTasks, executionResult })}. If the application created successfully, return the app URL in this format: "App created successfully. You can access it at https://org_dung.nflow.staging.nuclent.com/<app_name>"`,
         },
       ]);
 
@@ -90,9 +92,9 @@ export class CoordinatorService {
    */
   private async processTasksInOrder(intentPlan: IntentPlan): Promise<{
     appUrl?: string;
-    results: Record<string, unknown>;
+    results: ProcessedTasks;
   }> {
-    const results: Record<string, unknown> = {};
+    const results: ProcessedTasks = {};
     const completed = new Set<string>();
     const tasks = [...intentPlan.tasks];
     let appUrl: string | undefined;
@@ -154,9 +156,17 @@ export class CoordinatorService {
       case 'ObjectAgent':
         return this.objectService.generateObjects(task.data as GenerateObjectsParams);
       case 'LayoutAgent':
-        return this.layoutService.generateLayouts(task.data as GenerateLayoutsParams);
+        // return this.layoutService.generateLayouts(task.data as GenerateLayoutsParams);
+        return {
+          toolCalls: [],
+          metadata: {},
+        };
       case 'FlowAgent':
-        return this.flowService.generateFlows(task.data as GenerateFlowsParams);
+        // return this.flowService.generateFlows(task.data as GenerateFlowsParams);
+        return {
+          toolCalls: [],
+          metadata: {},
+        };
       default:
         throw new Error('Unknown agent type');
     }

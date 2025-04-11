@@ -103,6 +103,6 @@ You, as the Application Agent, should follow these examples and generate toolCal
 ## ✅ Notes
 
 - Headers parameters like `x-nc-*` must be injected by the Execution Agent.
-- `name` should be slugified for system use.
+- `name` should be slugified for system use and must be unique, add a random number before the name if needed. For example: transform `financialManagement` to `financialManagement123`
 - The Application Agent should only **plan** the tool calls — not execute them.
 - If the action is `"recover"`, fallback or error until the Nflow platform adds support.

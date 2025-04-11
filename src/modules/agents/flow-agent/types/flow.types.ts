@@ -78,46 +78,26 @@ export interface FlowDefinition {
 }
 
 export interface GenerateFlowsParams {
-  features: string[];
-  components: string[];
-  objects: Array<{
-    name: string;
-    fields: Array<{
-      name: string;
-      type: string;
-      required: boolean;
-    }>;
-  }>;
-  layouts: Array<{
-    name: string;
-    type: string;
-    components: Array<{
-      type: string;
-      id: string;
-      binding?: {
-        object: string;
-        field: string;
-      };
-    }>;
-  }>;
-  applicationId: string;
-  sessionId: string;
-  messageId: string;
+  action: 'create' | 'update' | 'remove' | 'recover';
+  name: string;
+  description: string;
 }
 
-export interface FlowPayload {
-  method: 'POST';
-  endpoint: '/v1/flows';
-  payload: {
-    applicationId: string;
-    flows: FlowDefinition[];
-  };
+export interface ToolCallPayload {
+  functionName: string;
+  arguments: Record<string, unknown>;
+}
+
+export interface FlowToolCall {
+  order: number;
+  toolCall: ToolCallPayload;
+  dependsOn?: string[];
 }
 
 export interface GenerateFlowsResponse {
-  flowPayload: FlowPayload;
-  suggestedNextSteps: Array<{
-    agent: string;
-    reason: string;
-  }>;
+  toolCalls: FlowToolCall[];
+  metadata?: {
+    appUrl?: string;
+    additionalInfo?: Record<string, unknown>;
+  };
 }

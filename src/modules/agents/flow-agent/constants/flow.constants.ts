@@ -10,6 +10,7 @@ export const FlowErrors = {
   INVALID_SCHEDULE: 'Invalid schedule configuration',
   INVALID_WEBHOOK: 'Invalid webhook configuration',
   OPENAI_ERROR: 'Error communicating with OpenAI service',
+  CONTEXT_LOAD_ERROR: 'Load agent contexts failed',
 } as const;
 
 export const FlowPrompts = {

@@ -3,6 +3,7 @@ import { NFlowApplicationService } from '../../nflow/services/application.servic
 import { NFlowObjectService } from '../../nflow/services/object.service';
 import { NFlowLayoutService } from '../../nflow/services/layout.service';
 import { NFlowFlowService } from '../../nflow/services/flow.service';
+import { AxiosError } from 'axios';
 import {
   ProcessedTasks,
   ExecutionResult,
@@ -111,7 +112,13 @@ export class ExecutorService {
     try {
       return await this.executeFunction(call.toolCall.functionName, call.toolCall.arguments);
     } catch (error) {
-      this.logger.error(`Error executing tool call: ${call.toolCall.functionName} - ${error}`);
+      if (error instanceof AxiosError) {
+        this.logger.error(
+          `Error executing tool call: ${call.toolCall.functionName} - ${error.response?.data}`,
+        );
+      } else {
+        this.logger.error(`Error executing tool call: ${call.toolCall.functionName} - ${error}`);
+      }
 
       if (this.defaultOptions.retryAttempts > 0 && callTime < this.defaultOptions.retryAttempts) {
         await this.delay(this.defaultOptions.retryDelay);

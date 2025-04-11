@@ -18,6 +18,7 @@ import { GenerateLayoutsResponse } from '../agents/layout-agent/types/layout.typ
 import { GenerateFlowsResponse } from '../agents/flow-agent/types/flow.types';
 import { ExecutorService } from '../agents/executor-agent/executor.service';
 import { ProcessedTasks } from '../agents/executor-agent/types/executor.types';
+import prompts from './consts/prompts';
 
 interface BaseAgentResponse {
   toolCalls: ToolCall[];
@@ -26,6 +27,7 @@ interface BaseAgentResponse {
 
 interface ToolCallArguments {
   name?: string;
+  objName?: string;
   data?: {
     name: string;
     relationships?: Array<{
@@ -85,12 +87,11 @@ export class CoordinatorService {
       const response = await this.openAIService.generateChatCompletion([
         {
           role: 'system',
-          content:
-            'You are a helpful AI assistant that helps users build applications using Nflow. Summarize what has been done in a friendly, concise way.',
+          content: prompts.SUMMARY,
         },
         {
           role: 'user',
-          content: `Here is what was done: ${JSON.stringify({ processedTasks, executionResult })}. If the application created successfully, return the app URL in this format: "App created successfully. You can access it at https://org_dung.nflow.staging.nuclent.com/<app_name>"`,
+          content: `Here is what was done: ${JSON.stringify({ processedTasks, executionResult })}. ${prompts.RETURN_APP_LINK}`,
         },
       ]);
 
@@ -115,7 +116,7 @@ export class CoordinatorService {
     return `${name.toLowerCase()}${Date.now()}`;
   }
 
-  private addUniqueNamesToToolCalls(toolCalls: ToolCall[]): void {
+  private addUniqueNamesToToolCalls(toolCalls: ToolCall[], nameMap: Map<string, string>): void {
     for (const call of toolCalls) {
       if (
         call.toolCall.functionName === 'ApiAppBuilderController_createApp' &&
@@ -128,13 +129,22 @@ export class CoordinatorService {
         call.toolCall.functionName === 'ObjectController_changeObject' &&
         call.toolCall.arguments.data
       ) {
-        call.toolCall.arguments.data.name = this.generateUniqueNameWithTimestamp(
-          call.toolCall.arguments.data.name,
-        );
+        const originalName = call.toolCall.arguments.data.name;
+        const uniqueName = this.generateUniqueNameWithTimestamp(originalName);
+        call.toolCall.arguments.data.name = uniqueName;
+        nameMap.set(originalName, uniqueName);
+
         if (call.toolCall.arguments.data.relationships) {
           for (const rel of call.toolCall.arguments.data.relationships) {
-            rel.targetObject = this.generateUniqueNameWithTimestamp(rel.targetObject);
+            rel.targetObject =
+              nameMap.get(rel.targetObject) ||
+              this.generateUniqueNameWithTimestamp(rel.targetObject);
           }
+        }
+      } else if (call.toolCall.functionName === 'FieldController_changeField') {
+        const objName = call.toolCall.arguments.objName;
+        if (objName && nameMap.has(objName)) {
+          call.toolCall.arguments.objName = nameMap.get(objName)!;
         }
       }
     }
@@ -174,39 +184,13 @@ export class CoordinatorService {
         executableTasks.map(async (task) => {
           const result = await this.executeTask(task);
 
-          // Add unique names to tool calls
           if (this.isAgentResponse(result)) {
-            this.addUniqueNamesToToolCalls(result.toolCalls);
-
-            // Store name mappings for relationships
-            if (task.agent === 'ObjectAgent') {
-              for (const call of result.toolCalls) {
-                if (call.toolCall.functionName === 'ObjectController_changeObject') {
-                  const originalName = call.toolCall.arguments.data?.name;
-                  if (originalName) {
-                    nameMap.set(originalName, this.generateUniqueNameWithTimestamp(originalName));
-                  }
-                }
-              }
-
-              // Update relationship references using the name map
-              for (const call of result.toolCalls) {
-                const relationships = call.toolCall.arguments.data?.relationships;
-                if (relationships) {
-                  for (const rel of relationships) {
-                    if (rel.targetObject) {
-                      rel.targetObject = nameMap.get(rel.targetObject) || rel.targetObject;
-                    }
-                  }
-                }
-              }
-            }
+            this.addUniqueNamesToToolCalls(result.toolCalls, nameMap);
           }
 
           results[task.agent] = result;
           completed.add(task.agent);
 
-          // Store app URL from ApplicationAgent
           if (
             task.agent === 'ApplicationAgent' &&
             'applicationPayload' in result &&
@@ -215,7 +199,6 @@ export class CoordinatorService {
             appUrl = result.appUrl as string;
           }
 
-          // Remove executed task from the queue
           const index = tasks.findIndex((t) => t.agent === task.agent);
           if (index !== -1) {
             tasks.splice(index, 1);

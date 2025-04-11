@@ -8,7 +8,7 @@ import {
   ObjectSchema,
   ObjectToolCall,
 } from './types/object.types';
-import { ObjectErrors } from './constants/object.constants';
+import { ObjectErrors, ObjectPrompts } from './constants/object.constants';
 import { createNewFieldTool, createNewObjectTool, schemaDesignerTool } from './tools/object-tools';
 
 @Injectable()
@@ -57,19 +57,7 @@ export class ObjectService {
   private async designObjectSchemas(params: GenerateObjectsParams): Promise<ObjectSchema[]> {
     const combinedContext = await this.loadAgentContexts();
 
-    const schemaDesignPrompt = `As a database schema expert, design comprehensive database schemas for the following objects.
-
-Requirements:
-1. For each object, provide:
-   - Object name and description
-   - Primary identifier field
-   - All necessary fields with their types and attributes
-2. Follow database design best practices
-3. Include all common required fields (id, createdAt, etc.)
-4. Add context-specific fields based on the object type
-5. Consider relationships between objects if relevant
-
-Objects to design: ${JSON.stringify(params.objects, null, 2)}`;
+    const schemaDesignPrompt = `${ObjectPrompts.OBJECT_DESIGN_PROMPT} ${JSON.stringify(params.objects, null, 2)}`;
 
     const schemaDesignMessages = [
       {
@@ -86,7 +74,7 @@ Objects to design: ${JSON.stringify(params.objects, null, 2)}`;
       tools: [schemaDesignerTool],
       tool_choice: { type: 'function', function: { name: 'SchemaDesigner_designSchema' } } as const,
       temperature: 0.7,
-      maxTokens: 2000,
+      maxTokens: 5000,
     };
 
     const completion = await this.openAIService.generateFunctionCompletion(
@@ -147,7 +135,7 @@ Generate the exact tool calls needed to implement these schemas in the Nflow pla
       tools: [createNewObjectTool, createNewFieldTool],
       tool_choice: 'auto' as const,
       temperature: 0.5, // Lower temperature for more precise tool calls
-      max_tokens: 2000,
+      max_tokens: 5000,
     };
 
     const completion = await this.openAIService.generateFunctionCompletion(

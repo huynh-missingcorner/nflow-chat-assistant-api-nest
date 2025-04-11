@@ -45,6 +45,19 @@ export const ObjectPrompts = {
   },
   "suggestedNextSteps": []
 }`,
+  OBJECT_DESIGN_PROMPT: `As a database schema expert, design comprehensive database schemas for the following objects.
+
+Requirements:
+1. For each object, provide:
+   - Object name and description
+   - Primary identifier field
+   - All necessary fields with their types and attributes
+2. Follow database design best practices
+3. Add context-specific fields based on the object type
+4. Consider relationships between objects if relevant
+5. Important: Do not include any fields like createdAt, updatedAt, guid, etc.
+
+Objects to design:`,
 } as const;
 
 export const ObjectDefaults = {

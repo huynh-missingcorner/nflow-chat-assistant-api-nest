@@ -39,7 +39,10 @@ export class LayoutService {
 
       const options = {
         tools: layoutTools,
-        tool_choice: 'auto' as const,
+        tool_choice: {
+          type: 'function',
+          function: { name: 'ApiLayoutBuilderController_createLayout' },
+        } as const,
       };
 
       const completion = await this.openAIService.generateFunctionCompletion(messages, options);

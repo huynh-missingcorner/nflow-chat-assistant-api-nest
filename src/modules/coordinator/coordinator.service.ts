@@ -116,13 +116,20 @@ export class CoordinatorService {
   }
 
   private generateUniqueNameWithTimestamp(name: string): string {
-    return `${name.toLowerCase()}${Date.now()}`;
+    return `${name.toLowerCase()}${Date.now()}`.replace(/[^a-z0-9_]/g, '_');
   }
 
   private addUniqueNamesToToolCalls(toolCalls: ToolCall[], nameMap: Map<string, string>): void {
     for (const call of toolCalls) {
       if (
         call.toolCall.functionName === 'ApiAppBuilderController_createApp' &&
+        call.toolCall.arguments.name
+      ) {
+        call.toolCall.arguments.name = this.generateUniqueNameWithTimestamp(
+          call.toolCall.arguments.name,
+        );
+      } else if (
+        call.toolCall.functionName === 'ApiLayoutBuilderController_createLayout' &&
         call.toolCall.arguments.name
       ) {
         call.toolCall.arguments.name = this.generateUniqueNameWithTimestamp(
@@ -175,9 +182,14 @@ export class CoordinatorService {
     const nameMap = new Map<string, string>();
 
     while (tasks.length > 0) {
-      const executableTasks = tasks.filter(
+      let executableTasks = tasks.filter(
         (task) => !task.dependsOn || task.dependsOn.every((dep) => completed.has(dep)),
       );
+
+      // If there is only one task, we don't need to check for circular dependencies
+      if (intentPlan.tasks.length === 1) {
+        executableTasks = tasks;
+      }
 
       if (executableTasks.length === 0 && tasks.length > 0) {
         throw new Error('Circular dependency detected in tasks');

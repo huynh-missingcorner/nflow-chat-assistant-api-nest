@@ -15,20 +15,22 @@ export const tools: ChatCompletionTool[] = [
           },
           name: {
             type: 'string',
-            description: '',
+            description:
+              'Name of the layout to create (will be automatically made unique with timestamp).',
           },
           displayName: {
             type: 'string',
-            description: '',
+            description: 'Display name of the layout',
           },
           description: {
             type: 'string',
-            description: '',
+            description: 'Description of the layout',
           },
           type: {
             type: 'string',
-            description: '',
+            description: 'Type of the layout',
             enum: ['dashboard', 'app-page', 'record-page'],
+            default: 'app-page',
           },
         },
         required: ['name', 'displayName', 'type'],

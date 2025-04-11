@@ -14,7 +14,10 @@ import {
   GenerateObjectsParams,
   GenerateObjectsResponse,
 } from '../agents/object-agent/types/object.types';
-import { GenerateLayoutsResponse } from '../agents/layout-agent/types/layout.types';
+import {
+  GenerateLayoutsParams,
+  GenerateLayoutsResponse,
+} from '../agents/layout-agent/types/layout.types';
 import { GenerateFlowsResponse } from '../agents/flow-agent/types/flow.types';
 import { ExecutorService } from '../agents/executor-agent/executor.service';
 import { ProcessedTasks } from '../agents/executor-agent/types/executor.types';
@@ -231,11 +234,7 @@ export class CoordinatorService {
       case 'ObjectAgent':
         return this.objectService.generateObjects(task.data as GenerateObjectsParams);
       case 'LayoutAgent':
-        // return this.layoutService.generateLayouts(task.data as GenerateLayoutsParams);
-        return {
-          toolCalls: [],
-          metadata: {},
-        };
+        return this.layoutService.generateLayouts(task.data as GenerateLayoutsParams);
       case 'FlowAgent':
         // return this.flowService.generateFlows(task.data as GenerateFlowsParams);
         return {

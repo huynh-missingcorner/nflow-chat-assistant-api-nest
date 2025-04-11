@@ -65,19 +65,9 @@ export interface LayoutDefinition {
 }
 
 export interface GenerateLayoutsParams {
-  features: string[];
-  components: string[];
-  objects: Array<{
-    name: string;
-    fields: Array<{
-      name: string;
-      type: string;
-      required: boolean;
-    }>;
-  }>;
-  applicationId: string;
-  sessionId: string;
-  messageId: string;
+  action: 'create' | 'update' | 'remove' | 'recover';
+  name: string;
+  description: string;
 }
 
 export interface LayoutPayload {
@@ -89,10 +79,21 @@ export interface LayoutPayload {
   };
 }
 
+export interface ToolCallPayload {
+  functionName: string;
+  arguments: Record<string, unknown>;
+}
+
+export interface LayoutToolCall {
+  order: number;
+  toolCall: ToolCallPayload;
+  dependsOn?: string[]; // Names of functions this call depends on
+}
+
 export interface GenerateLayoutsResponse {
-  layoutPayload: LayoutPayload;
-  suggestedNextSteps: Array<{
-    agent: 'flow';
-    reason: string;
-  }>;
+  toolCalls: LayoutToolCall[];
+  metadata?: {
+    appUrl?: string;
+    additionalInfo?: Record<string, unknown>;
+  };
 }

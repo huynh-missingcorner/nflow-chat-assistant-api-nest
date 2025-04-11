@@ -9,34 +9,6 @@ export const tools: ChatCompletionTool[] = [
       parameters: {
         type: 'object',
         properties: {
-          'x-nc-lang': {
-            type: 'string',
-            description: 'current user language',
-            enum: ['en', 'vi'],
-            default: 'en',
-          },
-          'x-nc-tenant': {
-            type: 'string',
-            description: 'org tenant',
-          },
-          'x-nc-payload': {
-            type: 'string',
-            description: 'Payload with one of JSON.stringify(object) then Base64',
-          },
-          'x-nc-date': {
-            type: 'string',
-            description: 'Timestamp of current date time',
-          },
-          'x-nc-signature': {
-            type: 'string',
-            description:
-              'Required fields: algorithm, headers, signature. Algorithm only support HmacSHA256, headers: all header need to sign seperated by space, signature: HMAC SHA-256 of headers value seperated by "\n" in base64 format.',
-          },
-          'x-nc-digest': {
-            type: 'string',
-            description:
-              'HMAC SHA-256 of the body content in base64 format, use JSON.stringify to convert body to string, add "SHA-256=" at the beginning',
-          },
           customProps: {
             type: 'string',
             description: 'Base64 custom properties',
@@ -90,34 +62,6 @@ export const tools: ChatCompletionTool[] = [
       parameters: {
         type: 'object',
         properties: {
-          'x-nc-lang': {
-            type: 'string',
-            description: 'current user language',
-            enum: ['en', 'vi'],
-            default: 'en',
-          },
-          'x-nc-tenant': {
-            type: 'string',
-            description: 'org tenant',
-          },
-          'x-nc-payload': {
-            type: 'string',
-            description: 'Payload with one of JSON.stringify(object) then Base64',
-          },
-          'x-nc-date': {
-            type: 'string',
-            description: 'Timestamp of current date time',
-          },
-          'x-nc-signature': {
-            type: 'string',
-            description:
-              'Required fields: algorithm, headers, signature. Algorithm only support HmacSHA256, headers: all header need to sign seperated by space, signature: HMAC SHA-256 of headers value seperated by "\n" in base64 format.',
-          },
-          'x-nc-digest': {
-            type: 'string',
-            description:
-              'HMAC SHA-256 of the body content in base64 format, use JSON.stringify to convert body to string, add "SHA-256=" at the beginning',
-          },
           name: {
             type: 'string',
             description: '',
@@ -142,14 +86,6 @@ export const tools: ChatCompletionTool[] = [
             },
             description: '',
           },
-          tagNames: {
-            type: 'array',
-            items: {
-              type: 'string',
-              description: '',
-            },
-            description: '',
-          },
           credentials: {
             type: 'array',
             items: {
@@ -166,88 +102,11 @@ export const tools: ChatCompletionTool[] = [
   {
     type: 'function',
     function: {
-      name: 'ApiAppBuilderController_removeApps',
-      description: 'Remove applications',
-      parameters: {
-        type: 'object',
-        properties: {
-          'x-nc-lang': {
-            type: 'string',
-            description: 'current user language',
-            enum: ['en', 'vi'],
-            default: 'en',
-          },
-          'x-nc-tenant': {
-            type: 'string',
-            description: 'org tenant',
-          },
-          'x-nc-payload': {
-            type: 'string',
-            description: 'Payload with one of JSON.stringify(object) then Base64',
-          },
-          'x-nc-date': {
-            type: 'string',
-            description: 'Timestamp of current date time',
-          },
-          'x-nc-signature': {
-            type: 'string',
-            description:
-              'Required fields: algorithm, headers, signature. Algorithm only support HmacSHA256, headers: all header need to sign seperated by space, signature: HMAC SHA-256 of headers value seperated by "\n" in base64 format.',
-          },
-          'x-nc-digest': {
-            type: 'string',
-            description:
-              'HMAC SHA-256 of the body content in base64 format, use JSON.stringify to convert body to string, add "SHA-256=" at the beginning',
-          },
-          names: {
-            type: 'array',
-            items: {
-              type: 'string',
-              description: '',
-            },
-            description: '',
-          },
-        },
-        required: ['names'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
       name: 'ApiAppBuilderController_updateAppLayouts',
       description: 'Order app pages',
       parameters: {
         type: 'object',
         properties: {
-          'x-nc-lang': {
-            type: 'string',
-            description: 'current user language',
-            enum: ['en', 'vi'],
-            default: 'en',
-          },
-          'x-nc-tenant': {
-            type: 'string',
-            description: 'org tenant',
-          },
-          'x-nc-payload': {
-            type: 'string',
-            description: 'Payload with one of JSON.stringify(object) then Base64',
-          },
-          'x-nc-date': {
-            type: 'string',
-            description: 'Timestamp of current date time',
-          },
-          'x-nc-signature': {
-            type: 'string',
-            description:
-              'Required fields: algorithm, headers, signature. Algorithm only support HmacSHA256, headers: all header need to sign seperated by space, signature: HMAC SHA-256 of headers value seperated by "\n" in base64 format.',
-          },
-          'x-nc-digest': {
-            type: 'string',
-            description:
-              'HMAC SHA-256 of the body content in base64 format, use JSON.stringify to convert body to string, add "SHA-256=" at the beginning',
-          },
           name: {
             type: 'string',
             description: '',

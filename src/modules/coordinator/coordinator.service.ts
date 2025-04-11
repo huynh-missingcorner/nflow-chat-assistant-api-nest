@@ -19,6 +19,32 @@ import { GenerateFlowsResponse } from '../agents/flow-agent/types/flow.types';
 import { ExecutorService } from '../agents/executor-agent/executor.service';
 import { ProcessedTasks } from '../agents/executor-agent/types/executor.types';
 
+interface BaseAgentResponse {
+  toolCalls: ToolCall[];
+  metadata: Record<string, unknown>;
+}
+
+interface ToolCallArguments {
+  name?: string;
+  data?: {
+    name: string;
+    relationships?: Array<{
+      targetObject: string;
+      [key: string]: unknown;
+    }>;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+interface ToolCall {
+  order: number;
+  toolCall: {
+    functionName: string;
+    arguments: ToolCallArguments;
+  };
+}
+
 @Injectable()
 export class CoordinatorService {
   private readonly logger = new Logger(CoordinatorService.name);
@@ -85,6 +111,39 @@ export class CoordinatorService {
     }
   }
 
+  private generateUniqueNameWithTimestamp(name: string): string {
+    return `${name.toLowerCase()}${Date.now()}`;
+  }
+
+  private addUniqueNamesToToolCalls(toolCalls: ToolCall[]): void {
+    for (const call of toolCalls) {
+      if (
+        call.toolCall.functionName === 'ApiAppBuilderController_createApp' &&
+        call.toolCall.arguments.name
+      ) {
+        call.toolCall.arguments.name = this.generateUniqueNameWithTimestamp(
+          call.toolCall.arguments.name,
+        );
+      } else if (
+        call.toolCall.functionName === 'ObjectController_changeObject' &&
+        call.toolCall.arguments.data
+      ) {
+        call.toolCall.arguments.data.name = this.generateUniqueNameWithTimestamp(
+          call.toolCall.arguments.data.name,
+        );
+        if (call.toolCall.arguments.data.relationships) {
+          for (const rel of call.toolCall.arguments.data.relationships) {
+            rel.targetObject = this.generateUniqueNameWithTimestamp(rel.targetObject);
+          }
+        }
+      }
+    }
+  }
+
+  private isAgentResponse(result: unknown): result is BaseAgentResponse {
+    return result !== null && typeof result === 'object' && 'toolCalls' in result;
+  }
+
   /**
    * Process tasks in order based on their dependencies
    * @param intentPlan The plan containing tasks to process
@@ -99,6 +158,9 @@ export class CoordinatorService {
     const tasks = [...intentPlan.tasks];
     let appUrl: string | undefined;
 
+    // Create a map to store original to unique name mappings
+    const nameMap = new Map<string, string>();
+
     while (tasks.length > 0) {
       const executableTasks = tasks.filter(
         (task) => !task.dependsOn || task.dependsOn.every((dep) => completed.has(dep)),
@@ -111,6 +173,36 @@ export class CoordinatorService {
       await Promise.all(
         executableTasks.map(async (task) => {
           const result = await this.executeTask(task);
+
+          // Add unique names to tool calls
+          if (this.isAgentResponse(result)) {
+            this.addUniqueNamesToToolCalls(result.toolCalls);
+
+            // Store name mappings for relationships
+            if (task.agent === 'ObjectAgent') {
+              for (const call of result.toolCalls) {
+                if (call.toolCall.functionName === 'ObjectController_changeObject') {
+                  const originalName = call.toolCall.arguments.data?.name;
+                  if (originalName) {
+                    nameMap.set(originalName, this.generateUniqueNameWithTimestamp(originalName));
+                  }
+                }
+              }
+
+              // Update relationship references using the name map
+              for (const call of result.toolCalls) {
+                const relationships = call.toolCall.arguments.data?.relationships;
+                if (relationships) {
+                  for (const rel of relationships) {
+                    if (rel.targetObject) {
+                      rel.targetObject = nameMap.get(rel.targetObject) || rel.targetObject;
+                    }
+                  }
+                }
+              }
+            }
+          }
+
           results[task.agent] = result;
           completed.add(task.agent);
 

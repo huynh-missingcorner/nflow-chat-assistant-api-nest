@@ -106,7 +106,7 @@ export class ExecutorService {
   /**
    * Execute a single tool call with retry logic
    */
-  private async executeToolCall(call: ToolCall, callTime: number = 0): Promise<unknown> {
+  private async executeToolCall(call: ToolCall, callTime: number = 1): Promise<unknown> {
     this.logger.log(`Executing tool call: ${call.toolCall.functionName}`);
     try {
       return await this.executeFunction(call.toolCall.functionName, call.toolCall.arguments);

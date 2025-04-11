@@ -13,7 +13,7 @@ export class HistoryService {
    * @param sessionId Unique identifier for the session
    * @returns Array of chat messages
    */
-  async getSessionHistory(sessionId: string): Promise<any[]> {
+  getSessionHistory(sessionId: string): { role: string; content: string }[] {
     return this.sessionHistory[sessionId] || [];
   }
 
@@ -23,11 +23,7 @@ export class HistoryService {
    * @param userMessage Message from the user
    * @param assistantReply Reply from the assistant
    */
-  async saveInteraction(
-    sessionId: string,
-    userMessage: string,
-    assistantReply: string,
-  ): Promise<void> {
+  saveInteraction(sessionId: string, userMessage: string, assistantReply: string): void {
     if (!this.sessionHistory[sessionId]) {
       this.sessionHistory[sessionId] = [];
     }

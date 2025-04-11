@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CoordinatorService } from '../../coordinator/coordinator.service';
-import { HistoryService } from '../../history/history.service';
 import { ChatRequestDto } from '../dto/chat-request.dto';
 import { ChatResponseDto } from '../dto/chat-response.dto';
 import { PrismaService } from 'src/shared/infrastructure/prisma/prisma.service';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ChatMessageService } from './chat-message.service';
+import { MessageRole } from '../dto/chat-message.dto';
 
 @Injectable()
 export class ChatService {
@@ -14,7 +15,7 @@ export class ChatService {
 
   constructor(
     private readonly coordinatorService: CoordinatorService,
-    private readonly historyService: HistoryService,
+    private readonly chatMessageService: ChatMessageService,
     private readonly prisma: PrismaService,
     private readonly openaiService: OpenAIService,
     private readonly eventEmitter: EventEmitter2,
@@ -27,9 +28,12 @@ export class ChatService {
    */
   async processMessage(chatRequestDto: ChatRequestDto): Promise<ChatResponseDto> {
     const { sessionId, message } = chatRequestDto;
-    // const chatContext = await this.historyService.getSessionHistory(sessionId);
-    const result = await this.coordinatorService.processUserMessage(message);
-    // await this.historyService.saveInteraction(sessionId, message, result.reply);
+    const savedMessages = await this.chatMessageService.findAllBySessionId(sessionId);
+    const chatContext = savedMessages.map((message) => ({
+      role: message.role === MessageRole.USER ? ('user' as const) : ('assistant' as const),
+      content: message.content,
+    }));
+    const result = await this.coordinatorService.processUserMessage(message, chatContext);
     await this.updateSessionTitle(sessionId, result.reply);
 
     return {

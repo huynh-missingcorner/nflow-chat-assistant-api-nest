@@ -5,7 +5,6 @@ import { InfrastructureModule } from './shared/infrastructure/infrastructure.mod
 import { ConfigModule } from './config/config.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { CoordinatorModule } from './modules/coordinator/coordinator.module';
-import { HistoryModule } from './modules/history/history.module';
 import { SharedModule } from './shared/shared.module';
 import { ChatSessionModule } from './modules/chat-session/chat-session.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
@@ -17,7 +16,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     InfrastructureModule,
     ChatModule,
     CoordinatorModule,
-    HistoryModule,
     SharedModule,
     ChatSessionModule,
   ],

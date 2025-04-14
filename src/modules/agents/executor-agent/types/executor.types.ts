@@ -1,4 +1,8 @@
-import { CreateAppRequest, UpdateAppRequest } from '../../../nflow/types/api.types';
+import {
+  CreateAppRequest,
+  CreateFlowRequest,
+  UpdateAppRequest,
+} from '../../../nflow/types/api.types';
 import { ChangeObjectRequest, ChangeFieldRequest } from '../../../nflow/types/api.types';
 import { CreateLayoutRequest } from '../../../nflow/types/api.types';
 import { GenerateApplicationResponse } from '../../application-agent/types/application.types';
@@ -11,7 +15,8 @@ export type FunctionArguments =
   | { name: 'ApiAppBuilderController_updateApp'; args: UpdateAppRequest }
   | { name: 'ObjectController_changeObject'; args: ChangeObjectRequest }
   | { name: 'FieldController_changeField'; args: ChangeFieldRequest }
-  | { name: 'ApiLayoutBuilderController_createLayout'; args: CreateLayoutRequest };
+  | { name: 'ApiLayoutBuilderController_createLayout'; args: CreateLayoutRequest }
+  | { name: 'ApiFlowController_createFlow'; args: CreateFlowRequest };
 
 export interface ToolCall {
   order: number;

@@ -17,6 +17,7 @@ import {
   ChangeObjectRequest,
   ChangeFieldRequest,
   CreateLayoutRequest,
+  CreateFlowRequest,
 } from '../../nflow/types/api.types';
 
 @Injectable()
@@ -160,6 +161,10 @@ export class ExecutorService {
       case 'ApiLayoutBuilderController_createLayout': {
         const typedArgs = args as CreateLayoutRequest;
         return this.layoutService.createLayout(typedArgs);
+      }
+      case 'ApiFlowController_createFlow': {
+        const typedArgs = args as CreateFlowRequest;
+        return this.flowService.createFlow(typedArgs);
       }
       default: {
         throw new Error(`Unsupported function: ${String(functionName)}`);

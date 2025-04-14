@@ -24,7 +24,7 @@ This document contains real-world input and output examples for the Flow Agent. 
     {
       "order": 1,
       "toolCall": {
-        "functionName": "ApiFlowBuilderController_createFlow",
+        "functionName": "ApiFlowController_createFlow",
         "arguments": {
           "name": "notify-when-expense-added",
           "displayName": "Notify When Expense Added",
@@ -69,7 +69,7 @@ This document contains real-world input and output examples for the Flow Agent. 
     {
       "order": 1,
       "toolCall": {
-        "functionName": "ApiFlowBuilderController_createFlow",
+        "functionName": "ApiFlowController_createFlow",
         "arguments": {
           "name": "assign-lead-owner",
           "displayName": "Assign Owner on Lead Creation",
@@ -114,7 +114,7 @@ This document contains real-world input and output examples for the Flow Agent. 
     {
       "order": 1,
       "toolCall": {
-        "functionName": "ApiFlowBuilderController_createFlow",
+        "functionName": "ApiFlowController_createFlow",
         "arguments": {
           "name": "redirect-after-contact-submit",
           "displayName": "Redirect After Contact Submission",

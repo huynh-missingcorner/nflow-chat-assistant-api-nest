@@ -18,7 +18,7 @@ import {
   GenerateLayoutsParams,
   GenerateLayoutsResponse,
 } from '../agents/layout-agent/types/layout.types';
-import { GenerateFlowsResponse } from '../agents/flow-agent/types/flow.types';
+import { GenerateFlowsParams, GenerateFlowsResponse } from '../agents/flow-agent/types/flow.types';
 import { ExecutorService } from '../agents/executor-agent/executor.service';
 import { ProcessedTasks } from '../agents/executor-agent/types/executor.types';
 import prompts from './consts/prompts';
@@ -130,6 +130,13 @@ export class CoordinatorService {
         );
       } else if (
         call.toolCall.functionName === 'ApiLayoutBuilderController_createLayout' &&
+        call.toolCall.arguments.name
+      ) {
+        call.toolCall.arguments.name = this.generateUniqueNameWithTimestamp(
+          call.toolCall.arguments.name,
+        );
+      } else if (
+        call.toolCall.functionName === 'ApiFlowController_createFlow' &&
         call.toolCall.arguments.name
       ) {
         call.toolCall.arguments.name = this.generateUniqueNameWithTimestamp(
@@ -248,11 +255,7 @@ export class CoordinatorService {
       case 'LayoutAgent':
         return this.layoutService.generateLayouts(task.data as GenerateLayoutsParams);
       case 'FlowAgent':
-        // return this.flowService.generateFlows(task.data as GenerateFlowsParams);
-        return {
-          toolCalls: [],
-          metadata: {},
-        };
+        return this.flowService.generateFlows(task.data as GenerateFlowsParams);
       default:
         throw new Error('Unknown agent type');
     }

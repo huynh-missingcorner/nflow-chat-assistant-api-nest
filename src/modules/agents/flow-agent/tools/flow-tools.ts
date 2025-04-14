@@ -26,14 +26,6 @@ export const createFlowTool: ChatCompletionTool = {
           type: 'string',
           description: 'Description of the flow',
         },
-        objectNameRefs: {
-          type: 'array',
-          items: {
-            type: 'string',
-            description: 'Object name references',
-          },
-          description: 'Object name references',
-        },
       },
       required: ['name', 'displayName', 'type'],
     },

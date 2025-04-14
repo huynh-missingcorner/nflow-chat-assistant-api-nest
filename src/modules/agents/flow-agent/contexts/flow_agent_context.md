@@ -75,7 +75,7 @@ export interface GenerateFlowsResponse {
     {
       "order": 1,
       "toolCall": {
-        "functionName": "ApiFlowBuilderController_createFlow",
+        "functionName": "ApiFlowController_createFlow",
         "arguments": {
           "name": "notify-when-expense-added",
           "displayName": "Notify When Expense Added",

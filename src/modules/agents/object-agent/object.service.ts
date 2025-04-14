@@ -74,8 +74,8 @@ export class ObjectService {
     const options = {
       tools: [schemaDesignerTool],
       tool_choice: { type: 'function', function: { name: 'SchemaDesigner_designSchema' } } as const,
-      temperature: 0.7,
-      maxTokens: 5000,
+      temperature: 0.2,
+      maxTokens: 4000,
     };
 
     const completion = await this.openAIService.generateFunctionCompletion(
@@ -156,7 +156,7 @@ export class ObjectService {
         type: 'function',
         function: { name: 'ObjectController_changeObject' },
       } as const,
-      temperature: 0.5,
+      temperature: 0.2,
       max_tokens: 4000,
     };
 
@@ -209,7 +209,7 @@ Requirements:
             type: 'function',
             function: { name: 'FieldController_changeField' },
           } as const,
-          temperature: 0.5,
+          temperature: 0.2,
           max_tokens: 4000,
         };
 

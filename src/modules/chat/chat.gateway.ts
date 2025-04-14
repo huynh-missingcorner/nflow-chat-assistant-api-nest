@@ -25,7 +25,7 @@ import {
 
 @WebSocketGateway({
   cors: {
-    origin: '*', // Update this to match your frontend origin in production
+    origin: '*', // TODO: Update this to match your frontend origin in production
   },
 })
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
@@ -118,24 +118,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         timestamp: new Date().toISOString(),
       };
       this.server.to(payload.sessionId).emit('messageResponse', chatResponse);
-
-      // Option 2: Stream the response (commented out for now)
-      // const chunks = await this.chatWebsocketService.streamResponse(
-      //   payload.sessionId,
-      //   response,
-      // );
-      //
-      // for (const chunk of chunks) {
-      //   this.server.to(payload.sessionId).emit('messageChunk', {
-      //     chunk,
-      //     timestamp: new Date().toISOString(),
-      //   });
-      //   await new Promise(resolve => setTimeout(resolve, 100)); // Simulate streaming
-      // }
-      //
-      // this.server.to(payload.sessionId).emit('messageComplete', {
-      //   timestamp: new Date().toISOString(),
-      // });
     } catch (error: unknown) {
       if (error instanceof Error) {
         this.logger.error(`Error processing message: ${error.message}`);

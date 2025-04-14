@@ -94,13 +94,6 @@ export const createNewObjectTool: ChatCompletionTool = {
               description: '',
               enum: ['PublicRead', 'PublicReadWrite', 'Private'],
             },
-            // tagNames: {
-            //   type: 'array',
-            //   items: {
-            //     type: 'string',
-            //     description: '',
-            //   },
-            // },
             name: {
               type: 'string',
               description: '',

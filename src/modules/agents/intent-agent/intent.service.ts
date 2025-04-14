@@ -1,11 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import {
-  ExtractedIntent,
-  ExtractIntentParams,
-  IntentPlan,
-  IntentToolResponse,
-} from './types/intent.types';
+import { ExtractIntentParams, IntentPlan, IntentToolResponse } from './types/intent.types';
 import { IntentErrors } from './constants/intent.constants';
 import { ContextLoaderService, ContextFile } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
@@ -81,25 +76,6 @@ export class IntentService {
     } catch (error) {
       this.logger.error('Failed to load agent contexts', error);
       throw new Error(IntentErrors.CONTEXT_LOAD_ERROR);
-    }
-  }
-
-  /**
-   * Validates the structure of extracted intent data
-   * @param intent The extracted intent to validate
-   * @throws Error if the intent structure is invalid
-   */
-  private validateExtractedIntent(intent: ExtractedIntent): void {
-    if (
-      !Array.isArray(intent.features) ||
-      !Array.isArray(intent.components) ||
-      typeof intent.summary !== 'string'
-    ) {
-      throw new Error(IntentErrors.INVALID_STRUCTURE);
-    }
-
-    if (intent.features.length === 0 || intent.components.length === 0 || !intent.summary.trim()) {
-      throw new Error(IntentErrors.MISSING_DATA);
     }
   }
 }

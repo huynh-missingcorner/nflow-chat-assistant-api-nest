@@ -74,6 +74,7 @@ export class LayoutService {
       throw new Error(error instanceof Error ? error.message : LayoutErrors.GENERATION_FAILED);
     }
   }
+
   private async loadAgentContexts(): Promise<string> {
     try {
       const contextFiles = await this.contextLoader.loadContextDirectory(

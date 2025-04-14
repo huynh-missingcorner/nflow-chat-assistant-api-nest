@@ -1,47 +1,3 @@
-export type FieldType =
-  | 'string'
-  | 'number'
-  | 'boolean'
-  | 'date'
-  | 'datetime'
-  | 'json'
-  | 'array'
-  | 'reference';
-
-export interface ObjectField {
-  name: string;
-  type: FieldType;
-  description: string;
-  required: boolean;
-  unique?: boolean;
-  defaultValue?: unknown;
-  validation?: {
-    type: string;
-    params: Record<string, unknown>;
-  };
-  reference?: {
-    object: string;
-    field: string;
-    onDelete?: 'CASCADE' | 'SET_NULL' | 'RESTRICT';
-  };
-}
-
-export interface ObjectDefinition {
-  name: string;
-  description: string;
-  fields: ObjectField[];
-  indexes?: Array<{
-    fields: string[];
-    type: 'unique' | 'index';
-  }>;
-  permissions?: {
-    create?: string[];
-    read?: string[];
-    update?: string[];
-    delete?: string[];
-  };
-}
-
 export interface ObjectParams {
   name: string;
   description: string;
@@ -51,15 +7,6 @@ export interface ObjectParams {
 export interface GenerateObjectsParams {
   action: 'create' | 'update' | 'remove' | 'recover';
   objects: ObjectParams[];
-}
-
-export interface ObjectPayload {
-  method: 'POST';
-  endpoint: '/v1/objects';
-  payload: {
-    applicationId: string;
-    objects: ObjectDefinition[];
-  };
 }
 
 export interface ToolCallPayload {
@@ -82,9 +29,6 @@ export interface GenerateObjectsResponse {
   };
 }
 
-/**
- * Represents a field in an object schema
- */
 export interface ObjectSchemaField {
   name: string;
   type: string;
@@ -100,9 +44,6 @@ export interface ObjectSchemaField {
   };
 }
 
-/**
- * Represents a complete object schema design
- */
 export interface ObjectSchema {
   name: string;
   displayName: string;

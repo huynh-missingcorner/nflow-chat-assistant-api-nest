@@ -2,7 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { ChatService } from './services/chat.service';
 import { ChatGateway } from './chat.gateway';
 import { ChatMessageService } from './services/chat-message.service';
-import { CoordinatorModule } from '../coordinator/coordinator.module';
+import { CoordinatorModule } from '../agents/coordinator/coordinator.module';
 import { ChatMessageController } from './controllers/chat-message.controller';
 import { ChatController } from './controllers/chat.controller';
 import { ChatWebsocketService } from './services/chat-websocket.service';

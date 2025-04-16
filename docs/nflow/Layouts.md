@@ -18,7 +18,7 @@ The **Layouts Table** displays a list of available layouts with the following co
 - **🏷️ Tags** – Users can add tags to categorize layouts.
 - **⏳ Last Modified** – Displays the last modification date and time.
 
-📌 *Pagination* – Located at the bottom, allowing users to navigate through multiple pages of layouts. The "Rows per Page" setting can be adjusted to show more or fewer layouts at once.
+📌 _Pagination_ – Located at the bottom, allowing users to navigate through multiple pages of layouts. The "Rows per Page" setting can be adjusted to show more or fewer layouts at once.
 
 ---
 

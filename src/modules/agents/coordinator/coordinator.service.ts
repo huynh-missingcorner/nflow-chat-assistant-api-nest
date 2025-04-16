@@ -1,30 +1,25 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import { IntentService } from '../agents/intent-agent/intent.service';
-import { ApplicationService } from '../agents/application-agent/application.service';
-import { ObjectService } from '../agents/object-agent/object.service';
-import { LayoutService } from '../agents/layout-agent/layout.service';
-import { FlowService } from '../agents/flow-agent/flow.service';
-import { IntentPlan, IntentTask } from '../agents/intent-agent/types/intent.types';
+
+import { ActiveAgent, DEFAULT_AGENT_STATUS, AgentStatus } from './consts';
+import { IntentService } from '../intent-agent/intent.service';
+import { ApplicationService } from '../application-agent/application.service';
+import { ObjectService } from '../object-agent/object.service';
+import { LayoutService } from '../layout-agent/layout.service';
+import { FlowService } from '../flow-agent/flow.service';
+import { ExecutorService } from '../executor-agent/executor.service';
+import { ChatMessageService } from 'src/modules/chat/services/chat-message.service';
+import { ProcessedTasks } from '../executor-agent/types/executor.types';
+import { IntentPlan, IntentTask } from '../intent-agent/types/intent.types';
 import {
   GenerateApplicationParams,
   GenerateApplicationResponse,
-} from '../agents/application-agent/types/application.types';
-import {
-  GenerateObjectsParams,
-  GenerateObjectsResponse,
-} from '../agents/object-agent/types/object.types';
-import {
-  GenerateLayoutsParams,
-  GenerateLayoutsResponse,
-} from '../agents/layout-agent/types/layout.types';
-import { GenerateFlowsParams, GenerateFlowsResponse } from '../agents/flow-agent/types/flow.types';
-import { ExecutorService } from '../agents/executor-agent/executor.service';
-import { ProcessedTasks } from '../agents/executor-agent/types/executor.types';
+} from '../application-agent/types/application.types';
+import { GenerateObjectsParams, GenerateObjectsResponse } from '../object-agent/types/object.types';
+import { GenerateLayoutsParams, GenerateLayoutsResponse } from '../layout-agent/types/layout.types';
+import { GenerateFlowsParams, GenerateFlowsResponse } from '../flow-agent/types/flow.types';
+import { MessageRole } from 'src/modules/chat/dto/chat-message.dto';
 import prompts from './consts/prompts';
-import { MessageRole } from '../chat/dto/chat-message.dto';
-import { ChatMessageService } from '../chat/services/chat-message.service';
-import { ActiveAgent, DEFAULT_AGENT_STATUS, AgentStatus } from './consts';
 
 interface BaseAgentResponse {
   toolCalls: ToolCall[];

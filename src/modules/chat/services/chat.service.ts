@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CoordinatorService } from '../../coordinator/coordinator.service';
+import { CoordinatorService } from '../../agents/coordinator/coordinator.service';
 import { ChatRequestDto } from '../dto/chat-request.dto';
 import { ChatResponseDto } from '../dto/chat-response.dto';
 import { PrismaService } from 'src/shared/infrastructure/prisma/prisma.service';

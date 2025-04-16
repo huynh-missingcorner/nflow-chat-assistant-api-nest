@@ -27,24 +27,24 @@ In **Nuclent nFlow**, the **Objects** section is a powerful interface that allow
 ## **New Object**
 
 - The **New Object Button** opens a modal to create a new object. Users are prompted to provide essential details such as:
-    - **Display Name**: A user-friendly name visible in the interface.
-    - **API Name**: A unique identifier used in back-end processes.
-    - **Record Name**: The naming convention for individual records within the object.
-    - **Object Permissions (OWD)**: Permissions for controlling whether the object is public, read-only, or private.
-    - **Description**: Optional details about the purpose of the object.
+  - **Display Name**: A user-friendly name visible in the interface.
+  - **API Name**: A unique identifier used in back-end processes.
+  - **Record Name**: The naming convention for individual records within the object.
+  - **Object Permissions (OWD)**: Permissions for controlling whether the object is public, read-only, or private.
+  - **Description**: Optional details about the purpose of the object.
 
 ## **Objects List**
 
 ![image.png](Objects%201c820e86a54481b19311e2e7218b1d62/image%201.png)
 
 - This section lists all available objects with multiple key columns:
-    - **Display Name**: The user-friendly name of the object.
-    - **Tags Column**: Tags associated with each object for easier filtering and categorization.
-    - **Metadata Column**: A summary of important information about the object (such as whether it's a custom object, its record count, and data types).
-    - **Last Modified Column**: The date and time when the object was last updated, helping users track recent changes.
-    - **Menu Button**: At the right end of each row, a menu button provides various options for each object:
-        - **View Details**: Opens a detailed view of the object, including its fields and relationships.
-        - **Edit**: Enables editing of the object’s schema, including adding or modifying fields.
-        - **View Activity**: Shows a history of changes made to the object (e.g., creation, updates).
-        - **Export**: Allows exporting the object’s schema and data.
-        - **Archive**: Moves the object to the archive, where it can be recovered later if needed
+  - **Display Name**: The user-friendly name of the object.
+  - **Tags Column**: Tags associated with each object for easier filtering and categorization.
+  - **Metadata Column**: A summary of important information about the object (such as whether it's a custom object, its record count, and data types).
+  - **Last Modified Column**: The date and time when the object was last updated, helping users track recent changes.
+  - **Menu Button**: At the right end of each row, a menu button provides various options for each object:
+    - **View Details**: Opens a detailed view of the object, including its fields and relationships.
+    - **Edit**: Enables editing of the object’s schema, including adding or modifying fields.
+    - **View Activity**: Shows a history of changes made to the object (e.g., creation, updates).
+    - **Export**: Allows exporting the object’s schema and data.
+    - **Archive**: Moves the object to the archive, where it can be recovered later if needed

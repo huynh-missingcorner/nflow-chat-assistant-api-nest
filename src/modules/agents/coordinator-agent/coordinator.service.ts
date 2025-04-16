@@ -64,22 +64,10 @@ export class CoordinatorService {
     private readonly chatMessageService: ChatMessageService,
   ) {}
 
-  /**
-   * Process a user message through the multi-agent system
-   * @param message User's message
-   * @param chatContext Previous chat history for context
-   * @returns Object containing the reply and app URL if applicable
-   */
-  async processUserMessage(
-    message: string,
-    sessionId: string,
-  ): Promise<{ reply: string; appUrl?: string }> {
+  async processUserMessage(message: string, sessionId: string): Promise<{ reply: string }> {
     try {
-      // Get the chat context for the session
       const chatContext = await this.getChatContext(sessionId);
-
-      // Extract the intent from the user's message
-      const intentPlan = await this.intentService.extractIntent({
+      const intentPlan = await this.intentService.run({
         message,
         chatContext,
       });
@@ -87,7 +75,7 @@ export class CoordinatorService {
       // Process tasks in order based on dependencies
       const processedTasks = await this.processTasksInOrder(intentPlan);
 
-      const executionResult = await this.executorService.execute(processedTasks.results);
+      const executionResult = await this.executorService.execute(processedTasks);
 
       // Generate a response summarizing what was done
       const response = await this.openAIService.generateChatCompletion([
@@ -174,15 +162,7 @@ export class CoordinatorService {
     return result !== null && typeof result === 'object' && 'toolCalls' in result;
   }
 
-  /**
-   * Process tasks in order based on their dependencies
-   * @param intentPlan The plan containing tasks to process
-   * @returns Results of processing all tasks
-   */
-  private async processTasksInOrder(intentPlan: IntentPlan): Promise<{
-    appUrl?: string;
-    results: ProcessedTasks;
-  }> {
+  private async processTasksInOrder(intentPlan: IntentPlan): Promise<ProcessedTasks> {
     const results: ProcessedTasks = {};
     const completed = new Set<string>();
 
@@ -196,8 +176,6 @@ export class CoordinatorService {
       }
       return isEnabled;
     });
-
-    let appUrl: string | undefined;
 
     // Create a map to store original to unique name mappings
     const nameMap = new Map<string, string>();
@@ -227,14 +205,6 @@ export class CoordinatorService {
           results[task.agent] = result;
           completed.add(task.agent);
 
-          if (
-            task.agent === 'ApplicationAgent' &&
-            'applicationPayload' in result &&
-            'appUrl' in result
-          ) {
-            appUrl = result.appUrl as string;
-          }
-
           const index = tasks.findIndex((t) => t.agent === task.agent);
           if (index !== -1) {
             tasks.splice(index, 1);
@@ -243,7 +213,7 @@ export class CoordinatorService {
       );
     }
 
-    return { appUrl, results };
+    return results;
   }
 
   /**
@@ -273,13 +243,13 @@ export class CoordinatorService {
 
     switch (task.agent) {
       case 'ApplicationAgent':
-        return this.applicationService.generateApplication(task.data as GenerateApplicationParams);
+        return this.applicationService.run(task.data as GenerateApplicationParams);
       case 'ObjectAgent':
-        return this.objectService.generateObjects(task.data as GenerateObjectsParams);
+        return this.objectService.run(task.data as GenerateObjectsParams);
       case 'LayoutAgent':
-        return this.layoutService.generateLayouts(task.data as GenerateLayoutsParams);
+        return this.layoutService.run(task.data as GenerateLayoutsParams);
       case 'FlowAgent':
-        return this.flowService.generateFlows(task.data as GenerateFlowsParams);
+        return this.flowService.run(task.data as GenerateFlowsParams);
       default:
         throw new Error('Unknown agent type');
     }

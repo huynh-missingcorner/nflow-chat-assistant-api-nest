@@ -31,7 +31,6 @@ export class ChatService {
     return {
       sessionId,
       reply: result.reply,
-      appUrl: result.appUrl || undefined,
     };
   }
 

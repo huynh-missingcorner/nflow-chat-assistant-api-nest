@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import { ContextFile, ContextLoaderService } from 'src/shared/services/context-loader.service';
+import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import {
   GenerateObjectsParams,
@@ -12,39 +12,29 @@ import {
 import { ObjectErrors, ObjectPrompts } from './constants/object.constants';
 import { createNewFieldTool, createNewObjectTool, schemaDesignerTool } from './tools/object-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
+import { BaseAgentService } from '../base-agent.service';
 
 @Injectable()
-export class ObjectService {
-  private readonly logger = new Logger(ObjectService.name);
-  private readonly AGENT_PATH = AGENT_PATHS.OBJECT;
-  private readonly CONTEXTS_PATH = 'contexts';
+export class ObjectService extends BaseAgentService<
+  GenerateObjectsParams,
+  GenerateObjectsResponse
+> {
+  constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
+    super(openAIService, contextLoader, AGENT_PATHS.OBJECT);
+  }
 
-  constructor(
-    private readonly openAIService: OpenAIService,
-    private readonly contextLoader: ContextLoaderService,
-  ) {}
+  async run(params: GenerateObjectsParams): Promise<GenerateObjectsResponse> {
+    return this.generateObjects(params);
+  }
 
-  /**
-   * Generate object definitions and their field schemas based on application features and components
-   * This is a two-phase process:
-   * 1. Design the database schema
-   * 2. Generate the tool calls to implement the schema
-   */
-  async generateObjects(params: GenerateObjectsParams): Promise<GenerateObjectsResponse> {
+  private async generateObjects(params: GenerateObjectsParams): Promise<GenerateObjectsResponse> {
     try {
-      // Phase 1: Design the schema
       const schemas = await this.designObjectSchemas(params);
-
-      // Phase 2: Generate tool calls based on the schema
       const toolCalls = await this.generateToolCalls(params.action, schemas);
 
       return {
         toolCalls,
-        metadata: {
-          totalObjects: params.objects.length,
-          generatedAt: new Date().toISOString(),
-          schemas, // Include the designed schemas in metadata for reference
-        },
+        metadata: {},
       };
     } catch (error) {
       this.logger.error('Object generation failed', error);
@@ -52,15 +42,9 @@ export class ObjectService {
     }
   }
 
-  /**
-   * Phase 1: Design the database schema for each object
-   * This phase focuses purely on schema design without concerning about implementation details
-   */
   private async designObjectSchemas(params: GenerateObjectsParams): Promise<ObjectSchema[]> {
     const combinedContext = await this.loadAgentContexts();
-
     const schemaDesignPrompt = `${ObjectPrompts.OBJECT_DESIGN_PROMPT} ${JSON.stringify(params.objects, null, 2)}`;
-
     const schemaDesignMessages = [
       {
         role: 'system' as const,
@@ -71,12 +55,10 @@ export class ObjectService {
         content: schemaDesignPrompt,
       },
     ];
-
     const options = {
       tools: [schemaDesignerTool],
       tool_choice: { type: 'function', name: 'SchemaDesigner_designSchema' } as ToolChoiceFunction,
     };
-
     const completion = await this.openAIService.generateFunctionCompletion(
       schemaDesignMessages,
       options,
@@ -98,22 +80,13 @@ export class ObjectService {
     }
   }
 
-  /**
-   * Phase 2: Generate tool calls to implement the designed schemas
-   * This phase translates the abstract schema into concrete API calls
-   */
   private async generateToolCalls(
     action: string,
     schemas: ObjectSchema[],
   ): Promise<ObjectToolCall[]> {
     try {
-      // Step 1: Generate object creation tool calls
       const objectToolCalls = await this.generateObjectCreationCalls(action, schemas);
-
-      // Step 2: Generate field creation tool calls for each object
       const fieldToolCalls = await this.generateFieldCreationCalls(action, schemas);
-
-      // Combine and order all tool calls
       const allToolCalls: ToolCallPayload[] = [...objectToolCalls, ...fieldToolCalls];
 
       return allToolCalls.map((toolCall, index) => ({
@@ -126,9 +99,6 @@ export class ObjectService {
     }
   }
 
-  /**
-   * Generate tool calls for creating objects
-   */
   private async generateObjectCreationCalls(
     action: string,
     schemas: ObjectSchema[],
@@ -168,9 +138,6 @@ export class ObjectService {
     }));
   }
 
-  /**
-   * Generate tool calls for creating fields for each object
-   */
   private async generateFieldCreationCalls(
     action: string,
     schemas: ObjectSchema[],
@@ -178,9 +145,7 @@ export class ObjectService {
     const combinedContext = await this.loadAgentContexts();
     const allFieldToolCalls: ToolCallPayload[] = [];
 
-    // Process each schema
     for (const schema of schemas) {
-      // Process each field in the schema
       for (const field of schema.fields) {
         const messages = [
           {
@@ -226,20 +191,5 @@ Requirements:
     }
 
     return allFieldToolCalls;
-  }
-
-  private async loadAgentContexts(): Promise<string> {
-    try {
-      const contextFiles = await this.contextLoader.loadContextDirectory(
-        `${this.AGENT_PATH}/${this.CONTEXTS_PATH}`,
-      );
-
-      return contextFiles
-        .map((file: ContextFile) => `# ${file.name}\n\n${file.content}`)
-        .join('\n\n---\n\n');
-    } catch (error) {
-      this.logger.error('Failed to load agent contexts', error);
-      throw new Error(ObjectErrors.CONTEXT_LOAD_ERROR);
-    }
   }
 }

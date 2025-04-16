@@ -1,29 +1,27 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import { ContextFile, ContextLoaderService } from 'src/shared/services/context-loader.service';
+import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { GenerateLayoutsParams, GenerateLayoutsResponse } from './types/layout.types';
 import { LayoutErrors } from './constants/layout.constants';
 import { tools as layoutTools } from './tools/layout-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
+import { BaseAgentService } from '../base-agent.service';
 
 @Injectable()
-export class LayoutService {
-  private readonly logger = new Logger(LayoutService.name);
-  private readonly AGENT_PATH = AGENT_PATHS.LAYOUT;
-  private readonly CONTEXTS_PATH = 'contexts';
+export class LayoutService extends BaseAgentService<
+  GenerateLayoutsParams,
+  GenerateLayoutsResponse
+> {
+  constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
+    super(openAIService, contextLoader, AGENT_PATHS.LAYOUT);
+  }
 
-  constructor(
-    private readonly openAIService: OpenAIService,
-    private readonly contextLoader: ContextLoaderService,
-  ) {}
+  async run(params: GenerateLayoutsParams): Promise<GenerateLayoutsResponse> {
+    return this.generateLayouts(params);
+  }
 
-  /**
-   * Generate layout definitions based on application features, components, and objects
-   * @param params Parameters containing features, components, objects, and session information
-   * @returns Layout definitions and suggested next steps
-   */
-  async generateLayouts(params: GenerateLayoutsParams): Promise<GenerateLayoutsResponse> {
+  private async generateLayouts(params: GenerateLayoutsParams): Promise<GenerateLayoutsResponse> {
     try {
       const combinedContext = await this.loadAgentContexts();
 
@@ -46,13 +44,12 @@ export class LayoutService {
         } as ToolChoiceFunction,
       };
 
-      const completion = await this.openAIService.generateFunctionCompletion(messages, options);
-      if (!completion.toolCalls?.length) {
+      const response = await this.openAIService.generateFunctionCompletion(messages, options);
+      if (!response.toolCalls?.length) {
         throw new Error(LayoutErrors.GENERATION_FAILED);
       }
 
-      // Process all tool calls and organize them
-      const toolCalls = completion.toolCalls.map((toolCall, index) => {
+      const toolCalls = response.toolCalls.map((toolCall, index) => {
         const functionCall = toolCall.function;
         return {
           order: index,
@@ -63,31 +60,13 @@ export class LayoutService {
         };
       });
 
-      // Return structured response with all tool calls
       return {
         toolCalls,
-        metadata: {
-          // Additional metadata can be added here
-        },
+        metadata: {},
       };
     } catch (error) {
       this.logger.error('Layout generation failed', error);
       throw new Error(error instanceof Error ? error.message : LayoutErrors.GENERATION_FAILED);
-    }
-  }
-
-  private async loadAgentContexts(): Promise<string> {
-    try {
-      const contextFiles = await this.contextLoader.loadContextDirectory(
-        `${this.AGENT_PATH}/${this.CONTEXTS_PATH}`,
-      );
-
-      return contextFiles
-        .map((file: ContextFile) => `# ${file.name}\n\n${file.content}`)
-        .join('\n\n---\n\n');
-    } catch (error) {
-      this.logger.error('Failed to load agent contexts', error);
-      throw new Error(LayoutErrors.CONTEXT_LOAD_ERROR);
     }
   }
 }

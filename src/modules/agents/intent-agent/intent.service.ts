@@ -1,29 +1,24 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ExtractIntentParams, IntentPlan, IntentToolResponse } from './types/intent.types';
 import { IntentErrors } from './constants/intent.constants';
-import { ContextLoaderService, ContextFile } from 'src/shared/services/context-loader.service';
+import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { tools as intentTools } from './tools/intent-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
+import { BaseAgentService } from '../base-agent.service';
 
 @Injectable()
-export class IntentService {
-  private readonly logger = new Logger(IntentService.name);
-  private readonly AGENT_PATH = AGENT_PATHS.INTENT;
-  private readonly CONTEXTS_PATH = 'contexts';
+export class IntentService extends BaseAgentService<ExtractIntentParams, IntentPlan> {
+  constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
+    super(openAIService, contextLoader, AGENT_PATHS.INTENT);
+  }
 
-  constructor(
-    private readonly openAIService: OpenAIService,
-    private readonly contextLoader: ContextLoaderService,
-  ) {}
+  async run(params: ExtractIntentParams): Promise<IntentPlan> {
+    return this.createIntentPlan(params);
+  }
 
-  /**
-   * Extracts features, components, and goals from a user's prompt
-   * @param params The extraction parameters containing message and optional chat context
-   * @returns Structured intent data including features, components, and summary
-   */
-  async extractIntent(params: ExtractIntentParams): Promise<IntentPlan> {
+  private async createIntentPlan(params: ExtractIntentParams): Promise<IntentPlan> {
     try {
       const combinedContext = await this.loadAgentContexts();
 
@@ -46,7 +41,7 @@ export class IntentService {
         options,
         params.functionCallInputs,
       );
-      if (!response.toolCalls?.[0]) {
+      if (!response.toolCalls?.length) {
         throw new Error(IntentErrors.EXTRACTION_ERROR);
       }
 
@@ -61,26 +56,6 @@ export class IntentService {
     } catch (error) {
       this.logger.error('Intent extraction failed', error);
       throw new Error(IntentErrors.EXTRACTION_ERROR);
-    }
-  }
-
-  /**
-   * Loads and combines all context files for the intent agent
-   * @returns Combined context content as string
-   * @private
-   */
-  private async loadAgentContexts(): Promise<string> {
-    try {
-      const contextFiles = await this.contextLoader.loadContextDirectory(
-        `${this.AGENT_PATH}/${this.CONTEXTS_PATH}`,
-      );
-
-      return contextFiles
-        .map((file: ContextFile) => `# ${file.name}\n\n${file.content}`)
-        .join('\n\n---\n\n');
-    } catch (error) {
-      this.logger.error('Failed to load agent contexts', error);
-      throw new Error(IntentErrors.CONTEXT_LOAD_ERROR);
     }
   }
 }

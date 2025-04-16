@@ -18,6 +18,7 @@ export const tools: FunctionTool[] = [
           items: {
             type: 'object',
             properties: {
+              id: { type: 'string' },
               agent: {
                 type: 'string',
                 description: 'Which agent should perform this task',
@@ -29,15 +30,13 @@ export const tools: FunctionTool[] = [
               },
               dependsOn: {
                 type: ['array', 'null'],
-                items: {
-                  type: 'string',
-                  enum: ['ApplicationAgent', 'ObjectAgent', 'LayoutAgent', 'FlowAgent'],
-                },
-                description: 'Optional list of agents this task depends on',
+                items: { type: 'string' },
+                description: 'List of task IDs that must be completed before this task can start',
               },
               data: {
                 description: 'Task-specific payload depending on the agent',
                 anyOf: [
+                  // ApplicationAgentData
                   {
                     title: 'ApplicationAgentData',
                     type: 'object',
@@ -69,6 +68,8 @@ export const tools: FunctionTool[] = [
                     required: ['agentType', 'action', 'name', 'description', 'visibility', 'slug'],
                     additionalProperties: false,
                   },
+
+                  // ObjectAgentData
                   {
                     title: 'ObjectAgentData',
                     type: 'object',
@@ -81,7 +82,7 @@ export const tools: FunctionTool[] = [
                       },
                       action: {
                         type: 'string',
-                        enum: ['create'],
+                        enum: ['create', 'update', 'delete', 'read'],
                         description: 'Action to perform',
                       },
                       objects: {
@@ -94,13 +95,50 @@ export const tools: FunctionTool[] = [
                               type: 'string',
                               description: 'Description of the object',
                             },
-                            requiredFields: {
-                              type: 'array',
-                              items: { type: 'string' },
-                              description: 'Required fields for the object',
+                            fields: {
+                              type: ['array', 'null'],
+                              items: {
+                                type: 'object',
+                                properties: {
+                                  name: { type: 'string', description: 'Name of the field' },
+                                  type: {
+                                    type: 'string',
+                                    enum: [
+                                      'numeric',
+                                      'text',
+                                      'dateTime',
+                                      'boolean',
+                                      'pickList',
+                                      'json',
+                                      'generated',
+                                      'currency',
+                                      'externalRelation',
+                                      'indirectRelation',
+                                      'relation',
+                                      'objectReference',
+                                      'flowReference',
+                                      'rollup',
+                                      'formula',
+                                      'file',
+                                    ],
+                                    description: 'Type of the field',
+                                  },
+                                  required: {
+                                    type: 'boolean',
+                                    description: 'Is the field required',
+                                  },
+                                  enumValues: {
+                                    type: ['array', 'null'],
+                                    items: { type: 'string' },
+                                    description: 'List of possible values for the field',
+                                  },
+                                },
+                                required: ['name', 'type', 'required', 'enumValues'],
+                                additionalProperties: false,
+                              },
                             },
                           },
-                          required: ['name', 'description', 'requiredFields'],
+                          required: ['name', 'description', 'fields'],
                           additionalProperties: false,
                         },
                       },
@@ -108,6 +146,8 @@ export const tools: FunctionTool[] = [
                     required: ['agentType', 'action', 'objects'],
                     additionalProperties: false,
                   },
+
+                  // LayoutAgentData
                   {
                     title: 'LayoutAgentData',
                     type: 'object',
@@ -132,6 +172,8 @@ export const tools: FunctionTool[] = [
                     required: ['agentType', 'action', 'pages'],
                     additionalProperties: false,
                   },
+
+                  // FlowAgentData
                   {
                     title: 'FlowAgentData',
                     type: 'object',
@@ -162,7 +204,7 @@ export const tools: FunctionTool[] = [
                 ],
               },
             },
-            required: ['agent', 'description', 'data', 'dependsOn'],
+            required: ['id', 'agent', 'description', 'data', 'dependsOn'],
             additionalProperties: false,
           },
         },

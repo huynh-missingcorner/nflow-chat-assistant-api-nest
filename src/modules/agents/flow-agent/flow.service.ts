@@ -1,30 +1,25 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import { ContextFile, ContextLoaderService } from 'src/shared/services/context-loader.service';
+import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { GenerateFlowsParams, GenerateFlowsResponse } from './types/flow.types';
 import { FlowErrors } from './constants/flow.constants';
 import { createFlowTool } from './tools/flow-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
+import { BaseAgentService } from '../base-agent.service';
+
 @Injectable()
-export class FlowService {
-  private readonly logger = new Logger(FlowService.name);
-  private readonly AGENT_PATH = AGENT_PATHS.FLOW;
-  private readonly CONTEXTS_PATH = 'contexts';
+export class FlowService extends BaseAgentService<GenerateFlowsParams, GenerateFlowsResponse> {
+  constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
+    super(openAIService, contextLoader, AGENT_PATHS.FLOW);
+  }
 
-  constructor(
-    private readonly openAIService: OpenAIService,
-    private readonly contextLoader: ContextLoaderService,
-  ) {}
+  async run(params: GenerateFlowsParams): Promise<GenerateFlowsResponse> {
+    return this.generateFlows(params);
+  }
 
-  /**
-   * Generate flow definitions based on application features, components, objects, and layouts
-   * @param params Parameters containing features, components, objects, layouts, and session information
-   * @returns Flow definitions and suggested next steps
-   */
-  async generateFlows(params: GenerateFlowsParams): Promise<GenerateFlowsResponse> {
+  private async generateFlows(params: GenerateFlowsParams): Promise<GenerateFlowsResponse> {
     try {
-      // Load context from file
       const combinedContext = await this.loadAgentContexts();
 
       const messages = [
@@ -46,13 +41,12 @@ export class FlowService {
         } as ToolChoiceFunction,
       };
 
-      const completion = await this.openAIService.generateFunctionCompletion(messages, options);
-      if (!completion.toolCalls?.length) {
+      const response = await this.openAIService.generateFunctionCompletion(messages, options);
+      if (!response.toolCalls?.length) {
         throw new Error(FlowErrors.GENERATION_FAILED);
       }
 
-      // Process all tool calls and organize them
-      const toolCalls = completion.toolCalls.map((toolCall, index) => {
+      const toolCalls = response.toolCalls.map((toolCall, index) => {
         const functionCall = toolCall.function;
         return {
           order: index,
@@ -63,31 +57,13 @@ export class FlowService {
         };
       });
 
-      // Return structured response with all tool calls
       return {
         toolCalls,
-        metadata: {
-          // Additional metadata can be added here
-        },
+        metadata: {},
       };
     } catch (error) {
       this.logger.error('Flow generation failed', error);
       throw new Error(error instanceof Error ? error.message : FlowErrors.GENERATION_FAILED);
-    }
-  }
-
-  private async loadAgentContexts(): Promise<string> {
-    try {
-      const contextFiles = await this.contextLoader.loadContextDirectory(
-        `${this.AGENT_PATH}/${this.CONTEXTS_PATH}`,
-      );
-
-      return contextFiles
-        .map((file: ContextFile) => `# ${file.name}\n\n${file.content}`)
-        .join('\n\n---\n\n');
-    } catch (error) {
-      this.logger.error('Failed to load agent contexts', error);
-      throw new Error(FlowErrors.CONTEXT_LOAD_ERROR);
     }
   }
 }

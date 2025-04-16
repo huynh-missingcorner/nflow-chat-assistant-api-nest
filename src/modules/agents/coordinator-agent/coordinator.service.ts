@@ -20,6 +20,7 @@ import { GenerateLayoutsParams, GenerateLayoutsResponse } from '../layout-agent/
 import { GenerateFlowsParams, GenerateFlowsResponse } from '../flow-agent/types/flow.types';
 import { MessageRole } from 'src/modules/chat/dto/chat-message.dto';
 import prompts from './consts/prompts';
+import { ChatMessage } from '../types';
 
 interface BaseAgentResponse {
   toolCalls: ToolCall[];
@@ -71,11 +72,8 @@ export class CoordinatorService {
         message,
         chatContext,
       });
-
-      // Process tasks in order based on dependencies
-      const processedTasks = await this.processTasksInOrder(intentPlan);
-
-      const executionResult = await this.executorService.execute(processedTasks);
+      const toolCalls = await this.getToolCalls(intentPlan);
+      const executionResult = await this.executorService.execute(toolCalls);
 
       // Generate a response summarizing what was done
       const response = await this.openAIService.generateChatCompletion([
@@ -86,7 +84,7 @@ export class CoordinatorService {
         ...chatContext,
         {
           role: 'user',
-          content: `Here is what was done: ${JSON.stringify({ processedTasks, executionResult })}. ${prompts.RETURN_APP_LINK}`,
+          content: `Here is what was done: ${JSON.stringify({ toolCalls, executionResult })}. ${prompts.RETURN_APP_LINK}`,
         },
       ]);
 
@@ -162,7 +160,12 @@ export class CoordinatorService {
     return result !== null && typeof result === 'object' && 'toolCalls' in result;
   }
 
-  private async processTasksInOrder(intentPlan: IntentPlan): Promise<ProcessedTasks> {
+  /**
+   * Get the tool calls for the intent plan
+   * @param intentPlan The intent plan
+   * @returns The tool calls
+   */
+  private async getToolCalls(intentPlan: IntentPlan): Promise<ProcessedTasks> {
     const results: ProcessedTasks = {};
     const completed = new Set<string>();
 
@@ -255,9 +258,7 @@ export class CoordinatorService {
     }
   }
 
-  private async getChatContext(
-    sessionId: string,
-  ): Promise<Array<{ role: 'user' | 'assistant'; content: string }>> {
+  private async getChatContext(sessionId: string): Promise<Array<ChatMessage>> {
     const savedMessages = await this.chatMessageService.findAllBySessionId(sessionId);
     const chatContext = savedMessages.map((message) => ({
       role: message.role === MessageRole.USER ? ('user' as const) : ('assistant' as const),

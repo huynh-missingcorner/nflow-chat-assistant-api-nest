@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { ChangeObjectRequest, ChangeFieldRequest } from '../types/api.types';
 import { BaseNFlowService } from './base.service';
+import { FieldDto, FieldResponse, ObjectResponse } from '../types';
+import { ObjectDto } from '../types';
 
 @Injectable()
 export class NFlowObjectService extends BaseNFlowService {
@@ -10,7 +11,12 @@ export class NFlowObjectService extends BaseNFlowService {
     super(httpService, configService, NFlowObjectService.name);
   }
 
-  async changeObject(data: ChangeObjectRequest) {
+  async getObject(name: string): Promise<ObjectResponse> {
+    return this.makeRequest('GET', `/mo/${name}`);
+  }
+
+  // CUD operations for objects
+  async changeObject(data: ObjectDto): Promise<ObjectResponse> {
     const { name, ...rest } = data;
     console.log(name, rest);
     rest.data.recordName.label = 'Name';
@@ -18,7 +24,12 @@ export class NFlowObjectService extends BaseNFlowService {
     return this.makeRequest('POST', '/mo', rest);
   }
 
-  async changeField(data: ChangeFieldRequest) {
+  async getFieldsForObject(name: string): Promise<FieldResponse[]> {
+    return this.makeRequest('GET', `/mo/${name}/fields`);
+  }
+
+  // CUD operations for fields
+  async changeField(data: FieldDto): Promise<FieldResponse> {
     const { objName, ...rest } = data;
     switch (rest.data.typeName) {
       case 'numeric':

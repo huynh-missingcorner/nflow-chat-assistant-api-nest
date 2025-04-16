@@ -5,6 +5,7 @@ export enum MessageRole {
   USER = 'USER',
   ASSISTANT = 'ASSISTANT',
   SYSTEM = 'SYSTEM',
+  DEVELOPER = 'DEVELOPER',
 }
 
 export class CreateMessageDto {

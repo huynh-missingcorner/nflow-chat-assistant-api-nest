@@ -3,6 +3,7 @@ import { GenerateApplicationParams } from '../../application-agent/types/applica
 import { GenerateFlowsParams } from '../../flow-agent/types/flow.types';
 import { GenerateLayoutsParams } from '../../layout-agent/types/layout.types';
 import { GenerateObjectsParams } from '../../object-agent/types/object.types';
+import { ChatMessage } from '../../types';
 
 export interface IntentPlan {
   summary: string;
@@ -38,7 +39,7 @@ export interface ObjectAgentData {
 
 export interface ExtractIntentParams {
   message: string;
-  chatContext?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  chatContext?: Array<ChatMessage>;
   functionCallInputs?: FunctionCallInputs;
 }
 

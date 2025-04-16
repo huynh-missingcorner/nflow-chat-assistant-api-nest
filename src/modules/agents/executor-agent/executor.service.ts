@@ -12,14 +12,13 @@ import {
   FunctionArguments,
 } from './types/executor.types';
 import {
-  CreateAppRequest,
-  UpdateAppRequest,
-  ChangeObjectRequest,
-  ChangeFieldRequest,
-  CreateLayoutRequest,
-  CreateFlowRequest,
-} from '../../nflow/types/api.types';
-
+  CreateApplicationDto,
+  UpdateApplicationDto,
+  ObjectDto,
+  FieldDto,
+  CreateLayoutDto,
+  FlowCreateDto,
+} from '../../nflow/types';
 @Injectable()
 export class ExecutorService {
   private readonly logger = new Logger(ExecutorService.name);
@@ -143,27 +142,27 @@ export class ExecutorService {
   ): Promise<unknown> {
     switch (functionName) {
       case 'ApiAppBuilderController_createApp': {
-        const typedArgs = args as CreateAppRequest;
+        const typedArgs = args as CreateApplicationDto;
         return this.applicationService.createApp(typedArgs);
       }
       case 'ApiAppBuilderController_updateApp': {
-        const typedArgs = args as UpdateAppRequest;
+        const typedArgs = args as UpdateApplicationDto;
         return this.applicationService.updateApp(typedArgs);
       }
       case 'ObjectController_changeObject': {
-        const typedArgs = args as ChangeObjectRequest;
+        const typedArgs = args as ObjectDto;
         return this.objectService.changeObject(typedArgs);
       }
       case 'FieldController_changeField': {
-        const typedArgs = args as ChangeFieldRequest;
+        const typedArgs = args as FieldDto;
         return this.objectService.changeField(typedArgs);
       }
       case 'ApiLayoutBuilderController_createLayout': {
-        const typedArgs = args as CreateLayoutRequest;
+        const typedArgs = args as CreateLayoutDto;
         return this.layoutService.createLayout(typedArgs);
       }
       case 'ApiFlowController_createFlow': {
-        const typedArgs = args as CreateFlowRequest;
+        const typedArgs = args as FlowCreateDto;
         return this.flowService.createFlow(typedArgs);
       }
       default: {

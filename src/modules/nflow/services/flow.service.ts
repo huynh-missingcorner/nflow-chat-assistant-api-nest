@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { CreateFlowRequest } from '../types/api.types';
 import { BaseNFlowService } from './base.service';
+import { FlowCreateDto, FlowResponse } from '../types';
 
 @Injectable()
 export class NFlowFlowService extends BaseNFlowService {
@@ -10,7 +10,7 @@ export class NFlowFlowService extends BaseNFlowService {
     super(httpService, configService, NFlowFlowService.name);
   }
 
-  async createFlow(data: CreateFlowRequest) {
+  async createFlow(data: FlowCreateDto): Promise<FlowResponse> {
     return this.makeRequest('POST', '/flows', data);
   }
 }

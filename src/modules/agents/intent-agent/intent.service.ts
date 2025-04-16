@@ -41,7 +41,11 @@ export class IntentService {
         tool_choice: { type: 'function', name: 'create_intent_plan' } as ToolChoiceFunction,
       };
 
-      const response = await this.openAIService.generateFunctionCompletion(messages, options);
+      const response = await this.openAIService.generateFunctionCompletion(
+        messages,
+        options,
+        params.functionCallInputs,
+      );
       if (!response.toolCalls?.[0]) {
         throw new Error(IntentErrors.EXTRACTION_ERROR);
       }

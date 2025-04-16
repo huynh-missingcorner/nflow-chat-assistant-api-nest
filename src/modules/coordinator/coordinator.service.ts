@@ -22,6 +22,8 @@ import { GenerateFlowsParams, GenerateFlowsResponse } from '../agents/flow-agent
 import { ExecutorService } from '../agents/executor-agent/executor.service';
 import { ProcessedTasks } from '../agents/executor-agent/types/executor.types';
 import prompts from './consts/prompts';
+import { MessageRole } from '../chat/dto/chat-message.dto';
+import { ChatMessageService } from '../chat/services/chat-message.service';
 
 interface BaseAgentResponse {
   toolCalls: ToolCall[];
@@ -62,6 +64,7 @@ export class CoordinatorService {
     private readonly flowService: FlowService,
     private readonly openAIService: OpenAIService,
     private readonly executorService: ExecutorService,
+    private readonly chatMessageService: ChatMessageService,
   ) {}
 
   /**
@@ -72,9 +75,12 @@ export class CoordinatorService {
    */
   async processUserMessage(
     message: string,
-    chatContext: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+    sessionId: string,
   ): Promise<{ reply: string; appUrl?: string }> {
     try {
+      // Get the chat context for the session
+      const chatContext = await this.getChatContext(sessionId);
+
       // Extract the intent from the user's message
       const intentPlan = await this.intentService.extractIntent({
         message,
@@ -259,5 +265,17 @@ export class CoordinatorService {
       default:
         throw new Error('Unknown agent type');
     }
+  }
+
+  private async getChatContext(
+    sessionId: string,
+  ): Promise<Array<{ role: 'user' | 'assistant'; content: string }>> {
+    const savedMessages = await this.chatMessageService.findAllBySessionId(sessionId);
+    const chatContext = savedMessages.map((message) => ({
+      role: message.role === MessageRole.USER ? ('user' as const) : ('assistant' as const),
+      content: message.content,
+    }));
+
+    return chatContext;
   }
 }

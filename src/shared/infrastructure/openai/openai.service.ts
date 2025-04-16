@@ -8,6 +8,7 @@ import {
   ResponseCreateOptions,
   ChatMessage,
   OpenAIResponseWithRequestId,
+  FunctionCallInputs,
 } from './openai.types';
 import {
   ResponseCreateParamsNonStreaming,
@@ -45,9 +46,10 @@ export class OpenAIService implements OnModuleInit {
   async generateChatCompletion(
     messages: ChatMessage[],
     options?: ResponseCreateOptions,
+    functionCallInputs?: FunctionCallInputs,
   ): Promise<ChatCompletionResponse> {
     try {
-      const params = this.createRequestParams(messages, options);
+      const params = this.createRequestParams(messages, options, functionCallInputs);
       const response: OpenAIResponseWithRequestId = await this.openai.responses.create(params);
       return this.processResponse(response);
     } catch (error: unknown) {
@@ -69,13 +71,18 @@ export class OpenAIService implements OnModuleInit {
       tool_choice: ToolChoiceOptions | ToolChoiceTypes | ToolChoiceFunction;
       tools: Array<Tool>;
     },
+    functionCallInputs?: FunctionCallInputs,
   ): Promise<ChatCompletionResponse> {
     try {
-      const params = this.createRequestParams(messages, {
-        ...options,
-        tool_choice: options.tool_choice ?? 'auto',
-        tools: options.tools,
-      });
+      const params = this.createRequestParams(
+        messages,
+        {
+          ...options,
+          tool_choice: options.tool_choice ?? 'auto',
+          tools: options.tools,
+        },
+        functionCallInputs,
+      );
       const response: OpenAIResponseWithRequestId = await this.openai.responses.create(params);
       return this.processResponse(response);
     } catch (error: unknown) {
@@ -95,10 +102,15 @@ export class OpenAIService implements OnModuleInit {
   private createRequestParams(
     messages: ChatMessage[],
     options?: ResponseCreateOptions,
+    functionCallInputs?: FunctionCallInputs,
   ): ResponseCreateParamsNonStreaming {
     return {
       ...options,
-      input: messages,
+      input: [
+        ...messages,
+        ...(functionCallInputs?.functionCalls ?? []),
+        ...(functionCallInputs?.functionCallOutputs ?? []),
+      ],
       model: options?.model ?? this.config.defaultModel,
       max_output_tokens: options?.max_output_tokens ?? this.config.defaultMaxTokens,
       temperature: options?.temperature ?? this.config.defaultTemperature,

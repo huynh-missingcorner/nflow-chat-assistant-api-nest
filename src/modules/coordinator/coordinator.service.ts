@@ -269,7 +269,11 @@ export class CoordinatorService {
     const agentKey = task.agent as ActiveAgent;
     if (!this.agentStatus[agentKey]?.enabled) {
       this.logger.warn(`Attempted to execute task for disabled agent: ${task.agent}`);
-      throw new Error(`Agent ${task.agent} is disabled`);
+
+      // Return an empty response for disabled agents
+      return {
+        toolCalls: [],
+      };
     }
 
     switch (task.agent) {

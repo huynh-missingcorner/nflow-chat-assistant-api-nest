@@ -23,7 +23,7 @@ export interface AgentStatus {
 export const DEFAULT_AGENT_STATUS: Record<ActiveAgent, AgentStatus> = {
   [Agent.ApplicationAgent]: {
     agent: Agent.ApplicationAgent,
-    enabled: true,
+    enabled: false,
     description: 'Application structure generation',
   },
   [Agent.ObjectAgent]: {
@@ -33,12 +33,12 @@ export const DEFAULT_AGENT_STATUS: Record<ActiveAgent, AgentStatus> = {
   },
   [Agent.LayoutAgent]: {
     agent: Agent.LayoutAgent,
-    enabled: true,
+    enabled: false,
     description: 'UI layout and components generation',
   },
   [Agent.FlowAgent]: {
     agent: Agent.FlowAgent,
-    enabled: true,
+    enabled: false,
     description: 'Business logic flow generation',
   },
 };

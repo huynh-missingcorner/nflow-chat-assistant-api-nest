@@ -2,16 +2,20 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import OpenAI from 'openai';
 import { OpenAIConfig, createOpenAIConfig } from './openai.config';
 import {
-  ChatCompletionOptions,
-  ChatMessage,
   OpenAIError,
   ChatCompletionResponse,
   ChatCompletionError,
+  ResponseCreateOptions,
+  ChatMessage,
+  OpenAIResponseWithRequestId,
 } from './openai.types';
 import {
-  ChatCompletionCreateParamsNonStreaming,
-  ChatCompletionMessage,
-} from 'openai/resources/chat/completions.mjs';
+  ResponseCreateParamsNonStreaming,
+  Tool,
+  ToolChoiceFunction,
+  ToolChoiceOptions,
+  ToolChoiceTypes,
+} from 'openai/resources/responses/responses.mjs';
 
 @Injectable()
 export class OpenAIService implements OnModuleInit {
@@ -40,11 +44,11 @@ export class OpenAIService implements OnModuleInit {
    */
   async generateChatCompletion(
     messages: ChatMessage[],
-    options?: ChatCompletionOptions,
+    options?: ResponseCreateOptions,
   ): Promise<ChatCompletionResponse> {
     try {
-      const config = this.createRequestConfig(messages, options);
-      const response = await this.openai.chat.completions.create(config);
+      const params = this.createRequestParams(messages, options);
+      const response: OpenAIResponseWithRequestId = await this.openai.responses.create(params);
       return this.processResponse(response);
     } catch (error: unknown) {
       const errorResponse = this.handleError(error);
@@ -61,14 +65,18 @@ export class OpenAIService implements OnModuleInit {
    */
   async generateFunctionCompletion(
     messages: ChatMessage[],
-    options: ChatCompletionOptions & { tools: NonNullable<ChatCompletionOptions['tools']> },
+    options: ResponseCreateOptions & {
+      tool_choice: ToolChoiceOptions | ToolChoiceTypes | ToolChoiceFunction;
+      tools: Array<Tool>;
+    },
   ): Promise<ChatCompletionResponse> {
     try {
-      const config = this.createRequestConfig(messages, {
+      const params = this.createRequestParams(messages, {
         ...options,
         tool_choice: options.tool_choice ?? 'auto',
+        tools: options.tools,
       });
-      const response = await this.openai.chat.completions.create(config);
+      const response: OpenAIResponseWithRequestId = await this.openai.responses.create(params);
       return this.processResponse(response);
     } catch (error: unknown) {
       const errorResponse = this.handleError(error);
@@ -78,29 +86,23 @@ export class OpenAIService implements OnModuleInit {
   }
 
   /**
-   * Creates the request configuration by merging default config with provided options
+   * Creates the request parameters by merging default config with provided options
    * @param messages Array of messages to send to OpenAI
+   * @param instructions Optional instructions to send to OpenAI
    * @param options Optional configuration to override defaults
-   * @returns Complete request configuration
+   * @returns Complete request parameters
    */
-  private createRequestConfig(
+  private createRequestParams(
     messages: ChatMessage[],
-    options?: ChatCompletionOptions,
-  ): ChatCompletionCreateParamsNonStreaming {
-    const config = { ...this.config, ...options };
+    options?: ResponseCreateOptions,
+  ): ResponseCreateParamsNonStreaming {
     return {
-      model: config.model,
-      messages: messages as ChatCompletionMessage[],
-      max_tokens: config.maxTokens,
-      temperature: config.temperature,
-      ...(options?.response_format && { response_format: options.response_format }),
-      ...(options?.tools && { tools: options.tools }),
-      ...(options?.tool_choice && { tool_choice: options.tool_choice }),
-      ...(options?.stop && { stop: options.stop }),
-      ...(options?.presence_penalty && { presence_penalty: options.presence_penalty }),
-      ...(options?.frequency_penalty && { frequency_penalty: options.frequency_penalty }),
-      ...(options?.logit_bias && { logit_bias: options.logit_bias }),
-      ...(options?.user && { user: options.user }),
+      ...options,
+      input: messages,
+      model: options?.model ?? this.config.defaultModel,
+      max_output_tokens: options?.max_output_tokens ?? this.config.defaultMaxTokens,
+      temperature: options?.temperature ?? this.config.defaultTemperature,
+      stream: false,
     };
   }
 
@@ -109,17 +111,43 @@ export class OpenAIService implements OnModuleInit {
    * @param response Raw API response
    * @returns Processed chat completion response
    */
-  private processResponse(
-    response: OpenAI.Chat.Completions.ChatCompletion,
-  ): ChatCompletionResponse {
-    const message = response.choices[0]?.message;
-    if (!message) {
+  private processResponse(response: OpenAIResponseWithRequestId): ChatCompletionResponse {
+    if (!response.output || response.output.length === 0) {
       throw new Error('No response from OpenAI');
     }
 
+    // Handle message type outputs
+    const messageOutput = response.output.find((item) => item.type === 'message');
+    if (messageOutput) {
+      return {
+        content:
+          messageOutput.content[0]?.type === 'output_text' ? messageOutput.content[0].text : '',
+      };
+    }
+
+    // Handle function call outputs
+    const functionCalls = response.output
+      .filter((item) => item.type === 'function_call')
+      .map((item) => ({
+        id: item.id ?? '',
+        type: 'function' as const,
+        function: {
+          call_id: item.call_id ?? '',
+          name: item.name ?? '',
+          arguments: item.arguments ?? '',
+        },
+      }));
+
+    if (functionCalls.length > 0) {
+      return {
+        content: '',
+        toolCalls: functionCalls,
+      };
+    }
+
     return {
-      content: message.content,
-      toolCalls: message.tool_calls,
+      content: '',
+      toolCalls: [],
     };
   }
 

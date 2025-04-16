@@ -5,6 +5,7 @@ import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { GenerateLayoutsParams, GenerateLayoutsResponse } from './types/layout.types';
 import { LayoutErrors } from './constants/layout.constants';
 import { tools as layoutTools } from './tools/layout-tools';
+import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 
 @Injectable()
 export class LayoutService {
@@ -41,8 +42,8 @@ export class LayoutService {
         tools: layoutTools,
         tool_choice: {
           type: 'function',
-          function: { name: 'ApiLayoutBuilderController_createLayout' },
-        } as const,
+          name: 'ApiLayoutBuilderController_createLayout',
+        } as ToolChoiceFunction,
       };
 
       const completion = await this.openAIService.generateFunctionCompletion(messages, options);

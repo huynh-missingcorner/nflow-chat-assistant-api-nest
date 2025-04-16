@@ -2,7 +2,12 @@ import { ResponseFormatJSONObject, ResponseFormatJSONSchema } from 'openai/resou
 import { ResponseFormatText } from 'openai/resources/shared.mjs';
 import { OpenAIConfig } from './openai.config';
 import { ChatCompletionToolChoiceOption, ChatCompletionTool } from 'openai/resources/index.mjs';
-import { ChatCompletionMessageParam } from 'openai/resources/chat/completions.mjs';
+import {
+  ResponseCreateParams,
+  ResponseInputItem,
+  ResponseOutputItem,
+} from 'openai/resources/responses/responses.mjs';
+import { Response as OpenAIResponse } from 'openai/resources/responses/responses.mjs';
 
 export interface OpenAIError extends Error {
   response?: {
@@ -17,7 +22,30 @@ export interface OpenAIError extends Error {
   };
 }
 
-export type ChatMessage = ChatCompletionMessageParam;
+export type ChatMessage = ResponseInputItem;
+
+export type ResponseCreateOptions = Partial<Omit<ResponseCreateParams, 'input'>>;
+
+export type OpenAIResponseWithRequestId = OpenAIResponse & {
+  _request_id?: string | null;
+};
+
+export interface ChatCompletionResponse {
+  content: string | null;
+  toolCalls?: Array<ToolCallOutput>;
+}
+
+export interface ToolCallOutput {
+  id: string;
+  type: 'function';
+  function: {
+    call_id: string;
+    name: string;
+    arguments: string;
+  };
+}
+
+export type OutputItemType = ResponseOutputItem['type'];
 
 export type JsonSchemaFormat = {
   type: 'json_schema';
@@ -56,18 +84,6 @@ export interface ChatCompletionWithoutToolsOptions extends ChatCompletionBaseOpt
 export type ChatCompletionOptions =
   | ChatCompletionWithToolsOptions
   | ChatCompletionWithoutToolsOptions;
-
-export interface ChatCompletionResponse {
-  content: string | null;
-  toolCalls?: Array<{
-    id: string;
-    type: 'function';
-    function: {
-      name: string;
-      arguments: string;
-    };
-  }>;
-}
 
 export interface ChatCompletionError {
   error: OpenAIError;

@@ -5,6 +5,7 @@ import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { GenerateApplicationParams, GenerateApplicationResponse } from './types/application.types';
 import { ApplicationErrors } from './constants/application.constants';
 import { tools as applicationTools } from './tools/application-tools';
+import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 
 @Injectable()
 export class ApplicationService {
@@ -44,8 +45,8 @@ export class ApplicationService {
         tools: applicationTools,
         tool_choice: {
           type: 'function',
-          function: { name: 'ApiAppBuilderController_createApp' },
-        } as const,
+          name: 'ApiAppBuilderController_createApp',
+        } as ToolChoiceFunction,
       };
 
       const completion = await this.openAIService.generateFunctionCompletion(messages, options);

@@ -5,6 +5,7 @@ import { IntentErrors } from './constants/intent.constants';
 import { ContextLoaderService, ContextFile } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { tools as intentTools } from './tools/intent-tools';
+import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 
 @Injectable()
 export class IntentService {
@@ -37,7 +38,7 @@ export class IntentService {
 
       const options = {
         tools: intentTools,
-        tool_choice: { type: 'function', function: { name: 'create_intent_plan' } } as const,
+        tool_choice: { type: 'function', name: 'create_intent_plan' } as ToolChoiceFunction,
       };
 
       const response = await this.openAIService.generateFunctionCompletion(messages, options);

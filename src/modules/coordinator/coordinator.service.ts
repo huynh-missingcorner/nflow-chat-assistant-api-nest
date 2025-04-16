@@ -92,6 +92,7 @@ export class CoordinatorService {
           role: 'system',
           content: prompts.SUMMARY,
         },
+        ...chatContext,
         {
           role: 'user',
           content: `Here is what was done: ${JSON.stringify({ processedTasks, executionResult })}. ${prompts.RETURN_APP_LINK}`,
@@ -104,7 +105,6 @@ export class CoordinatorService {
 
       return {
         reply: response.content,
-        appUrl: processedTasks.appUrl,
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';

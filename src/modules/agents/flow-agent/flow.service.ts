@@ -5,6 +5,7 @@ import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { GenerateFlowsParams, GenerateFlowsResponse } from './types/flow.types';
 import { FlowErrors } from './constants/flow.constants';
 import { createFlowTool } from './tools/flow-tools';
+import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 @Injectable()
 export class FlowService {
   private readonly logger = new Logger(FlowService.name);
@@ -41,8 +42,8 @@ export class FlowService {
         tools: [createFlowTool],
         tool_choice: {
           type: 'function',
-          function: { name: 'ApiFlowController_createFlow' },
-        } as const,
+          name: 'ApiFlowController_createFlow',
+        } as ToolChoiceFunction,
       };
 
       const completion = await this.openAIService.generateFunctionCompletion(messages, options);

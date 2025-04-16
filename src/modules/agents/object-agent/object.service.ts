@@ -11,6 +11,7 @@ import {
 } from './types/object.types';
 import { ObjectErrors, ObjectPrompts } from './constants/object.constants';
 import { createNewFieldTool, createNewObjectTool, schemaDesignerTool } from './tools/object-tools';
+import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 
 @Injectable()
 export class ObjectService {
@@ -73,9 +74,7 @@ export class ObjectService {
 
     const options = {
       tools: [schemaDesignerTool],
-      tool_choice: { type: 'function', function: { name: 'SchemaDesigner_designSchema' } } as const,
-      temperature: 0.2,
-      maxTokens: 4000,
+      tool_choice: { type: 'function', name: 'SchemaDesigner_designSchema' } as ToolChoiceFunction,
     };
 
     const completion = await this.openAIService.generateFunctionCompletion(
@@ -154,10 +153,8 @@ export class ObjectService {
       tools: [createNewObjectTool],
       tool_choice: {
         type: 'function',
-        function: { name: 'ObjectController_changeObject' },
-      } as const,
-      temperature: 0.2,
-      max_tokens: 4000,
+        name: 'ObjectController_changeObject',
+      } as ToolChoiceFunction,
     };
 
     const completion = await this.openAIService.generateFunctionCompletion(messages, options);
@@ -207,10 +204,8 @@ Requirements:
           tools: [createNewFieldTool],
           tool_choice: {
             type: 'function',
-            function: { name: 'FieldController_changeField' },
-          } as const,
-          temperature: 0.2,
-          max_tokens: 4000,
+            name: 'FieldController_changeField',
+          } as ToolChoiceFunction,
         };
 
         const completion = await this.openAIService.generateFunctionCompletion(messages, options);

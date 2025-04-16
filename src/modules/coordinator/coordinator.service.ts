@@ -24,6 +24,7 @@ import { ProcessedTasks } from '../agents/executor-agent/types/executor.types';
 import prompts from './consts/prompts';
 import { MessageRole } from '../chat/dto/chat-message.dto';
 import { ChatMessageService } from '../chat/services/chat-message.service';
+import { ActiveAgent, DEFAULT_AGENT_STATUS, AgentStatus } from './consts';
 
 interface BaseAgentResponse {
   toolCalls: ToolCall[];
@@ -55,6 +56,7 @@ interface ToolCall {
 @Injectable()
 export class CoordinatorService {
   private readonly logger = new Logger(CoordinatorService.name);
+  private agentStatus: Record<ActiveAgent, AgentStatus> = { ...DEFAULT_AGENT_STATUS };
 
   constructor(
     private readonly intentService: IntentService,
@@ -188,7 +190,18 @@ export class CoordinatorService {
   }> {
     const results: ProcessedTasks = {};
     const completed = new Set<string>();
-    const tasks = [...intentPlan.tasks];
+
+    // Filter out tasks for disabled agents
+    const tasks = intentPlan.tasks.filter((task) => {
+      const isEnabled = this.agentStatus[task.agent as ActiveAgent]?.enabled ?? false;
+      if (!isEnabled) {
+        this.logger.log(`Skipping task for disabled agent: ${task.agent}`);
+        // Mark as completed so dependent tasks don't get stuck
+        completed.add(task.agent);
+      }
+      return isEnabled;
+    });
+
     let appUrl: string | undefined;
 
     // Create a map to store original to unique name mappings
@@ -252,6 +265,12 @@ export class CoordinatorService {
     | GenerateFlowsResponse
   > {
     this.logger.log(`Executing task for ${task.agent}: ${task.description}`);
+
+    const agentKey = task.agent as ActiveAgent;
+    if (!this.agentStatus[agentKey]?.enabled) {
+      this.logger.warn(`Attempted to execute task for disabled agent: ${task.agent}`);
+      throw new Error(`Agent ${task.agent} is disabled`);
+    }
 
     switch (task.agent) {
       case 'ApplicationAgent':

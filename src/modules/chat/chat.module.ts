@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ChatService } from './services/chat.service';
 import { ChatGateway } from './chat.gateway';
 import { ChatMessageService } from './services/chat-message.service';
@@ -9,7 +9,7 @@ import { ChatWebsocketService } from './services/chat-websocket.service';
 import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
 
 @Module({
-  imports: [CoordinatorModule, OpenAIModule],
+  imports: [forwardRef(() => CoordinatorModule), OpenAIModule],
   controllers: [ChatController, ChatMessageController],
   providers: [ChatService, ChatWebsocketService, ChatGateway, ChatMessageService],
   exports: [ChatService, ChatWebsocketService, ChatGateway, ChatMessageService],

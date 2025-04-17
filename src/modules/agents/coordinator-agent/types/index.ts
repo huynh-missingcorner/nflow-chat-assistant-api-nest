@@ -1,6 +1,6 @@
-import { ToolCall } from '../../types';
+import { AgentOutput, ToolCall } from '../../types';
 
-export interface BaseAgentResponse {
+export interface BaseAgentResponse extends AgentOutput {
   toolCalls: ToolCall[];
   memoryPatch?: any;
   clarification?: HITLRequest;

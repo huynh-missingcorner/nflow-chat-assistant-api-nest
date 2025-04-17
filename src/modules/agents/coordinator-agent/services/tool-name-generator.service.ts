@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable, Logger } from '@nestjs/common';
-import { ToolCallArguments } from '../types';
-import { ToolCall } from '../../types';
+import { ToolCall, ToolCallArguments } from '../../types';
 
 @Injectable()
 export class ToolNameGeneratorService {
@@ -9,34 +7,35 @@ export class ToolNameGeneratorService {
 
   /**
    * Add unique names to tool calls
-   * @param _toolCalls The tool calls to process
+   * @param toolCalls The tool calls to process
    * @returns The name mapping from original to unique names
    */
-  public processToolCallNames(_toolCalls: ToolCall[]): Map<string, string> {
+  public processToolCallNames(toolCalls: ToolCall[]): Map<string, string> {
     const nameMap = new Map<string, string>();
 
-    // for (const call of toolCalls) {
-    //   this.processToolCall(call, nameMap);
-    // }
+    for (const call of toolCalls) {
+      this.processToolCall(call, nameMap);
+    }
 
     return nameMap;
   }
 
-  // private processToolCall(call: ToolCall, nameMap: Map<string, string>): void {
-  //   const { functionName, arguments: toolArgs } = call.toolCall;
+  private processToolCall(call: ToolCall, nameMap: Map<string, string>): void {
+    const { functionName, arguments: toolArgs } = call;
+    const args = toolArgs as ToolCallArguments;
 
-  //   if (functionName === 'ApiAppBuilderController_createApp' && toolArgs.name) {
-  //     toolArgs.name = this.generateUniqueNameWithTimestamp(toolArgs.name);
-  //   } else if (functionName === 'ApiLayoutBuilderController_createLayout' && toolArgs.name) {
-  //     toolArgs.name = this.generateUniqueNameWithTimestamp(toolArgs.name);
-  //   } else if (functionName === 'ApiFlowController_createFlow' && toolArgs.name) {
-  //     toolArgs.name = this.generateUniqueNameWithTimestamp(toolArgs.name);
-  //   } else if (functionName === 'ObjectController_changeObject' && toolArgs.data) {
-  //     this.processObjectChange(toolArgs, nameMap);
-  //   } else if (functionName === 'FieldController_changeField') {
-  //     this.processFieldChange(toolArgs, nameMap);
-  //   }
-  // }
+    if (functionName === 'ApiAppBuilderController_createApp' && args.name) {
+      args.name = this.generateUniqueNameWithTimestamp(args.name);
+    } else if (functionName === 'ApiLayoutBuilderController_createLayout' && args.name) {
+      args.name = this.generateUniqueNameWithTimestamp(args.name);
+    } else if (functionName === 'ApiFlowController_createFlow' && args.name) {
+      args.name = this.generateUniqueNameWithTimestamp(args.name);
+    } else if (functionName === 'ObjectController_changeObject' && args.data) {
+      this.processObjectChange(args, nameMap);
+    } else if (functionName === 'FieldController_changeField') {
+      this.processFieldChange(args, nameMap);
+    }
+  }
 
   private processObjectChange(args: ToolCallArguments, nameMap: Map<string, string>): void {
     if (!args.data) {
@@ -47,6 +46,11 @@ export class ToolNameGeneratorService {
     const uniqueName = this.generateUniqueNameWithTimestamp(originalName);
     args.data.name = uniqueName;
     nameMap.set(originalName, uniqueName);
+
+    // Also update the name parameter if it exists
+    if (args.name) {
+      args.name = uniqueName;
+    }
 
     if (args.data.relationships) {
       for (const rel of args.data.relationships) {

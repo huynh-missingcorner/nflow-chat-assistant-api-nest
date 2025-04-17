@@ -17,10 +17,8 @@ export class NFlowObjectService extends BaseNFlowService {
 
   // CUD operations for objects
   async changeObject(data: ObjectDto): Promise<ObjectResponse> {
-    const { name, ...rest } = data;
-    console.log(name, rest);
-    rest.data.recordName.label = 'Name';
-    rest.data.name = rest.data.name.toLowerCase();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { name, ...rest } = data; // name is not used
     return this.makeRequest('POST', '/mo', rest);
   }
 
@@ -31,28 +29,6 @@ export class NFlowObjectService extends BaseNFlowService {
   // CUD operations for fields
   async changeField(data: FieldDto): Promise<FieldResponse> {
     const { objName, ...rest } = data;
-    switch (rest.data.typeName) {
-      case 'numeric':
-        rest.data.attributes = {
-          ...rest.data.attributes,
-          subType: 'integer',
-        };
-        break;
-      case 'text':
-        rest.data.attributes = {
-          ...rest.data.attributes,
-          subType: 'short',
-        };
-        break;
-      case 'dateTime':
-        rest.data.attributes = {
-          ...rest.data.attributes,
-          subType: 'date-time',
-        };
-        break;
-      default:
-        break;
-    }
     return this.makeRequest('POST', `/mo/${objName}/fields`, rest);
   }
 }

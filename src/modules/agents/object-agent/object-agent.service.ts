@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { ObjectAgentInput, ObjectSchema } from './types/object.types';
+import { ObjectAgentInput, ObjectSchema, ObjectSchemaWithoutFields } from './types/object.types';
 import { ObjectErrors, ObjectPrompts } from './constants/object.constants';
 import { createNewFieldTool, createNewObjectTool, schemaDesignerTool } from './tools/object-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
@@ -96,39 +96,61 @@ export class ObjectAgentService extends BaseAgentService<
     schemas: ObjectSchema[],
   ): Promise<ToolCall[]> {
     const combinedContext = await this.loadAgentContexts();
-    const prompt = (ObjectPrompts.OBJECT_CREATION_PROMPT as string)
-      .replace('{action}', action)
-      .replace('{schemas}', JSON.stringify(schemas, null, 2));
+    const objectList = this.getObjectListFromSchemas(schemas);
+    const allObjectToolCalls: ToolCall[] = [];
 
-    const messages = [
-      {
-        role: 'system' as const,
-        content: combinedContext,
-      },
-      {
-        role: 'user' as const,
-        content: prompt,
-      },
-    ];
+    for (const objectSchema of objectList) {
+      try {
+        const prompt = (ObjectPrompts.SINGLE_OBJECT_CREATION_PROMPT as string)
+          .replace('{action}', action)
+          .replace('{schema}', JSON.stringify(objectSchema, null, 2));
 
-    const options = {
-      tools: [createNewObjectTool],
-      tool_choice: {
-        type: 'function',
-        name: 'ObjectController_changeObject',
-      } as ToolChoiceFunction,
-    };
+        const messages = [
+          {
+            role: 'system' as const,
+            content: combinedContext,
+          },
+          {
+            role: 'user' as const,
+            content: prompt,
+          },
+        ];
 
-    const completion = await this.openAIService.generateFunctionCompletion(messages, options);
-    if (!completion.toolCalls?.length) {
+        const options = {
+          tools: [createNewObjectTool],
+          tool_choice: {
+            type: 'function',
+            name: 'ObjectController_changeObject',
+          } as ToolChoiceFunction,
+        };
+
+        const completion = await this.openAIService.generateFunctionCompletion(messages, options);
+        if (!completion.toolCalls?.length) {
+          this.logger.warn(`No object tool call generated for object ${objectSchema.name}`);
+          continue;
+        }
+
+        const objectToolCalls = completion.toolCalls.map((toolCall) => ({
+          id: toolCall.id,
+          functionName: toolCall.function.name,
+          arguments: JSON.parse(toolCall.function.arguments) as Record<string, unknown>,
+        }));
+
+        allObjectToolCalls.push(...objectToolCalls);
+      } catch (error) {
+        this.logger.error(
+          `Failed to generate tool call for object ${objectSchema.name}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+        // Continue with the next object instead of failing the entire process
+      }
+    }
+
+    if (allObjectToolCalls.length === 0) {
       throw new Error(ObjectErrors.TOOL_CALLS_GENERATION_FAILED);
     }
 
-    return completion.toolCalls.map((toolCall) => ({
-      id: toolCall.id,
-      functionName: toolCall.function.name,
-      arguments: JSON.parse(toolCall.function.arguments) as Record<string, unknown>,
-    }));
+    return allObjectToolCalls;
   }
 
   private async generateFieldCreationCalls(
@@ -185,5 +207,14 @@ Requirements:
     }
 
     return allFieldToolCalls;
+  }
+
+  private getObjectListFromSchemas(schemas: ObjectSchema[]): ObjectSchemaWithoutFields[] {
+    return schemas.map((schema) => ({
+      name: schema.name,
+      displayName: schema.displayName,
+      description: schema.description,
+      primaryField: schema.primaryField,
+    }));
   }
 }

@@ -50,7 +50,11 @@ export class OpenAIService implements OnModuleInit {
   ): Promise<ChatCompletionResponse> {
     try {
       const params = this.createRequestParams(messages, options, functionCallInputs);
+      this.logger.log('Sending chat completion request to OpenAI...');
       const response: OpenAIResponseWithRequestId = await this.openai.responses.create(params);
+      this.logger.log(
+        `Received response from OpenAI, model: ${response.model}, total tokens: ${response.usage?.total_tokens}`,
+      );
       return this.processResponse(response);
     } catch (error: unknown) {
       const errorResponse = this.handleError(error);
@@ -83,7 +87,11 @@ export class OpenAIService implements OnModuleInit {
         },
         functionCallInputs,
       );
+      this.logger.log('Sending function completion request to OpenAI...');
       const response: OpenAIResponseWithRequestId = await this.openai.responses.create(params);
+      this.logger.log(
+        `Received response from OpenAI, model: ${response.model}, total tokens: ${response.usage?.total_tokens}`,
+      );
       return this.processResponse(response);
     } catch (error: unknown) {
       const errorResponse = this.handleError(error);

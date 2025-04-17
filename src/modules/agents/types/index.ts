@@ -47,6 +47,20 @@ export interface ToolCall {
   order?: number;
 }
 
+export interface ToolCallArguments {
+  [key: string]: unknown;
+  name?: string;
+  data?: {
+    name: string;
+    relationships?: Array<{
+      targetObject: string;
+      [key: string]: unknown;
+    }>;
+    [key: string]: unknown;
+  };
+  objName?: string;
+}
+
 export interface HITLRequest {
   prompt: string;
   taskId: string;

@@ -37,6 +37,16 @@ Requirements:
 Objects to create:
 {schemas}`,
 
+  SINGLE_OBJECT_CREATION_PROMPT: `Create an object in the Nflow platform with these specifications:
+{schema}
+
+Requirements:
+1. Set proper displayName and description
+2. Configure recordName settings with appropriate label and type
+3. Set appropriate access level (owd)
+4. Set action to "{action}"
+5. Map the object properties correctly`,
+
   FIELD_CREATION_PROMPT: `Generate tool calls to create fields for the following object schema in the Nflow platform. For each field, generate a FieldController_changeField call with appropriate parameters.
 
 Requirements:

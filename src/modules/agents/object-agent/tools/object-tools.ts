@@ -74,18 +74,18 @@ export const createNewObjectTool: FunctionTool = {
         properties: {
           displayName: {
             type: 'string',
-            description: '',
+            description: 'Display name of the object',
           },
           recordName: {
             type: 'object',
             properties: {
               label: {
                 type: 'string',
-                description: '',
+                description: 'Label of the record name. Always set to the same as the displayName',
               },
               type: {
                 type: 'string',
-                description: '',
+                description: 'Type of the record name',
                 enum: ['text'],
               },
             },
@@ -94,30 +94,31 @@ export const createNewObjectTool: FunctionTool = {
           },
           owd: {
             type: ['string', 'null'],
-            description: '',
+            description: 'Access level of the object',
             enum: ['PublicRead', 'PublicReadWrite', 'Private'],
+            default: 'Private',
           },
           name: {
             type: 'string',
-            description: '',
+            description: 'Name of the object',
           },
           description: {
             type: ['string', 'null'],
-            description: '',
+            description: 'Description of the object',
           },
         },
         required: ['displayName', 'recordName', 'name', 'description', 'owd'],
-        description: '',
+        description: 'Data to create the object',
         additionalProperties: false,
       },
       action: {
         type: 'string',
-        description: '',
+        description: 'Action to perform',
         enum: ['create', 'update', 'delete', 'recover'],
       },
       name: {
         type: ['string', 'null'],
-        description: '',
+        description: 'Name of the object',
       },
     },
     required: ['action', 'data', 'name'],

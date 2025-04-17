@@ -1,7 +1,11 @@
+import { AgentAction, AgentType } from '../../types';
+
 export interface GenerateLayoutsParams {
-  action: 'create' | 'update' | 'remove' | 'recover';
+  action: AgentAction;
   name: string;
   description: string;
+  agentType: AgentType;
+  pages: string[];
 }
 
 export interface ToolCallPayload {

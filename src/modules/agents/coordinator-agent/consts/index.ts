@@ -1,16 +1,5 @@
-export enum Agent {
-  ApplicationAgent = 'ApplicationAgent',
-  ObjectAgent = 'ObjectAgent',
-  LayoutAgent = 'LayoutAgent',
-  FlowAgent = 'FlowAgent',
-}
-
-export const AGENT_LIST = [
-  Agent.ApplicationAgent,
-  Agent.ObjectAgent,
-  Agent.LayoutAgent,
-  Agent.FlowAgent,
-] as const;
+import { Agent } from '../../types';
+import { AGENT_LIST } from '../../types';
 
 export type ActiveAgent = (typeof AGENT_LIST)[number];
 

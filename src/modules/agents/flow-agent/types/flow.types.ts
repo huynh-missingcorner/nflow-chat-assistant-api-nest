@@ -1,7 +1,18 @@
+import { AgentAction, AgentType } from '../../types';
+
+export interface FlowTrigger {
+  type: 'manual' | 'scheduled' | 'webhook';
+  interval?: string;
+  webhookUrl?: string;
+}
+
 export interface GenerateFlowsParams {
-  action: 'create' | 'update' | 'remove' | 'recover';
+  action: AgentAction;
   name: string;
   description: string;
+  agentType: AgentType;
+  trigger: FlowTrigger;
+  actionLogic: string;
 }
 
 export interface ToolCallPayload {

@@ -1,11 +1,21 @@
+import { AgentAction, AgentType } from '../../types';
+
 export interface ObjectParams {
   name: string;
   description: string;
-  requiredFields: string[];
+  fields: ObjectField[];
+}
+
+export interface ObjectField {
+  name: string;
+  type: string;
+  enumValues: string[];
+  required: boolean;
 }
 
 export interface GenerateObjectsParams {
-  action: 'create' | 'update' | 'remove' | 'recover';
+  agentType: AgentType;
+  action: AgentAction;
   objects: ObjectParams[];
 }
 

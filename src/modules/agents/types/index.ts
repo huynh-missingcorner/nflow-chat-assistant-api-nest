@@ -44,6 +44,7 @@ export interface ToolCall {
   id: string;
   functionName: string;
   arguments: Record<string, unknown>;
+  order?: number;
 }
 
 export interface HITLRequest {

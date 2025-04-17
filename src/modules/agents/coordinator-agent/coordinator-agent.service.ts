@@ -27,21 +27,10 @@ export class CoordinatorAgentService extends BaseAgentService<
     super(openAIService, contextLoader, AGENT_PATHS.COORDINATOR);
   }
 
-  /**
-   * Execute the coordinator agent
-   * @param input The input for the coordinator agent
-   * @returns The output from the coordinator agent
-   */
   async run(input: CoordinatorAgentInput): Promise<CoordinatorAgentOutput> {
     return this.processUserMessage(input.message, input.sessionId);
   }
 
-  /**
-   * Process a user message and coordinate agent execution
-   * @param message The user message
-   * @param sessionId The session ID
-   * @returns The coordinator agent output
-   */
   private async processUserMessage(
     message: string,
     sessionId: string,
@@ -109,13 +98,6 @@ export class CoordinatorAgentService extends BaseAgentService<
     }
   }
 
-  /**
-   * Process a user response to a HITL request
-   * @param userResponse The user's response
-   * @param sessionId The session ID
-   * @param hitlData HITL context data
-   * @returns Coordinator agent output with the final response
-   */
   async processHITLResponse(
     userResponse: string,
     sessionId: string,

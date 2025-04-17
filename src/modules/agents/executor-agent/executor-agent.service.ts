@@ -4,12 +4,7 @@ import { NFlowObjectService } from '../../nflow/services/object.service';
 import { NFlowLayoutService } from '../../nflow/services/layout.service';
 import { NFlowFlowService } from '../../nflow/services/flow.service';
 import { AxiosError } from 'axios';
-import {
-  ExecutionResult,
-  ExecutorOptions,
-  NflowRequest,
-  FunctionArguments,
-} from './types/executor.types';
+import { ExecutionResult, ExecutorOptions, NflowRequest } from './types/executor.types';
 import {
   CreateApplicationDto,
   UpdateApplicationDto,
@@ -50,7 +45,7 @@ export class ExecutorAgentService {
       for (const { agentName, call } of sortedCalls) {
         const result = await this.executeToolCall(call);
         results.push({
-          id: call.data.functionName, // TODO: Update this to tool call id
+          id: call.id,
           agent: agentName,
           response: result,
           success: true,
@@ -76,28 +71,35 @@ export class ExecutorAgentService {
     for (const [agentName, agentOutput] of Object.entries(tasks)) {
       if ('toolCalls' in agentOutput) {
         for (const call of agentOutput.toolCalls) {
-          allCalls.push({ agentName, call: call as unknown as NflowRequest });
+          allCalls.push({
+            agentName,
+            call: {
+              ...call,
+              order: call.order ?? 0, // Provide default order if not present
+            },
+          });
         }
       }
     }
 
-    return allCalls.sort((a, b) => a.call.order - b.call.order);
+    // Sort by order if available, otherwise keep original sequence
+    return allCalls.sort((a, b) => (a.call.order ?? 0) - (b.call.order ?? 0));
   }
 
   /**
    * Execute a single tool call with retry logic
    */
   private async executeToolCall(call: NflowRequest, callTime: number = 1): Promise<unknown> {
-    this.logger.log(`Executing tool call: ${call.data.functionName}`);
+    this.logger.log(`Executing tool call: ${call.functionName}`);
     try {
-      return await this.executeFunction(call.data.functionName, call.data.arguments);
+      return await this.executeFunction(call.functionName, call.arguments);
     } catch (error) {
       if (error instanceof AxiosError) {
         this.logger.error(
-          `Error executing tool call: ${call.data.functionName} - ${error.response?.data}`,
+          `Error executing tool call: ${call.functionName} - ${error.response?.data}`,
         );
       } else {
-        this.logger.error(`Error executing tool call: ${call.data.functionName} - ${error}`);
+        this.logger.error(`Error executing tool call: ${call.functionName} - ${error}`);
       }
 
       if (this.defaultOptions.retryAttempts > 0 && callTime < this.defaultOptions.retryAttempts) {
@@ -107,7 +109,7 @@ export class ExecutorAgentService {
 
       // Log final failure and return null instead of throwing
       this.logger.error(
-        `Tool call ${call.data.functionName} failed after ${this.defaultOptions.retryAttempts} retries`,
+        `Tool call ${call.functionName} failed after ${this.defaultOptions.retryAttempts} retries`,
       );
       return null;
     }
@@ -117,32 +119,32 @@ export class ExecutorAgentService {
    * Execute the appropriate function based on the function name
    */
   private async executeFunction(
-    functionName: FunctionArguments['name'],
-    args: FunctionArguments['args'],
+    functionName: string,
+    args: Record<string, unknown>,
   ): Promise<unknown> {
     switch (functionName) {
       case 'ApiAppBuilderController_createApp': {
-        const typedArgs = args as CreateApplicationDto;
+        const typedArgs = args as unknown as CreateApplicationDto;
         return this.applicationService.createApp(typedArgs);
       }
       case 'ApiAppBuilderController_updateApp': {
-        const typedArgs = args as UpdateApplicationDto;
+        const typedArgs = args as unknown as UpdateApplicationDto;
         return this.applicationService.updateApp(typedArgs);
       }
       case 'ObjectController_changeObject': {
-        const typedArgs = args as ObjectDto;
+        const typedArgs = args as unknown as ObjectDto;
         return this.objectService.changeObject(typedArgs);
       }
       case 'FieldController_changeField': {
-        const typedArgs = args as FieldDto;
+        const typedArgs = args as unknown as FieldDto;
         return this.objectService.changeField(typedArgs);
       }
       case 'ApiLayoutBuilderController_createLayout': {
-        const typedArgs = args as CreateLayoutDto;
+        const typedArgs = args as unknown as CreateLayoutDto;
         return this.layoutService.createLayout(typedArgs);
       }
       case 'ApiFlowController_createFlow': {
-        const typedArgs = args as FlowCreateDto;
+        const typedArgs = args as unknown as FlowCreateDto;
         return this.flowService.createFlow(typedArgs);
       }
       default: {

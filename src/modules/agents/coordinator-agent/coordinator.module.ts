@@ -1,13 +1,16 @@
-import { Module, Logger, forwardRef } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CoordinatorService } from './coordinator.service';
-import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
 import { IntentModule } from '../intent-agent/intent.module';
 import { ApplicationModule } from '../application-agent/application.module';
 import { ObjectModule } from '../object-agent/object.module';
-import { FlowModule } from '../flow-agent/flow.module';
-import { ChatModule } from 'src/modules/chat/chat.module';
 import { LayoutModule } from '../layout-agent/layout.module';
+import { FlowModule } from '../flow-agent/flow.module';
 import { ExecutorModule } from '../executor-agent/executor.module';
+import { ChatModule } from 'src/modules/chat/chat.module';
+import { ToolNameGeneratorService } from './services/tool-name-generator.service';
+import { TaskExecutorService } from './services/task-executor.service';
+import { ChatContextService } from './services/chat-context.service';
+import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
 
 @Module({
   imports: [
@@ -20,7 +23,12 @@ import { ExecutorModule } from '../executor-agent/executor.module';
     ExecutorModule,
     forwardRef(() => ChatModule),
   ],
-  providers: [CoordinatorService, Logger],
+  providers: [
+    CoordinatorService,
+    ToolNameGeneratorService,
+    TaskExecutorService,
+    ChatContextService,
+  ],
   exports: [CoordinatorService],
 })
 export class CoordinatorModule {}

@@ -1,6 +1,6 @@
 export interface BaseAgentResponse {
   toolCalls: ToolCall[];
-  metadata: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ToolCallArguments {

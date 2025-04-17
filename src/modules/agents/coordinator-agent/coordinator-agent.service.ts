@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import { IntentService } from '../intent-agent/intent.service';
-import { ExecutorService } from '../executor-agent/executor.service';
+import { IntentAgentService } from '../intent-agent/intent-agent.service';
+import { ExecutorAgentService } from '../executor-agent/executor-agent.service';
 import prompts from './consts/prompts';
 import { CoordinatorAgentInput, CoordinatorAgentOutput } from './types';
 import { BaseAgentService } from '../base-agent.service';
@@ -11,13 +11,13 @@ import { TaskExecutorService } from './services/task-executor.service';
 import { ChatContextService } from './services/chat-context.service';
 
 @Injectable()
-export class CoordinatorService extends BaseAgentService<
+export class CoordinatorAgentService extends BaseAgentService<
   CoordinatorAgentInput,
   CoordinatorAgentOutput
 > {
   constructor(
-    private readonly intentService: IntentService,
-    private readonly executorService: ExecutorService,
+    private readonly intentService: IntentAgentService,
+    private readonly executorService: ExecutorAgentService,
     private readonly taskExecutorService: TaskExecutorService,
     private readonly chatContextService: ChatContextService,
     contextLoader: ContextLoaderService,

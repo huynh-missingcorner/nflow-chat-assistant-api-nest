@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CoordinatorService } from '../../agents/coordinator-agent/coordinator.service';
+import { CoordinatorAgentService } from '../../agents/coordinator-agent/coordinator-agent.service';
 import { ChatRequestDto } from '../dto/chat-request.dto';
 import { ChatResponseDto } from '../dto/chat-response.dto';
 import { PrismaService } from 'src/shared/infrastructure/prisma/prisma.service';
@@ -12,7 +12,7 @@ export class ChatService {
   private readonly logger = new Logger(ChatService.name);
 
   constructor(
-    private readonly coordinatorService: CoordinatorService,
+    private readonly coordinatorService: CoordinatorAgentService,
     private readonly prisma: PrismaService,
     private readonly openaiService: OpenAIService,
     private readonly eventEmitter: EventEmitter2,

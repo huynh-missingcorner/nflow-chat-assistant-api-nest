@@ -2,28 +2,23 @@ import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { ApplicationAgentInput, ApplicationAgentOutput } from './types/application.types';
-import { ApplicationErrors } from './constants/application.constants';
-import { tools as applicationTools } from './tools/application-tools';
+import { LayoutAgentInput, LayoutAgentOutput } from './types/layout.types';
+import { LayoutErrors } from './constants/layout.constants';
+import { tools as layoutTools } from './tools/layout-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
 
 @Injectable()
-export class ApplicationService extends BaseAgentService<
-  ApplicationAgentInput,
-  ApplicationAgentOutput
-> {
+export class LayoutAgentService extends BaseAgentService<LayoutAgentInput, LayoutAgentOutput> {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
-    super(openAIService, contextLoader, AGENT_PATHS.APPLICATION);
+    super(openAIService, contextLoader, AGENT_PATHS.LAYOUT);
   }
 
-  async run(params: ApplicationAgentInput): Promise<ApplicationAgentOutput> {
-    return this.generateApplication(params);
+  async run(params: LayoutAgentInput): Promise<LayoutAgentOutput> {
+    return this.generateLayouts(params);
   }
 
-  private async generateApplication(
-    params: ApplicationAgentInput,
-  ): Promise<ApplicationAgentOutput> {
+  private async generateLayouts(params: LayoutAgentInput): Promise<LayoutAgentOutput> {
     try {
       const combinedContext = await this.loadAgentContexts();
 
@@ -34,21 +29,21 @@ export class ApplicationService extends BaseAgentService<
         },
         {
           role: 'user' as const,
-          content: `Application Parameters: ${JSON.stringify(params, null, 2)}`,
+          content: `Layout Parameters: ${JSON.stringify(params, null, 2)}`,
         },
       ];
 
       const options = {
-        tools: applicationTools,
+        tools: layoutTools,
         tool_choice: {
           type: 'function',
-          name: 'ApiAppBuilderController_createApp',
+          name: 'ApiLayoutBuilderController_createLayout',
         } as ToolChoiceFunction,
       };
 
       const response = await this.openAIService.generateFunctionCompletion(messages, options);
       if (!response.toolCalls?.length) {
-        throw new Error(ApplicationErrors.GENERATION_FAILED);
+        throw new Error(LayoutErrors.GENERATION_FAILED);
       }
 
       const toolCalls = response.toolCalls.map((toolCall, index) => {
@@ -67,8 +62,8 @@ export class ApplicationService extends BaseAgentService<
         metadata: {},
       };
     } catch (error) {
-      this.logger.error('Application generation failed', error);
-      throw new Error(error instanceof Error ? error.message : ApplicationErrors.GENERATION_FAILED);
+      this.logger.error('Layout generation failed', error);
+      throw new Error(error instanceof Error ? error.message : LayoutErrors.GENERATION_FAILED);
     }
   }
 }

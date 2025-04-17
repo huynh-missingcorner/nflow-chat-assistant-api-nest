@@ -2,23 +2,28 @@ import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { FlowAgentInput, FlowAgentOutput } from './types/flow.types';
-import { FlowErrors } from './constants/flow.constants';
-import { createFlowTool } from './tools/flow-tools';
+import { ApplicationAgentInput, ApplicationAgentOutput } from './types/application.types';
+import { ApplicationErrors } from './constants/application.constants';
+import { tools as applicationTools } from './tools/application-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
 
 @Injectable()
-export class FlowService extends BaseAgentService<FlowAgentInput, FlowAgentOutput> {
+export class ApplicationAgentService extends BaseAgentService<
+  ApplicationAgentInput,
+  ApplicationAgentOutput
+> {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
-    super(openAIService, contextLoader, AGENT_PATHS.FLOW);
+    super(openAIService, contextLoader, AGENT_PATHS.APPLICATION);
   }
 
-  async run(params: FlowAgentInput): Promise<FlowAgentOutput> {
-    return this.generateFlows(params);
+  async run(params: ApplicationAgentInput): Promise<ApplicationAgentOutput> {
+    return this.generateApplication(params);
   }
 
-  private async generateFlows(params: FlowAgentInput): Promise<FlowAgentOutput> {
+  private async generateApplication(
+    params: ApplicationAgentInput,
+  ): Promise<ApplicationAgentOutput> {
     try {
       const combinedContext = await this.loadAgentContexts();
 
@@ -29,21 +34,21 @@ export class FlowService extends BaseAgentService<FlowAgentInput, FlowAgentOutpu
         },
         {
           role: 'user' as const,
-          content: `Layout Parameters: ${JSON.stringify(params, null, 2)}`,
+          content: `Application Parameters: ${JSON.stringify(params, null, 2)}`,
         },
       ];
 
       const options = {
-        tools: [createFlowTool],
+        tools: applicationTools,
         tool_choice: {
           type: 'function',
-          name: 'ApiFlowController_createFlow',
+          name: 'ApiAppBuilderController_createApp',
         } as ToolChoiceFunction,
       };
 
       const response = await this.openAIService.generateFunctionCompletion(messages, options);
       if (!response.toolCalls?.length) {
-        throw new Error(FlowErrors.GENERATION_FAILED);
+        throw new Error(ApplicationErrors.GENERATION_FAILED);
       }
 
       const toolCalls = response.toolCalls.map((toolCall, index) => {
@@ -62,8 +67,8 @@ export class FlowService extends BaseAgentService<FlowAgentInput, FlowAgentOutpu
         metadata: {},
       };
     } catch (error) {
-      this.logger.error('Flow generation failed', error);
-      throw new Error(error instanceof Error ? error.message : FlowErrors.GENERATION_FAILED);
+      this.logger.error('Application generation failed', error);
+      throw new Error(error instanceof Error ? error.message : ApplicationErrors.GENERATION_FAILED);
     }
   }
 }

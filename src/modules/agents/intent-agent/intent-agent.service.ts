@@ -9,7 +9,7 @@ import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
 
 @Injectable()
-export class IntentService extends BaseAgentService<IntentAgentInput, IntentPlan> {
+export class IntentAgentService extends BaseAgentService<IntentAgentInput, IntentPlan> {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
     super(openAIService, contextLoader, AGENT_PATHS.INTENT);
   }

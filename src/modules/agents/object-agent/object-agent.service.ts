@@ -15,7 +15,7 @@ import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
 
 @Injectable()
-export class ObjectService extends BaseAgentService<ObjectAgentInput, ObjectAgentOutput> {
+export class ObjectAgentService extends BaseAgentService<ObjectAgentInput, ObjectAgentOutput> {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
     super(openAIService, contextLoader, AGENT_PATHS.OBJECT);
   }

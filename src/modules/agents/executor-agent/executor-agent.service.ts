@@ -19,9 +19,10 @@ import {
   CreateLayoutDto,
   FlowCreateDto,
 } from '../../nflow/types';
+
 @Injectable()
-export class ExecutorService {
-  private readonly logger = new Logger(ExecutorService.name);
+export class ExecutorAgentService {
+  private readonly logger = new Logger(ExecutorAgentService.name);
   private readonly defaultOptions: Required<ExecutorOptions> = {
     stopOnError: true,
     retryAttempts: 3,

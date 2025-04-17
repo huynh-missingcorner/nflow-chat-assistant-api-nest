@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ApplicationService } from '../../application-agent/application.service';
-import { ObjectService } from '../../object-agent/object.service';
-import { LayoutService } from '../../layout-agent/layout.service';
-import { FlowService } from '../../flow-agent/flow.service';
+import { ApplicationAgentService } from '../../application-agent/application-agent.service';
+import { ObjectAgentService } from '../../object-agent/object-agent.service';
+import { LayoutAgentService } from '../../layout-agent/layout-agent.service';
+import { FlowAgentService } from '../../flow-agent/flow-agent.service';
 import { IntentTask } from '../../intent-agent/types/intent.types';
 import {
   ApplicationAgentInput,
@@ -22,10 +22,10 @@ export class TaskExecutorService {
   private agentStatus: Record<ActiveAgent, AgentStatus> = { ...DEFAULT_AGENT_STATUS };
 
   constructor(
-    private readonly applicationService: ApplicationService,
-    private readonly objectService: ObjectService,
-    private readonly layoutService: LayoutService,
-    private readonly flowService: FlowService,
+    private readonly applicationService: ApplicationAgentService,
+    private readonly objectService: ObjectAgentService,
+    private readonly layoutService: LayoutAgentService,
+    private readonly flowService: FlowAgentService,
     private readonly toolNameGenerator: ToolNameGeneratorService,
   ) {}
 

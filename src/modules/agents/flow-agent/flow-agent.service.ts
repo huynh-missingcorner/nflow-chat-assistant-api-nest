@@ -2,23 +2,23 @@ import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { LayoutAgentInput, LayoutAgentOutput } from './types/layout.types';
-import { LayoutErrors } from './constants/layout.constants';
-import { tools as layoutTools } from './tools/layout-tools';
+import { FlowAgentInput, FlowAgentOutput } from './types/flow.types';
+import { FlowErrors } from './constants/flow.constants';
+import { createFlowTool } from './tools/flow-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
 
 @Injectable()
-export class LayoutService extends BaseAgentService<LayoutAgentInput, LayoutAgentOutput> {
+export class FlowAgentService extends BaseAgentService<FlowAgentInput, FlowAgentOutput> {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
-    super(openAIService, contextLoader, AGENT_PATHS.LAYOUT);
+    super(openAIService, contextLoader, AGENT_PATHS.FLOW);
   }
 
-  async run(params: LayoutAgentInput): Promise<LayoutAgentOutput> {
-    return this.generateLayouts(params);
+  async run(params: FlowAgentInput): Promise<FlowAgentOutput> {
+    return this.generateFlows(params);
   }
 
-  private async generateLayouts(params: LayoutAgentInput): Promise<LayoutAgentOutput> {
+  private async generateFlows(params: FlowAgentInput): Promise<FlowAgentOutput> {
     try {
       const combinedContext = await this.loadAgentContexts();
 
@@ -34,16 +34,16 @@ export class LayoutService extends BaseAgentService<LayoutAgentInput, LayoutAgen
       ];
 
       const options = {
-        tools: layoutTools,
+        tools: [createFlowTool],
         tool_choice: {
           type: 'function',
-          name: 'ApiLayoutBuilderController_createLayout',
+          name: 'ApiFlowController_createFlow',
         } as ToolChoiceFunction,
       };
 
       const response = await this.openAIService.generateFunctionCompletion(messages, options);
       if (!response.toolCalls?.length) {
-        throw new Error(LayoutErrors.GENERATION_FAILED);
+        throw new Error(FlowErrors.GENERATION_FAILED);
       }
 
       const toolCalls = response.toolCalls.map((toolCall, index) => {
@@ -62,8 +62,8 @@ export class LayoutService extends BaseAgentService<LayoutAgentInput, LayoutAgen
         metadata: {},
       };
     } catch (error) {
-      this.logger.error('Layout generation failed', error);
-      throw new Error(error instanceof Error ? error.message : LayoutErrors.GENERATION_FAILED);
+      this.logger.error('Flow generation failed', error);
+      throw new Error(error instanceof Error ? error.message : FlowErrors.GENERATION_FAILED);
     }
   }
 }

@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
 import { PrismaModule } from 'src/shared/infrastructure/prisma/prisma.module';
-import { ObjectService } from './object.service';
 import { SharedModule } from 'src/shared/shared.module';
+import { FlowAgentService } from './flow-agent.service';
 
 @Module({
   imports: [OpenAIModule, PrismaModule, SharedModule],
-  providers: [ObjectService],
-  exports: [ObjectService],
+  providers: [FlowAgentService],
+  exports: [FlowAgentService],
 })
-export class ObjectModule {}
+export class FlowAgentModule {}

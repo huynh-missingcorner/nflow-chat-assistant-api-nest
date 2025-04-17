@@ -1,6 +1,7 @@
 export interface BaseAgentResponse {
   toolCalls: ToolCall[];
-  metadata?: Record<string, unknown>;
+  memoryPatch?: any;
+  clarification?: HITLRequest;
 }
 
 export interface ToolCallArguments {
@@ -18,11 +19,9 @@ export interface ToolCallArguments {
 }
 
 export interface ToolCall {
-  order: number;
-  toolCall: {
-    functionName: string;
-    arguments: ToolCallArguments;
-  };
+  id: string;
+  name: string;
+  arguments: Record<string, any>;
 }
 
 export interface CoordinatorAgentInput {
@@ -32,4 +31,15 @@ export interface CoordinatorAgentInput {
 
 export interface CoordinatorAgentOutput {
   reply: string;
+  requiresHITL?: boolean;
+  hitlData?: {
+    taskId: string;
+    remainingTasks: any[];
+  };
+}
+
+export interface HITLRequest {
+  prompt: string;
+  taskId: string;
+  missing: string[];
 }

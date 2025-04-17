@@ -4,17 +4,16 @@ import { ObjectAgentService } from '../../object-agent/object-agent.service';
 import { LayoutAgentService } from '../../layout-agent/layout-agent.service';
 import { FlowAgentService } from '../../flow-agent/flow-agent.service';
 import { IntentTask } from '../../intent-agent/types/intent.types';
-import {
-  ApplicationAgentInput,
-  ApplicationAgentOutput,
-} from '../../application-agent/types/application.types';
-import { ObjectAgentInput, ObjectAgentOutput } from '../../object-agent/types/object.types';
-import { LayoutAgentInput, LayoutAgentOutput } from '../../layout-agent/types/layout.types';
-import { FlowAgentInput, FlowAgentOutput } from '../../flow-agent/types/flow.types';
-import { BaseAgentResponse } from '../types';
+import { ApplicationAgentInput } from '../../application-agent/types/application.types';
+import { ObjectAgentInput } from '../../object-agent/types/object.types';
+import { LayoutAgentInput } from '../../layout-agent/types/layout.types';
+import { FlowAgentInput } from '../../flow-agent/types/flow.types';
+import { BaseAgentResponse, HITLRequest } from '../types';
 import { ActiveAgent, AgentStatus, DEFAULT_AGENT_STATUS } from '../consts';
-import { ProcessedTasks } from '../../executor-agent/types/executor.types';
+import { AgentResult, ProcessedTasks } from '../../executor-agent/types/executor.types';
 import { ToolNameGeneratorService } from './tool-name-generator.service';
+import { SessionContext } from '../../../memory/types';
+import { MemoryService } from 'src/modules/memory/memory.service';
 
 @Injectable()
 export class TaskExecutorService {
@@ -27,16 +26,26 @@ export class TaskExecutorService {
     private readonly layoutService: LayoutAgentService,
     private readonly flowService: FlowAgentService,
     private readonly toolNameGenerator: ToolNameGeneratorService,
+    private readonly memoryService: MemoryService,
   ) {}
 
   /**
    * Get the tool calls for the intent plan
    * @param tasks The intent tasks to execute
+   * @param sessionId The session ID for memory context
    * @returns The processed tasks with their results
    */
-  public async executeTasksInOrder(tasks: IntentTask[]): Promise<ProcessedTasks> {
-    const results: ProcessedTasks = {};
+  public async executeTasksInOrder(
+    tasks: IntentTask[],
+    sessionId: string,
+  ): Promise<ProcessedTasks> {
+    // Initialize results to store execution outputs
+    const taskResults: Record<string, AgentResult> = {};
     const completed = new Set<string>();
+    const pendingHITL: Record<string, HITLRequest> = {};
+
+    // Get the current session context
+    let sessionContext = await this.memoryService.getContext(sessionId);
 
     // Filter out tasks for disabled agents
     const filteredTasks = tasks.filter((task) => {
@@ -44,7 +53,7 @@ export class TaskExecutorService {
       if (!isEnabled) {
         this.logger.log(`Skipping task for disabled agent: ${task.agent}`);
         // Mark as completed so dependent tasks don't get stuck
-        completed.add(task.agent);
+        completed.add(task.id);
       }
       return isEnabled;
     });
@@ -52,6 +61,7 @@ export class TaskExecutorService {
     const remainingTasks = [...filteredTasks];
 
     while (remainingTasks.length > 0) {
+      // Find tasks that can be executed (dependencies satisfied)
       let executableTasks = remainingTasks.filter(
         (task) => !task.dependsOn || task.dependsOn.every((dep) => completed.has(dep)),
       );
@@ -65,37 +75,168 @@ export class TaskExecutorService {
         throw new Error('Circular dependency detected in tasks');
       }
 
-      await Promise.all(
-        executableTasks.map(async (task) => {
-          const result = await this.executeTask(task);
+      // Check if any tasks need HITL clarification
+      const tasksNeedingClarification = Object.keys(pendingHITL);
+      if (tasksNeedingClarification.length > 0) {
+        // Return early with pending HITL requests
+        return {
+          results: taskResults,
+          pendingHITL,
+        };
+      }
 
+      // Execute all tasks that can be run in parallel
+      const taskPromises = executableTasks.map(async (task) => {
+        try {
+          // Add context to the task data
+          const taskWithContext = {
+            ...task,
+            data: {
+              ...task.data,
+              context: sessionContext,
+            },
+          };
+
+          const result = await this.executeTask(taskWithContext);
+
+          // Check if the task execution requires human clarification
+          if (this.requiresHITL(result)) {
+            pendingHITL[task.id] = (result as unknown as BaseAgentResponse)
+              .clarification as HITLRequest;
+            return; // Skip rest of processing for this task
+          }
+
+          // Update session context with any memory patches
+          if ('memoryPatch' in result && result.memoryPatch) {
+            sessionContext = this.memoryService.patch(sessionContext, result.memoryPatch);
+          }
+
+          // Process tool call names for standardization
           if (this.isAgentResponse(result)) {
             this.toolNameGenerator.processToolCallNames(result.toolCalls);
           }
 
-          results[task.agent] = result;
-          completed.add(task.agent);
+          taskResults[task.id] = result;
+          completed.add(task.id);
 
-          const index = remainingTasks.findIndex((t) => t.agent === task.agent);
+          // Remove completed task from remaining tasks
+          const index = remainingTasks.findIndex((t) => t.id === task.id);
           if (index !== -1) {
             remainingTasks.splice(index, 1);
           }
-        }),
-      );
+        } catch (error) {
+          this.logger.error(
+            `Error executing task ${task.id} (${task.agent}): ${(error as Error).message}`,
+            (error as Error).stack,
+          );
+          // Store error in results
+          taskResults[task.id] = {
+            toolCalls: [],
+            error: (error as Error).message,
+          } as AgentResult;
+          // Mark as completed to continue the flow
+          completed.add(task.id);
+          const index = remainingTasks.findIndex((t) => t.id === task.id);
+          if (index !== -1) {
+            remainingTasks.splice(index, 1);
+          }
+        }
+      });
+
+      await Promise.all(taskPromises);
+
+      // If we have pending HITL requests, stop processing and return
+      if (Object.keys(pendingHITL).length > 0) {
+        return {
+          results: taskResults,
+          pendingHITL,
+        };
+      }
     }
 
-    return results;
+    // Update the full session context with task results
+    await this.memoryService.updateTaskResults(sessionId, { results: taskResults });
+
+    return {
+      results: taskResults,
+    };
+  }
+
+  /**
+   * Process HITL response and resume task execution
+   * @param taskId The ID of the task requiring clarification
+   * @param response The user's response to the clarification request
+   * @param sessionId The session ID
+   * @returns Updated processed tasks
+   */
+  public async processHITLResponse(
+    taskId: string,
+    response: string,
+    sessionId: string,
+    remainingTasks: IntentTask[],
+  ): Promise<ProcessedTasks> {
+    // Get the current session context
+    const sessionContext = await this.memoryService.getContext(sessionId);
+
+    // Find the task that needs clarification
+    const task = remainingTasks.find((t) => t.id === taskId);
+    if (!task) {
+      throw new Error(`Task with ID ${taskId} not found`);
+    }
+
+    // Update the task data with the clarification response
+    const updatedTask = {
+      ...task,
+      data: {
+        ...task.data,
+        context: sessionContext,
+        clarification: response,
+      },
+    };
+
+    // Re-execute the task with the clarification
+    const result = await this.executeTask(updatedTask);
+
+    // Process and return the results
+    if (this.isAgentResponse(result)) {
+      this.toolNameGenerator.processToolCallNames(result.toolCalls);
+    }
+
+    // Update memory if needed
+    if ('memoryPatch' in result && result.memoryPatch) {
+      this.memoryService.patch(sessionContext, result.memoryPatch);
+    }
+
+    // Continue with the remaining tasks
+    const updatedRemainingTasks = remainingTasks.filter((t) => t.id !== taskId);
+    const partialResults = { [taskId]: result };
+
+    // If there are more tasks, continue execution
+    if (updatedRemainingTasks.length > 0) {
+      const remainingResults = await this.executeTasksInOrder(updatedRemainingTasks, sessionId);
+      return {
+        results: {
+          ...partialResults,
+          ...remainingResults.results,
+        },
+        pendingHITL: remainingResults.pendingHITL,
+      };
+    }
+
+    return {
+      results: partialResults,
+    };
   }
 
   /**
    * Execute a single task using the appropriate agent
-   * @param task The task to execute
+   * @param task The task to execute with context
    * @returns Result of the task execution
    */
   private async executeTask(
-    task: IntentTask,
-  ): Promise<ApplicationAgentOutput | ObjectAgentOutput | LayoutAgentOutput | FlowAgentOutput> {
-    this.logger.log(`Executing task for ${task.agent}: ${task.description}`);
+    task: IntentTask & { data: { context?: SessionContext } },
+  ): Promise<AgentResult> {
+    this.logger.log(`Executing task ${task.id} for ${task.agent}: ${task.description}`);
 
     const agentKey = task.agent as ActiveAgent;
     if (!this.agentStatus[agentKey]?.enabled) {
@@ -117,10 +258,30 @@ export class TaskExecutorService {
       case 'FlowAgent':
         return this.flowService.run(task.data as FlowAgentInput);
       default:
-        throw new Error('Unknown agent type');
+        return {
+          toolCalls: [],
+        };
     }
   }
 
+  /**
+   * Check if a response requires human-in-the-loop clarification
+   * @param result The agent execution result
+   * @returns Boolean indicating if HITL is required
+   */
+  private requiresHITL(result: AgentResult): boolean {
+    return (
+      'clarification' in result &&
+      !!result.clarification &&
+      !!(result.clarification as HITLRequest).prompt
+    );
+  }
+
+  /**
+   * Type guard to check if a result is an agent response
+   * @param result Result to check
+   * @returns Type predicate for BaseAgentResponse
+   */
   private isAgentResponse(result: unknown): result is BaseAgentResponse {
     return result !== null && typeof result === 'object' && 'toolCalls' in result;
   }

@@ -11,6 +11,7 @@ import { ToolNameGeneratorService } from './services/tool-name-generator.service
 import { TaskExecutorService } from './services/task-executor.service';
 import { ChatContextService } from './services/chat-context.service';
 import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
+import { MemoryModule } from '../../memory/memory.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
     FlowAgentModule,
     ExecutorAgentModule,
     forwardRef(() => ChatModule),
+    forwardRef(() => MemoryModule),
   ],
   providers: [
     CoordinatorAgentService,
@@ -29,6 +31,6 @@ import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
     TaskExecutorService,
     ChatContextService,
   ],
-  exports: [CoordinatorAgentService],
+  exports: [CoordinatorAgentService, ChatContextService],
 })
 export class CoordinatorAgentModule {}

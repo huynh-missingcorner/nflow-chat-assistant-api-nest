@@ -8,6 +8,7 @@ import { CoordinatorAgentModule } from './modules/agents/coordinator-agent/coord
 import { SharedModule } from './shared/shared.module';
 import { ChatSessionModule } from './modules/chat-session/chat-session.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { MemoryModule } from './modules/memory/memory.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     CoordinatorAgentModule,
     SharedModule,
     ChatSessionModule,
+    MemoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

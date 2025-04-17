@@ -5,11 +5,11 @@ import { NFlowLayoutService } from '../../nflow/services/layout.service';
 import { NFlowFlowService } from '../../nflow/services/flow.service';
 import { AxiosError } from 'axios';
 import {
-  ProcessedTasks,
   ExecutionResult,
   ExecutorOptions,
   ToolCall,
   FunctionArguments,
+  AgentResult,
 } from './types/executor.types';
 import {
   CreateApplicationDto,
@@ -39,7 +39,10 @@ export class ExecutorAgentService {
   /**
    * Execute all processed tasks in order
    */
-  async execute(tasks: ProcessedTasks, options?: ExecutorOptions): Promise<ExecutionResult> {
+  async execute(
+    tasks: Record<string, AgentResult>,
+    options?: ExecutorOptions,
+  ): Promise<ExecutionResult> {
     const finalOptions = { ...this.defaultOptions, ...options };
     const results: ExecutionResult['results'] = {};
     let hasError = false;
@@ -91,7 +94,9 @@ export class ExecutorAgentService {
   /**
    * Get all tool calls sorted by order
    */
-  private getSortedToolCalls(tasks: ProcessedTasks): Array<{ agentName: string; call: ToolCall }> {
+  private getSortedToolCalls(
+    tasks: Record<string, AgentResult>,
+  ): Array<{ agentName: string; call: ToolCall }> {
     const allCalls: Array<{ agentName: string; call: ToolCall }> = [];
 
     for (const [agentName, result] of Object.entries(tasks)) {

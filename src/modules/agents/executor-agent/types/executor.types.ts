@@ -5,6 +5,7 @@ import { ApplicationAgentOutput } from '../../application-agent/types/applicatio
 import { FlowAgentOutput } from '../../flow-agent/types/flow.types';
 import { LayoutAgentOutput } from '../../layout-agent/types/layout.types';
 import { ObjectAgentOutput } from '../../object-agent/types/object.types';
+import { HITLRequest } from '../../coordinator-agent/types';
 
 export type FunctionArguments =
   | { name: 'ApiAppBuilderController_createApp'; args: CreateApplicationDto }
@@ -22,11 +23,6 @@ export interface ToolCall {
   };
 }
 
-// export interface AgentResult {
-//   toolCalls: ToolCall[];
-//   metadata: Record<string, unknown>;
-// }
-
 export type AgentResult =
   | ApplicationAgentOutput
   | ObjectAgentOutput
@@ -34,7 +30,8 @@ export type AgentResult =
   | FlowAgentOutput;
 
 export interface ProcessedTasks {
-  [key: string]: AgentResult;
+  results: Record<string, AgentResult>;
+  pendingHITL?: Record<string, HITLRequest>;
 }
 
 export interface ExecutionResult {

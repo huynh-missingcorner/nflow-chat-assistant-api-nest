@@ -2,28 +2,27 @@ import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { ApplicationAgentInput, ApplicationAgentOutput } from './types/application.types';
+import { ApplicationAgentInput } from './types/application.types';
 import { ApplicationErrors } from './constants/application.constants';
 import { tools as applicationTools } from './tools/application-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
+import { AgentInput, AgentOutput, ToolCall } from '../types';
 
 @Injectable()
 export class ApplicationAgentService extends BaseAgentService<
-  ApplicationAgentInput,
-  ApplicationAgentOutput
+  AgentInput<ApplicationAgentInput>,
+  AgentOutput
 > {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
     super(openAIService, contextLoader, AGENT_PATHS.APPLICATION);
   }
 
-  async run(params: ApplicationAgentInput): Promise<ApplicationAgentOutput> {
-    return this.generateApplication(params);
+  async run(input: AgentInput<ApplicationAgentInput>): Promise<AgentOutput> {
+    return this.generateApplication(input.taskData);
   }
 
-  private async generateApplication(
-    params: ApplicationAgentInput,
-  ): Promise<ApplicationAgentOutput> {
+  private async generateApplication(params: ApplicationAgentInput): Promise<AgentOutput> {
     try {
       const combinedContext = await this.loadAgentContexts();
 
@@ -51,20 +50,17 @@ export class ApplicationAgentService extends BaseAgentService<
         throw new Error(ApplicationErrors.GENERATION_FAILED);
       }
 
-      const toolCalls = response.toolCalls.map((toolCall, index) => {
+      const toolCalls: ToolCall[] = response.toolCalls.map((toolCall) => {
         const functionCall = toolCall.function;
         return {
-          order: index,
-          toolCall: {
-            functionName: functionCall.name,
-            arguments: JSON.parse(functionCall.arguments) as Record<string, unknown>,
-          },
+          id: toolCall.id,
+          functionName: functionCall.name,
+          arguments: JSON.parse(functionCall.arguments) as Record<string, unknown>,
         };
       });
 
       return {
         toolCalls,
-        metadata: {},
       };
     } catch (error) {
       this.logger.error('Application generation failed', error);

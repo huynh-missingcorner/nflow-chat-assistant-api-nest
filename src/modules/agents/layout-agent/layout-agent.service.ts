@@ -2,23 +2,27 @@ import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { LayoutAgentInput, LayoutAgentOutput } from './types/layout.types';
+import { LayoutAgentInput } from './types/layout.types';
 import { LayoutErrors } from './constants/layout.constants';
 import { tools as layoutTools } from './tools/layout-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
+import { AgentInput, AgentOutput, ToolCall } from '../types';
 
 @Injectable()
-export class LayoutAgentService extends BaseAgentService<LayoutAgentInput, LayoutAgentOutput> {
+export class LayoutAgentService extends BaseAgentService<
+  AgentInput<LayoutAgentInput>,
+  AgentOutput
+> {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
     super(openAIService, contextLoader, AGENT_PATHS.LAYOUT);
   }
 
-  async run(params: LayoutAgentInput): Promise<LayoutAgentOutput> {
-    return this.generateLayouts(params);
+  async run(input: AgentInput<LayoutAgentInput>): Promise<AgentOutput> {
+    return this.generateLayouts(input.taskData);
   }
 
-  private async generateLayouts(params: LayoutAgentInput): Promise<LayoutAgentOutput> {
+  private async generateLayouts(params: LayoutAgentInput): Promise<AgentOutput> {
     try {
       const combinedContext = await this.loadAgentContexts();
 
@@ -46,20 +50,17 @@ export class LayoutAgentService extends BaseAgentService<LayoutAgentInput, Layou
         throw new Error(LayoutErrors.GENERATION_FAILED);
       }
 
-      const toolCalls = response.toolCalls.map((toolCall, index) => {
+      const toolCalls: ToolCall[] = response.toolCalls.map((toolCall) => {
         const functionCall = toolCall.function;
         return {
-          order: index,
-          toolCall: {
-            functionName: functionCall.name,
-            arguments: JSON.parse(functionCall.arguments) as Record<string, unknown>,
-          },
+          id: toolCall.id,
+          functionName: functionCall.name,
+          arguments: JSON.parse(functionCall.arguments) as Record<string, unknown>,
         };
       });
 
       return {
         toolCalls,
-        metadata: {},
       };
     } catch (error) {
       this.logger.error('Layout generation failed', error);

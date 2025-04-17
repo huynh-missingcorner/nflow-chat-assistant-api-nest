@@ -2,36 +2,33 @@ import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import {
-  ObjectAgentInput,
-  ObjectAgentOutput,
-  ObjectSchema,
-  ObjectToolCall,
-  ToolCallPayload,
-} from './types/object.types';
+import { ObjectAgentInput, ObjectSchema } from './types/object.types';
 import { ObjectErrors, ObjectPrompts } from './constants/object.constants';
 import { createNewFieldTool, createNewObjectTool, schemaDesignerTool } from './tools/object-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
+import { AgentInput, AgentOutput, ToolCall } from '../types';
 
 @Injectable()
-export class ObjectAgentService extends BaseAgentService<ObjectAgentInput, ObjectAgentOutput> {
+export class ObjectAgentService extends BaseAgentService<
+  AgentInput<ObjectAgentInput>,
+  AgentOutput
+> {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
     super(openAIService, contextLoader, AGENT_PATHS.OBJECT);
   }
 
-  async run(params: ObjectAgentInput): Promise<ObjectAgentOutput> {
-    return this.generateObjects(params);
+  async run(input: AgentInput<ObjectAgentInput>): Promise<AgentOutput> {
+    return this.generateObjects(input.taskData);
   }
 
-  private async generateObjects(params: ObjectAgentInput): Promise<ObjectAgentOutput> {
+  private async generateObjects(params: ObjectAgentInput): Promise<AgentOutput> {
     try {
       const schemas = await this.designObjectSchemas(params);
       const toolCalls = await this.generateToolCalls(params.action, schemas);
 
       return {
         toolCalls,
-        metadata: {},
       };
     } catch (error) {
       this.logger.error('Object generation failed', error);
@@ -77,18 +74,16 @@ export class ObjectAgentService extends BaseAgentService<ObjectAgentInput, Objec
     }
   }
 
-  private async generateToolCalls(
-    action: string,
-    schemas: ObjectSchema[],
-  ): Promise<ObjectToolCall[]> {
+  private async generateToolCalls(action: string, schemas: ObjectSchema[]): Promise<ToolCall[]> {
     try {
       const objectToolCalls = await this.generateObjectCreationCalls(action, schemas);
       const fieldToolCalls = await this.generateFieldCreationCalls(action, schemas);
-      const allToolCalls: ToolCallPayload[] = [...objectToolCalls, ...fieldToolCalls];
+      const allToolCalls = [...objectToolCalls, ...fieldToolCalls];
 
-      return allToolCalls.map((toolCall, index) => ({
-        order: index + 1,
-        toolCall,
+      return allToolCalls.map((toolCall) => ({
+        id: toolCall.id,
+        functionName: toolCall.functionName,
+        arguments: toolCall.arguments,
       }));
     } catch (error) {
       this.logger.error('Failed to generate tool calls', error);
@@ -99,7 +94,7 @@ export class ObjectAgentService extends BaseAgentService<ObjectAgentInput, Objec
   private async generateObjectCreationCalls(
     action: string,
     schemas: ObjectSchema[],
-  ): Promise<ToolCallPayload[]> {
+  ): Promise<ToolCall[]> {
     const combinedContext = await this.loadAgentContexts();
     const prompt = (ObjectPrompts.OBJECT_CREATION_PROMPT as string)
       .replace('{action}', action)
@@ -130,6 +125,7 @@ export class ObjectAgentService extends BaseAgentService<ObjectAgentInput, Objec
     }
 
     return completion.toolCalls.map((toolCall) => ({
+      id: toolCall.id,
       functionName: toolCall.function.name,
       arguments: JSON.parse(toolCall.function.arguments) as Record<string, unknown>,
     }));
@@ -138,9 +134,9 @@ export class ObjectAgentService extends BaseAgentService<ObjectAgentInput, Objec
   private async generateFieldCreationCalls(
     action: string,
     schemas: ObjectSchema[],
-  ): Promise<ToolCallPayload[]> {
+  ): Promise<ToolCall[]> {
     const combinedContext = await this.loadAgentContexts();
-    const allFieldToolCalls: ToolCallPayload[] = [];
+    const allFieldToolCalls: ToolCall[] = [];
 
     for (const schema of schemas) {
       for (const field of schema.fields) {
@@ -179,6 +175,7 @@ Requirements:
         }
 
         const fieldToolCalls = completion.toolCalls.map((toolCall) => ({
+          id: toolCall.id,
           functionName: toolCall.function.name,
           arguments: JSON.parse(toolCall.function.arguments) as Record<string, unknown>,
         }));

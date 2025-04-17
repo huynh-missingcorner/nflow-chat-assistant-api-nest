@@ -14,43 +14,6 @@ export class ChatMessageService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Map MessageRole (API enum) to Role (Prisma enum)
-   */
-  private mapMessageRoleToPrisma(role: MessageRole): Role {
-    switch (role) {
-      case MessageRole.USER:
-        return Role.USER;
-      case MessageRole.ASSISTANT:
-        return Role.ASSISTANT;
-      case MessageRole.SYSTEM:
-        return Role.SYSTEM;
-      default:
-        return Role.USER;
-    }
-  }
-
-  /**
-   * Map Role (Prisma enum) to MessageRole (API enum)
-   */
-  private mapPrismaRoleToMessageRole(role: Role): MessageRole {
-    switch (role) {
-      case Role.USER:
-        return MessageRole.USER;
-      case Role.ASSISTANT:
-        return MessageRole.ASSISTANT;
-      case Role.SYSTEM:
-        return MessageRole.SYSTEM;
-      default:
-        return MessageRole.USER;
-    }
-  }
-
-  /**
-   * Create a new chat message
-   * @param createMessageDto The message data
-   * @returns The created message
-   */
   async create(createMessageDto: CreateMessageDto): Promise<MessageResponseDto> {
     try {
       const { sessionId, content, role } = createMessageDto;
@@ -89,10 +52,6 @@ export class ChatMessageService {
     }
   }
 
-  /**
-   * Find all chat messages
-   * @returns Array of messages
-   */
   async findAll(): Promise<MessageResponseDto[]> {
     try {
       const messages = await this.prisma.message.findMany({
@@ -113,11 +72,6 @@ export class ChatMessageService {
     }
   }
 
-  /**
-   * Find all messages for a specific chat session
-   * @param sessionId The chat session ID
-   * @returns Array of messages for the session
-   */
   async findAllBySessionId(sessionId: string): Promise<MessageResponseDto[]> {
     try {
       const messages = await this.prisma.message.findMany({
@@ -139,11 +93,6 @@ export class ChatMessageService {
     }
   }
 
-  /**
-   * Find a message by ID
-   * @param id The message ID
-   * @returns The message if found
-   */
   async findOne(id: string): Promise<MessageResponseDto> {
     try {
       const message = await this.prisma.message.findUnique({
@@ -168,12 +117,6 @@ export class ChatMessageService {
     }
   }
 
-  /**
-   * Update a message
-   * @param id The message ID
-   * @param updateMessageDto The update data
-   * @returns The updated message
-   */
   async update(id: string, updateMessageDto: UpdateMessageDto): Promise<MessageResponseDto> {
     try {
       const message = await this.prisma.message.update({
@@ -195,11 +138,6 @@ export class ChatMessageService {
     }
   }
 
-  /**
-   * Delete a message
-   * @param id The message ID
-   * @returns True if the message was deleted
-   */
   async remove(id: string): Promise<boolean> {
     try {
       await this.prisma.message.delete({
@@ -214,11 +152,6 @@ export class ChatMessageService {
     }
   }
 
-  /**
-   * Delete all messages for a chat session
-   * @param sessionId The chat session ID
-   * @returns The number of messages deleted
-   */
   async removeAllBySessionId(sessionId: string): Promise<number> {
     try {
       const result = await this.prisma.message.deleteMany({
@@ -230,6 +163,32 @@ export class ChatMessageService {
     } catch (error) {
       this.logger.error(`Failed to delete messages for session ID ${sessionId}`, error);
       throw error;
+    }
+  }
+
+  private mapMessageRoleToPrisma(role: MessageRole): Role {
+    switch (role) {
+      case MessageRole.USER:
+        return Role.USER;
+      case MessageRole.ASSISTANT:
+        return Role.ASSISTANT;
+      case MessageRole.SYSTEM:
+        return Role.SYSTEM;
+      default:
+        return Role.USER;
+    }
+  }
+
+  private mapPrismaRoleToMessageRole(role: Role): MessageRole {
+    switch (role) {
+      case Role.USER:
+        return MessageRole.USER;
+      case Role.ASSISTANT:
+        return MessageRole.ASSISTANT;
+      case Role.SYSTEM:
+        return MessageRole.SYSTEM;
+      default:
+        return MessageRole.USER;
     }
   }
 }

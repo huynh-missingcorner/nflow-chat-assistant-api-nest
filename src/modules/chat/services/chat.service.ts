@@ -18,11 +18,6 @@ export class ChatService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  /**
-   * Process a chat message and return a response
-   * @param chatRequestDto The chat request data
-   * @returns Chat response with AI reply and app URL if available
-   */
   async processMessage(chatRequestDto: ChatRequestDto): Promise<ChatResponseDto> {
     const { sessionId, message } = chatRequestDto;
     const result = await this.coordinatorService.run({ message, sessionId });
@@ -74,8 +69,6 @@ export class ChatService {
     });
 
     this.logger.log(`Updated title for session ${sessionId} to: ${titleResponse.content}`);
-
-    // Emit a session.title.updated event
     this.eventEmitter.emit('session.title.updated', { sessionId, title: titleResponse.content });
   }
 }

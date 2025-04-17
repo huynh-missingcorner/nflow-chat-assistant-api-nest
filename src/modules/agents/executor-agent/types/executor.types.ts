@@ -1,11 +1,8 @@
 import { FlowCreateDto, CreateLayoutDto } from 'src/modules/nflow/types';
 import { FieldDto, ObjectDto, UpdateApplicationDto } from 'src/modules/nflow/types';
 import { CreateApplicationDto } from 'src/modules/nflow/types';
-import { ApplicationAgentOutput } from '../../application-agent/types/application.types';
-import { FlowAgentOutput } from '../../flow-agent/types/flow.types';
-import { LayoutAgentOutput } from '../../layout-agent/types/layout.types';
-import { ObjectAgentOutput } from '../../object-agent/types/object.types';
 import { HITLRequest } from '../../coordinator-agent/types';
+import { AgentOutput } from '../../types';
 
 export type FunctionArguments =
   | { name: 'ApiAppBuilderController_createApp'; args: CreateApplicationDto }
@@ -15,34 +12,24 @@ export type FunctionArguments =
   | { name: 'ApiLayoutBuilderController_createLayout'; args: CreateLayoutDto }
   | { name: 'ApiFlowController_createFlow'; args: FlowCreateDto };
 
-export interface ToolCall {
+export interface NflowRequest {
   order: number;
-  toolCall: {
+  data: {
     functionName: FunctionArguments['name'];
     arguments: FunctionArguments['args'];
   };
 }
 
-export type AgentResult =
-  | ApplicationAgentOutput
-  | ObjectAgentOutput
-  | LayoutAgentOutput
-  | FlowAgentOutput;
-
 export interface ProcessedTasks {
-  results: Record<string, AgentResult>;
+  results: Record<string, AgentOutput>;
   pendingHITL?: Record<string, HITLRequest>;
 }
 
 export interface ExecutionResult {
+  id: string;
+  agent: string;
+  response: unknown; // Reponse data from nFlow API
   success: boolean;
-  results: {
-    [key: string]: {
-      success: boolean;
-      data?: unknown;
-      error?: string;
-    }[];
-  };
   error?: string;
 }
 

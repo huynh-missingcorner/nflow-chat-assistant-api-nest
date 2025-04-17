@@ -10,10 +10,10 @@ import { LayoutAgentInput } from '../../layout-agent/types/layout.types';
 import { FlowAgentInput } from '../../flow-agent/types/flow.types';
 import { BaseAgentResponse, HITLRequest } from '../types';
 import { ActiveAgent, AgentStatus, DEFAULT_AGENT_STATUS } from '../consts';
-import { AgentResult, ProcessedTasks } from '../../executor-agent/types/executor.types';
+import { ProcessedTasks } from '../../executor-agent/types/executor.types';
 import { ToolNameGeneratorService } from './tool-name-generator.service';
-import { SessionContext } from '../../../memory/types';
 import { MemoryService } from 'src/modules/memory/memory.service';
+import { Agent, AgentOutput, SessionContext } from '../../types';
 
 @Injectable()
 export class TaskExecutorService {
@@ -40,7 +40,7 @@ export class TaskExecutorService {
     sessionId: string,
   ): Promise<ProcessedTasks> {
     // Initialize results to store execution outputs
-    const taskResults: Record<string, AgentResult> = {};
+    const taskResults: Record<string, AgentOutput> = {};
     const completed = new Set<string>();
     const pendingHITL: Record<string, HITLRequest> = {};
 
@@ -133,7 +133,7 @@ export class TaskExecutorService {
           taskResults[task.id] = {
             toolCalls: [],
             error: (error as Error).message,
-          } as AgentResult;
+          };
           // Mark as completed to continue the flow
           completed.add(task.id);
           const index = remainingTasks.findIndex((t) => t.id === task.id);
@@ -154,8 +154,9 @@ export class TaskExecutorService {
       }
     }
 
-    // Update the full session context with task results
-    await this.memoryService.updateTaskResults(sessionId, { results: taskResults });
+    // TODO: Update the full session context with task results
+    // We should update the task results only if the task execution by ExecutorAgent is successful
+    // await this.memoryService.updateTaskResults(sessionId, { results: taskResults });
 
     return {
       results: taskResults,
@@ -233,12 +234,10 @@ export class TaskExecutorService {
    * @param task The task to execute with context
    * @returns Result of the task execution
    */
-  private async executeTask(
-    task: IntentTask & { data: { context?: SessionContext } },
-  ): Promise<AgentResult> {
+  private async executeTask(task: IntentTask, context?: SessionContext): Promise<AgentOutput> {
     this.logger.log(`Executing task ${task.id} for ${task.agent}: ${task.description}`);
 
-    const agentKey = task.agent as ActiveAgent;
+    const agentKey = task.agent;
     if (!this.agentStatus[agentKey]?.enabled) {
       this.logger.warn(`Attempted to execute task for disabled agent: ${task.agent}`);
 
@@ -249,14 +248,26 @@ export class TaskExecutorService {
     }
 
     switch (task.agent) {
-      case 'ApplicationAgent':
-        return this.applicationService.run(task.data as ApplicationAgentInput);
-      case 'ObjectAgent':
-        return this.objectService.run(task.data as ObjectAgentInput);
-      case 'LayoutAgent':
-        return this.layoutService.run(task.data as LayoutAgentInput);
-      case 'FlowAgent':
-        return this.flowService.run(task.data as FlowAgentInput);
+      case Agent.ApplicationAgent:
+        return this.applicationService.run({
+          taskData: task.data as ApplicationAgentInput,
+          context,
+        });
+      case Agent.ObjectAgent:
+        return this.objectService.run({
+          taskData: task.data as ObjectAgentInput,
+          context,
+        });
+      case Agent.LayoutAgent:
+        return this.layoutService.run({
+          taskData: task.data as LayoutAgentInput,
+          context,
+        });
+      case Agent.FlowAgent:
+        return this.flowService.run({
+          taskData: task.data as FlowAgentInput,
+          context,
+        });
       default:
         return {
           toolCalls: [],
@@ -269,7 +280,7 @@ export class TaskExecutorService {
    * @param result The agent execution result
    * @returns Boolean indicating if HITL is required
    */
-  private requiresHITL(result: AgentResult): boolean {
+  private requiresHITL(result: AgentOutput): boolean {
     return (
       'clarification' in result &&
       !!result.clarification &&

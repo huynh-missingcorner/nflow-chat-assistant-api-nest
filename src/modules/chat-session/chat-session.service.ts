@@ -9,11 +9,6 @@ export class ChatSessionService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Create a new chat session
-   * @param createChatSessionDto The chat session data
-   * @returns The created chat session
-   */
   async create(createChatSessionDto: CreateChatSessionDto) {
     try {
       return await this.prisma.chatSession.create({
@@ -25,10 +20,6 @@ export class ChatSessionService {
     }
   }
 
-  /**
-   * Find all chat sessions
-   * @returns Array of chat sessions
-   */
   async findAll() {
     try {
       return await this.prisma.chatSession.findMany({
@@ -40,11 +31,6 @@ export class ChatSessionService {
     }
   }
 
-  /**
-   * Find a chat session by ID
-   * @param id The chat session ID
-   * @returns The chat session if found
-   */
   async findOne(id: string) {
     try {
       const session = await this.prisma.chatSession.findUnique({
@@ -66,12 +52,6 @@ export class ChatSessionService {
     }
   }
 
-  /**
-   * Update a chat session
-   * @param id The chat session ID
-   * @param updateChatSessionDto The update data
-   * @returns The updated chat session
-   */
   async update(id: string, updateChatSessionDto: UpdateChatSessionDto) {
     try {
       const session = await this.prisma.chatSession.update({
@@ -90,11 +70,6 @@ export class ChatSessionService {
     }
   }
 
-  /**
-   * Delete a chat session
-   * @param id The chat session ID
-   * @returns The deleted chat session
-   */
   async remove(id: string) {
     try {
       const session = await this.prisma.chatSession.delete({

@@ -2,23 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { FlowAgentInput, FlowAgentOutput } from './types/flow.types';
+import { FlowAgentInput } from './types/flow.types';
 import { FlowErrors } from './constants/flow.constants';
 import { createFlowTool } from './tools/flow-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
+import { AgentInput, AgentOutput, ToolCall } from '../types';
 
 @Injectable()
-export class FlowAgentService extends BaseAgentService<FlowAgentInput, FlowAgentOutput> {
+export class FlowAgentService extends BaseAgentService<AgentInput<FlowAgentInput>, AgentOutput> {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
     super(openAIService, contextLoader, AGENT_PATHS.FLOW);
   }
 
-  async run(params: FlowAgentInput): Promise<FlowAgentOutput> {
-    return this.generateFlows(params);
+  async run(input: AgentInput<FlowAgentInput>): Promise<AgentOutput> {
+    return this.generateFlows(input.taskData);
   }
 
-  private async generateFlows(params: FlowAgentInput): Promise<FlowAgentOutput> {
+  private async generateFlows(params: FlowAgentInput): Promise<AgentOutput> {
     try {
       const combinedContext = await this.loadAgentContexts();
 
@@ -46,20 +47,17 @@ export class FlowAgentService extends BaseAgentService<FlowAgentInput, FlowAgent
         throw new Error(FlowErrors.GENERATION_FAILED);
       }
 
-      const toolCalls = response.toolCalls.map((toolCall, index) => {
+      const toolCalls: ToolCall[] = response.toolCalls.map((toolCall) => {
         const functionCall = toolCall.function;
         return {
-          order: index,
-          toolCall: {
-            functionName: functionCall.name,
-            arguments: JSON.parse(functionCall.arguments) as Record<string, unknown>,
-          },
+          id: toolCall.id,
+          functionName: functionCall.name,
+          arguments: JSON.parse(functionCall.arguments) as Record<string, unknown>,
         };
       });
 
       return {
         toolCalls,
-        metadata: {},
       };
     } catch (error) {
       this.logger.error('Flow generation failed', error);

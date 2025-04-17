@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { SessionContext, CreatedObject } from './types';
+import { CreatedObject } from './types';
 import { ChatContextService } from '../agents/coordinator-agent/services/chat-context.service';
-import { ProcessedTasks } from '../agents/executor-agent/types/executor.types';
+import { ExecutionResult } from '../agents/executor-agent/types/executor.types';
+import { SessionContext } from '../agents/types';
 
 @Injectable()
 export class MemoryService {
@@ -30,6 +31,7 @@ export class MemoryService {
         createdFlows: [],
         toolCallsLog: [],
         taskResults: {},
+        pendingClarifications: [],
         timestamp: new Date(),
       };
 
@@ -54,7 +56,7 @@ export class MemoryService {
       createdObjects: [...(context.createdObjects || []), ...(patchData.createdObjects || [])],
       createdLayouts: [...(context.createdLayouts || []), ...(patchData.createdLayouts || [])],
       createdFlows: [...(context.createdFlows || []), ...(patchData.createdFlows || [])],
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       toolCallsLog: [...(context.toolCallsLog || []), ...(patchData.toolCallsLog || [])],
       // Merge task results
       taskResults: { ...(context.taskResults || {}), ...(patchData.taskResults || {}) },
@@ -93,8 +95,8 @@ export class MemoryService {
    * @param context The session context
    * @returns The last created application or undefined
    */
-  public getLastCreatedApplication(context: SessionContext): SessionContext['application'] {
-    return context.application;
+  public getLastCreatedApplication(context: SessionContext): SessionContext['createdApplication'] {
+    return context.createdApplication;
   }
 
   /**
@@ -102,12 +104,12 @@ export class MemoryService {
    * @param sessionId The session ID
    * @param results The task results to update
    */
-  public async updateTaskResults(sessionId: string, results: ProcessedTasks): Promise<void> {
+  public async updateTaskResults(sessionId: string, results: ExecutionResult): Promise<void> {
     const context = await this.getContext(sessionId);
 
     context.taskResults = {
       ...context.taskResults,
-      ...results.results,
+      [results.id]: results,
     };
 
     this.sessionContexts.set(sessionId, context);

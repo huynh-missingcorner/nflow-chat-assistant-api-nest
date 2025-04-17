@@ -3,7 +3,7 @@ import { ApplicationAgentInput } from '../../application-agent/types/application
 import { FlowAgentInput } from '../../flow-agent/types/flow.types';
 import { LayoutAgentInput } from '../../layout-agent/types/layout.types';
 import { ObjectAgentInput } from '../../object-agent/types/object.types';
-import { ChatMessage } from '../../types';
+import { Agent, ChatMessage } from '../../types';
 
 export interface IntentPlan {
   summary: string;
@@ -12,7 +12,7 @@ export interface IntentPlan {
 
 export interface IntentTask {
   id: string;
-  agent: 'ApplicationAgent' | 'ObjectAgent' | 'LayoutAgent' | 'FlowAgent';
+  agent: Agent;
   description: string;
   dependsOn?: string[];
   data: ApplicationAgentInput | FlowAgentInput | LayoutAgentInput | ObjectAgentInput;

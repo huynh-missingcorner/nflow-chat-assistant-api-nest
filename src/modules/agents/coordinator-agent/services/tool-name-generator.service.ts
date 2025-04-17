@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable, Logger } from '@nestjs/common';
-import { ToolCall, ToolCallArguments } from '../types';
+import { ToolCallArguments } from '../types';
+import { ToolCall } from '../../types';
 
 @Injectable()
 export class ToolNameGeneratorService {

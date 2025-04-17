@@ -7,9 +7,8 @@ import { AxiosError } from 'axios';
 import {
   ExecutionResult,
   ExecutorOptions,
-  ToolCall,
+  NflowRequest,
   FunctionArguments,
-  AgentResult,
 } from './types/executor.types';
 import {
   CreateApplicationDto,
@@ -19,6 +18,7 @@ import {
   CreateLayoutDto,
   FlowCreateDto,
 } from '../../nflow/types';
+import { AgentOutput } from '../types';
 
 @Injectable()
 export class ExecutorAgentService {
@@ -39,13 +39,8 @@ export class ExecutorAgentService {
   /**
    * Execute all processed tasks in order
    */
-  async execute(
-    tasks: Record<string, AgentResult>,
-    options?: ExecutorOptions,
-  ): Promise<ExecutionResult> {
-    const finalOptions = { ...this.defaultOptions, ...options };
-    const results: ExecutionResult['results'] = {};
-    let hasError = false;
+  async execute(tasks: Record<string, AgentOutput>): Promise<ExecutionResult[]> {
+    const results: ExecutionResult[] = [];
 
     try {
       // Sort all tool calls by order
@@ -53,41 +48,20 @@ export class ExecutorAgentService {
 
       // Execute each tool call in order
       for (const { agentName, call } of sortedCalls) {
-        if (!results[agentName]) {
-          results[agentName] = [];
-        }
-
-        try {
-          const result = await this.executeToolCall(call);
-          results[agentName].push({
-            success: true,
-            data: result,
-          });
-        } catch (error) {
-          hasError = true;
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-          results[agentName].push({
-            success: false,
-            error: errorMessage,
-          });
-
-          if (finalOptions.stopOnError) {
-            throw new Error(`Execution failed at ${agentName}: ${errorMessage}`);
-          }
-        }
+        const result = await this.executeToolCall(call);
+        results.push({
+          id: call.data.functionName, // TODO: Update this to tool call id
+          agent: agentName,
+          response: result,
+          success: true,
+        });
       }
 
-      return {
-        success: !hasError,
-        results,
-      };
+      return results;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      return {
-        success: false,
-        results,
-        error: errorMessage,
-      };
+      this.logger.error(errorMessage);
+      throw new Error(errorMessage);
     }
   }
 
@@ -95,14 +69,14 @@ export class ExecutorAgentService {
    * Get all tool calls sorted by order
    */
   private getSortedToolCalls(
-    tasks: Record<string, AgentResult>,
-  ): Array<{ agentName: string; call: ToolCall }> {
-    const allCalls: Array<{ agentName: string; call: ToolCall }> = [];
+    tasks: Record<string, AgentOutput>,
+  ): Array<{ agentName: string; call: NflowRequest }> {
+    const allCalls: Array<{ agentName: string; call: NflowRequest }> = [];
 
-    for (const [agentName, result] of Object.entries(tasks)) {
-      if ('toolCalls' in result) {
-        for (const call of result.toolCalls) {
-          allCalls.push({ agentName, call: call as unknown as ToolCall });
+    for (const [agentName, agentOutput] of Object.entries(tasks)) {
+      if ('toolCalls' in agentOutput) {
+        for (const call of agentOutput.toolCalls) {
+          allCalls.push({ agentName, call: call as unknown as NflowRequest });
         }
       }
     }
@@ -113,17 +87,17 @@ export class ExecutorAgentService {
   /**
    * Execute a single tool call with retry logic
    */
-  private async executeToolCall(call: ToolCall, callTime: number = 1): Promise<unknown> {
-    this.logger.log(`Executing tool call: ${call.toolCall.functionName}`);
+  private async executeToolCall(call: NflowRequest, callTime: number = 1): Promise<unknown> {
+    this.logger.log(`Executing tool call: ${call.data.functionName}`);
     try {
-      return await this.executeFunction(call.toolCall.functionName, call.toolCall.arguments);
+      return await this.executeFunction(call.data.functionName, call.data.arguments);
     } catch (error) {
       if (error instanceof AxiosError) {
         this.logger.error(
-          `Error executing tool call: ${call.toolCall.functionName} - ${error.response?.data}`,
+          `Error executing tool call: ${call.data.functionName} - ${error.response?.data}`,
         );
       } else {
-        this.logger.error(`Error executing tool call: ${call.toolCall.functionName} - ${error}`);
+        this.logger.error(`Error executing tool call: ${call.data.functionName} - ${error}`);
       }
 
       if (this.defaultOptions.retryAttempts > 0 && callTime < this.defaultOptions.retryAttempts) {
@@ -133,7 +107,7 @@ export class ExecutorAgentService {
 
       // Log final failure and return null instead of throwing
       this.logger.error(
-        `Tool call ${call.toolCall.functionName} failed after ${this.defaultOptions.retryAttempts} retries`,
+        `Tool call ${call.data.functionName} failed after ${this.defaultOptions.retryAttempts} retries`,
       );
       return null;
     }

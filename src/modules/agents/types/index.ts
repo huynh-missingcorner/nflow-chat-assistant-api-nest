@@ -1,5 +1,12 @@
+import { CreatedApplication } from 'src/modules/memory/types';
+import { CreatedFlow, CreatedLayout } from 'src/modules/memory/types';
+import { CreatedObject } from 'src/modules/memory/types';
 import { ExecutionResult } from '../executor-agent/types/executor.types';
-import { IntentPlan, IntentTask } from '../intent-agent/types/intent.types';
+import { IntentPlan } from '../intent-agent/types/intent.types';
+import { ApplicationAgentInput } from '../application-agent/types/application.types';
+import { FlowAgentInput } from '../flow-agent/types/flow.types';
+import { LayoutAgentInput } from '../layout-agent/types/layout.types';
+import { ObjectAgentInput } from '../object-agent/types/object.types';
 
 export type AgentType = 'application' | 'object' | 'layout' | 'flow' | 'coordinator' | 'executor';
 
@@ -19,21 +26,24 @@ export const AGENT_LIST = [
   Agent.FlowAgent,
 ] as const;
 
-export interface AgentInput {
-  task: IntentTask;
-  context: SessionContext;
+export interface AgentInput<
+  T extends ApplicationAgentInput | FlowAgentInput | LayoutAgentInput | ObjectAgentInput,
+> {
+  taskData: T;
+  context?: SessionContext;
 }
 
 export interface AgentOutput {
   toolCalls: ToolCall[];
-  memoryPatch?: any;
+  memoryPatch?: Partial<SessionContext>;
   clarification?: HITLRequest;
+  error?: string;
 }
 
 export interface ToolCall {
   id: string;
-  name: string;
-  arguments: Record<string, any>;
+  functionName: string;
+  arguments: Record<string, unknown>;
 }
 
 export interface HITLRequest {
@@ -49,10 +59,10 @@ export interface SessionContext {
   chatHistory: ChatMessage[];
 
   // Nflow memory
-  //   application?: CreatedApplication;
-  //   createdObjects: CreatedObject[];
-  //   createdLayouts: CreatedLayout[];
-  //   createdFlows: CreatedFlow[];
+  createdApplication?: CreatedApplication;
+  createdObjects: CreatedObject[];
+  createdLayouts: CreatedLayout[];
+  createdFlows: CreatedFlow[];
 
   // Plan memory
   intentPlan?: IntentPlan;

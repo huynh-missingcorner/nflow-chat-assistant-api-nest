@@ -19,26 +19,6 @@ export interface ObjectAgentInput {
   objects: ObjectParams[];
 }
 
-export interface ToolCallPayload {
-  functionName: string;
-  arguments: Record<string, unknown>;
-}
-
-export interface ObjectToolCall {
-  order: number;
-  toolCall: ToolCallPayload;
-}
-
-export interface ObjectAgentOutput {
-  toolCalls: ObjectToolCall[];
-  metadata?: {
-    totalObjects?: number;
-    generatedAt?: string;
-    schemas?: ObjectSchema[];
-    additionalInfo?: Record<string, unknown>;
-  };
-}
-
 export interface ObjectSchemaField {
   name: string;
   type: string;

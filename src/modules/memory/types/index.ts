@@ -1,5 +1,3 @@
-import { ChatMessage } from 'src/modules/agents/types';
-
 export interface CreatedApplication {
   id: string;
   name: string;
@@ -37,16 +35,4 @@ export interface CreatedFlow {
   name: string;
   trigger: string;
   actions: any[];
-}
-
-export interface SessionContext {
-  sessionId: string;
-  chatHistory: ChatMessage[];
-  application?: CreatedApplication;
-  createdObjects: CreatedObject[];
-  createdLayouts: CreatedLayout[];
-  createdFlows: CreatedFlow[];
-  toolCallsLog: any[];
-  taskResults: Record<string, any>;
-  timestamp: Date;
 }

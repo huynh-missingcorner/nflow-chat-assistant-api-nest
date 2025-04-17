@@ -8,9 +8,6 @@ export class ChatWebsocketService {
 
   constructor(private readonly chatService: ChatService) {}
 
-  /**
-   * Process a user message via WebSocket and prepare it for agent processing
-   */
   async processMessage(sessionId: string, message: string): Promise<string> {
     this.logger.log(`Processing WebSocket message for session ${sessionId}: ${message}`);
 
@@ -38,9 +35,6 @@ export class ChatWebsocketService {
     }
   }
 
-  /**
-   * Stream a response to the WebSocket client
-   */
   async streamResponse(sessionId: string, message: string): Promise<string[]> {
     this.logger.debug(`Streaming response for session ${sessionId}`);
     await new Promise((resolve) => setTimeout(resolve, 100)); // Mock async operation

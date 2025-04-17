@@ -1,3 +1,5 @@
+import { ToolCall } from '../../types';
+
 export interface BaseAgentResponse {
   toolCalls: ToolCall[];
   memoryPatch?: any;
@@ -16,12 +18,6 @@ export interface ToolCallArguments {
     [key: string]: unknown;
   };
   [key: string]: unknown;
-}
-
-export interface ToolCall {
-  id: string;
-  name: string;
-  arguments: Record<string, any>;
 }
 
 export interface CoordinatorAgentInput {

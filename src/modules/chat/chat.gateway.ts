@@ -106,7 +106,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       );
 
       // Save the assistant response to history
-      await this.chatMessageService.create({
+      const responseMessage = await this.chatMessageService.create({
         sessionId: payload.sessionId,
         content: response,
         role: MessageRole.ASSISTANT,
@@ -114,8 +114,12 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
       // Send response back to client
       const chatResponse: WebSocketChatResponseDto = {
-        message: response,
-        timestamp: new Date().toISOString(),
+        id: responseMessage.id,
+        sessionId: responseMessage.sessionId,
+        content: responseMessage.content,
+        role: responseMessage.role,
+        createdAt: responseMessage.createdAt,
+        updatedAt: responseMessage.updatedAt,
       };
       this.server.to(payload.sessionId).emit('messageResponse', chatResponse);
     } catch (error: unknown) {

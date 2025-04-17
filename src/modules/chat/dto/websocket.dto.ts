@@ -1,11 +1,17 @@
+import { MessageRole } from './chat-message.dto';
+
 export interface WebSocketChatMessageDto {
   sessionId: string;
   message: string;
 }
 
 export interface WebSocketChatResponseDto {
-  message: string;
-  timestamp: string;
+  id: string;
+  sessionId: string;
+  content: string;
+  role: MessageRole;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface WebSocketMessageChunkDto {

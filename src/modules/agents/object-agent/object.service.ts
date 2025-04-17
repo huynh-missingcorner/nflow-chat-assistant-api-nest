@@ -3,8 +3,8 @@ import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import {
-  GenerateObjectsParams,
-  GenerateObjectsResponse,
+  ObjectAgentInput,
+  ObjectAgentOutput,
   ObjectSchema,
   ObjectToolCall,
   ToolCallPayload,
@@ -15,19 +15,16 @@ import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
 
 @Injectable()
-export class ObjectService extends BaseAgentService<
-  GenerateObjectsParams,
-  GenerateObjectsResponse
-> {
+export class ObjectService extends BaseAgentService<ObjectAgentInput, ObjectAgentOutput> {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
     super(openAIService, contextLoader, AGENT_PATHS.OBJECT);
   }
 
-  async run(params: GenerateObjectsParams): Promise<GenerateObjectsResponse> {
+  async run(params: ObjectAgentInput): Promise<ObjectAgentOutput> {
     return this.generateObjects(params);
   }
 
-  private async generateObjects(params: GenerateObjectsParams): Promise<GenerateObjectsResponse> {
+  private async generateObjects(params: ObjectAgentInput): Promise<ObjectAgentOutput> {
     try {
       const schemas = await this.designObjectSchemas(params);
       const toolCalls = await this.generateToolCalls(params.action, schemas);
@@ -42,7 +39,7 @@ export class ObjectService extends BaseAgentService<
     }
   }
 
-  private async designObjectSchemas(params: GenerateObjectsParams): Promise<ObjectSchema[]> {
+  private async designObjectSchemas(params: ObjectAgentInput): Promise<ObjectSchema[]> {
     const combinedContext = await this.loadAgentContexts();
     const schemaDesignPrompt = `${ObjectPrompts.OBJECT_DESIGN_PROMPT} ${JSON.stringify(params.objects, null, 2)}`;
     const schemaDesignMessages = [

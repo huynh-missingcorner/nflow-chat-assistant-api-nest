@@ -1,8 +1,8 @@
 import { FunctionCallInputs } from 'src/shared/infrastructure/openai/openai.types';
-import { GenerateApplicationParams } from '../../application-agent/types/application.types';
-import { GenerateFlowsParams } from '../../flow-agent/types/flow.types';
-import { GenerateLayoutsParams } from '../../layout-agent/types/layout.types';
-import { GenerateObjectsParams } from '../../object-agent/types/object.types';
+import { ApplicationAgentInput } from '../../application-agent/types/application.types';
+import { FlowAgentInput } from '../../flow-agent/types/flow.types';
+import { LayoutAgentInput } from '../../layout-agent/types/layout.types';
+import { ObjectAgentInput } from '../../object-agent/types/object.types';
 import { ChatMessage } from '../../types';
 
 export interface IntentPlan {
@@ -15,11 +15,7 @@ export interface IntentTask {
   agent: 'ApplicationAgent' | 'ObjectAgent' | 'LayoutAgent' | 'FlowAgent';
   description: string;
   dependsOn?: string[];
-  data:
-    | GenerateApplicationParams
-    | GenerateFlowsParams
-    | GenerateLayoutsParams
-    | GenerateObjectsParams;
+  data: ApplicationAgentInput | FlowAgentInput | LayoutAgentInput | ObjectAgentInput;
 }
 
 export interface ObjectAgentData {
@@ -37,7 +33,7 @@ export interface ObjectAgentData {
   }[];
 }
 
-export interface ExtractIntentParams {
+export interface IntentAgentInput {
   message: string;
   chatContext?: Array<ChatMessage>;
   functionCallInputs?: FunctionCallInputs;

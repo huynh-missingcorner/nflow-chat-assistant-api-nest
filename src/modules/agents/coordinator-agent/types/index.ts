@@ -24,3 +24,12 @@ export interface ToolCall {
     arguments: ToolCallArguments;
   };
 }
+
+export interface CoordinatorAgentInput {
+  message: string;
+  sessionId: string;
+}
+
+export interface CoordinatorAgentOutput {
+  reply: string;
+}

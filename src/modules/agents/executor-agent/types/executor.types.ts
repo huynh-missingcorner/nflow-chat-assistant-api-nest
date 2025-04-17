@@ -1,10 +1,10 @@
 import { FlowCreateDto, CreateLayoutDto } from 'src/modules/nflow/types';
 import { FieldDto, ObjectDto, UpdateApplicationDto } from 'src/modules/nflow/types';
 import { CreateApplicationDto } from 'src/modules/nflow/types';
-import { GenerateApplicationResponse } from '../../application-agent/types/application.types';
-import { GenerateFlowsResponse } from '../../flow-agent/types/flow.types';
-import { GenerateLayoutsResponse } from '../../layout-agent/types/layout.types';
-import { GenerateObjectsResponse } from '../../object-agent/types/object.types';
+import { ApplicationAgentOutput } from '../../application-agent/types/application.types';
+import { FlowAgentOutput } from '../../flow-agent/types/flow.types';
+import { LayoutAgentOutput } from '../../layout-agent/types/layout.types';
+import { ObjectAgentOutput } from '../../object-agent/types/object.types';
 
 export type FunctionArguments =
   | { name: 'ApiAppBuilderController_createApp'; args: CreateApplicationDto }
@@ -28,10 +28,10 @@ export interface ToolCall {
 // }
 
 export type AgentResult =
-  | GenerateApplicationResponse
-  | GenerateObjectsResponse
-  | GenerateLayoutsResponse
-  | GenerateFlowsResponse;
+  | ApplicationAgentOutput
+  | ObjectAgentOutput
+  | LayoutAgentOutput
+  | FlowAgentOutput;
 
 export interface ProcessedTasks {
   [key: string]: AgentResult;

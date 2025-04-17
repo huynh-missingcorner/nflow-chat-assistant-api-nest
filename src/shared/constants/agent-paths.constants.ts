@@ -8,6 +8,8 @@ export const AGENT_PATHS = {
   FLOW: path.join(AGENTS_BASE_PATH, 'flow-agent'),
   LAYOUT: path.join(AGENTS_BASE_PATH, 'layout-agent'),
   OBJECT: path.join(AGENTS_BASE_PATH, 'object-agent'),
+  COORDINATOR: path.join(AGENTS_BASE_PATH, 'coordinator-agent'),
+  EXECUTOR: path.join(AGENTS_BASE_PATH, 'executor-agent'),
 } as const;
 
 export const getAgentContextPath = (agentPath: string): string => {

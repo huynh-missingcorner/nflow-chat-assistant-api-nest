@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import { ExtractIntentParams, IntentPlan, IntentToolResponse } from './types/intent.types';
+import { IntentAgentInput, IntentPlan, IntentToolResponse } from './types/intent.types';
 import { IntentErrors } from './constants/intent.constants';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
@@ -9,16 +9,16 @@ import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
 
 @Injectable()
-export class IntentService extends BaseAgentService<ExtractIntentParams, IntentPlan> {
+export class IntentService extends BaseAgentService<IntentAgentInput, IntentPlan> {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
     super(openAIService, contextLoader, AGENT_PATHS.INTENT);
   }
 
-  async run(params: ExtractIntentParams): Promise<IntentPlan> {
+  async run(params: IntentAgentInput): Promise<IntentPlan> {
     return this.createIntentPlan(params);
   }
 
-  private async createIntentPlan(params: ExtractIntentParams): Promise<IntentPlan> {
+  private async createIntentPlan(params: IntentAgentInput): Promise<IntentPlan> {
     try {
       const combinedContext = await this.loadAgentContexts();
 

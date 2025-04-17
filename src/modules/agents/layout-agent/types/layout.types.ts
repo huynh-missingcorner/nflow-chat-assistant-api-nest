@@ -1,6 +1,6 @@
 import { AgentAction, AgentType } from '../../types';
 
-export interface GenerateLayoutsParams {
+export interface LayoutAgentInput {
   action: AgentAction;
   name: string;
   description: string;
@@ -19,7 +19,7 @@ export interface LayoutToolCall {
   dependsOn?: string[];
 }
 
-export interface GenerateLayoutsResponse {
+export interface LayoutAgentOutput {
   toolCalls: LayoutToolCall[];
   metadata?: {
     appUrl?: string;

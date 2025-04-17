@@ -13,7 +13,7 @@ export interface ObjectField {
   required: boolean;
 }
 
-export interface GenerateObjectsParams {
+export interface ObjectAgentInput {
   agentType: AgentType;
   action: AgentAction;
   objects: ObjectParams[];
@@ -29,7 +29,7 @@ export interface ObjectToolCall {
   toolCall: ToolCallPayload;
 }
 
-export interface GenerateObjectsResponse {
+export interface ObjectAgentOutput {
   toolCalls: ObjectToolCall[];
   metadata?: {
     totalObjects?: number;

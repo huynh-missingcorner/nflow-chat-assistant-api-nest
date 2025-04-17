@@ -2,23 +2,23 @@ import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { GenerateFlowsParams, GenerateFlowsResponse } from './types/flow.types';
+import { FlowAgentInput, FlowAgentOutput } from './types/flow.types';
 import { FlowErrors } from './constants/flow.constants';
 import { createFlowTool } from './tools/flow-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
 
 @Injectable()
-export class FlowService extends BaseAgentService<GenerateFlowsParams, GenerateFlowsResponse> {
+export class FlowService extends BaseAgentService<FlowAgentInput, FlowAgentOutput> {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
     super(openAIService, contextLoader, AGENT_PATHS.FLOW);
   }
 
-  async run(params: GenerateFlowsParams): Promise<GenerateFlowsResponse> {
+  async run(params: FlowAgentInput): Promise<FlowAgentOutput> {
     return this.generateFlows(params);
   }
 
-  private async generateFlows(params: GenerateFlowsParams): Promise<GenerateFlowsResponse> {
+  private async generateFlows(params: FlowAgentInput): Promise<FlowAgentOutput> {
     try {
       const combinedContext = await this.loadAgentContexts();
 

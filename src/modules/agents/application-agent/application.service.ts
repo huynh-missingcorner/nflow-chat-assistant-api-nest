@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { GenerateApplicationParams, GenerateApplicationResponse } from './types/application.types';
+import { ApplicationAgentInput, ApplicationAgentOutput } from './types/application.types';
 import { ApplicationErrors } from './constants/application.constants';
 import { tools as applicationTools } from './tools/application-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
@@ -10,20 +10,20 @@ import { BaseAgentService } from '../base-agent.service';
 
 @Injectable()
 export class ApplicationService extends BaseAgentService<
-  GenerateApplicationParams,
-  GenerateApplicationResponse
+  ApplicationAgentInput,
+  ApplicationAgentOutput
 > {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
     super(openAIService, contextLoader, AGENT_PATHS.APPLICATION);
   }
 
-  async run(params: GenerateApplicationParams): Promise<GenerateApplicationResponse> {
+  async run(params: ApplicationAgentInput): Promise<ApplicationAgentOutput> {
     return this.generateApplication(params);
   }
 
   private async generateApplication(
-    params: GenerateApplicationParams,
-  ): Promise<GenerateApplicationResponse> {
+    params: ApplicationAgentInput,
+  ): Promise<ApplicationAgentOutput> {
     try {
       const combinedContext = await this.loadAgentContexts();
 

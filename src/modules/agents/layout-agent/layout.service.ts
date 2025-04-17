@@ -2,26 +2,23 @@ import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { GenerateLayoutsParams, GenerateLayoutsResponse } from './types/layout.types';
+import { LayoutAgentInput, LayoutAgentOutput } from './types/layout.types';
 import { LayoutErrors } from './constants/layout.constants';
 import { tools as layoutTools } from './tools/layout-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
 
 @Injectable()
-export class LayoutService extends BaseAgentService<
-  GenerateLayoutsParams,
-  GenerateLayoutsResponse
-> {
+export class LayoutService extends BaseAgentService<LayoutAgentInput, LayoutAgentOutput> {
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
     super(openAIService, contextLoader, AGENT_PATHS.LAYOUT);
   }
 
-  async run(params: GenerateLayoutsParams): Promise<GenerateLayoutsResponse> {
+  async run(params: LayoutAgentInput): Promise<LayoutAgentOutput> {
     return this.generateLayouts(params);
   }
 
-  private async generateLayouts(params: GenerateLayoutsParams): Promise<GenerateLayoutsResponse> {
+  private async generateLayouts(params: LayoutAgentInput): Promise<LayoutAgentOutput> {
     try {
       const combinedContext = await this.loadAgentContexts();
 

@@ -6,7 +6,7 @@ export interface FlowTrigger {
   webhookUrl?: string;
 }
 
-export interface GenerateFlowsParams {
+export interface FlowAgentInput {
   action: AgentAction;
   name: string;
   description: string;
@@ -26,7 +26,7 @@ export interface FlowToolCall {
   dependsOn?: string[];
 }
 
-export interface GenerateFlowsResponse {
+export interface FlowAgentOutput {
   toolCalls: FlowToolCall[];
   metadata?: {
     appUrl?: string;

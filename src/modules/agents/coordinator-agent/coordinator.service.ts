@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 
 import { ActiveAgent, DEFAULT_AGENT_STATUS, AgentStatus } from './consts';
@@ -12,46 +12,30 @@ import { ChatMessageService } from 'src/modules/chat/services/chat-message.servi
 import { ProcessedTasks } from '../executor-agent/types/executor.types';
 import { IntentPlan, IntentTask } from '../intent-agent/types/intent.types';
 import {
-  GenerateApplicationParams,
-  GenerateApplicationResponse,
+  ApplicationAgentInput,
+  ApplicationAgentOutput,
 } from '../application-agent/types/application.types';
-import { GenerateObjectsParams, GenerateObjectsResponse } from '../object-agent/types/object.types';
-import { GenerateLayoutsParams, GenerateLayoutsResponse } from '../layout-agent/types/layout.types';
-import { GenerateFlowsParams, GenerateFlowsResponse } from '../flow-agent/types/flow.types';
+import { ObjectAgentInput, ObjectAgentOutput } from '../object-agent/types/object.types';
+import { LayoutAgentInput, LayoutAgentOutput } from '../layout-agent/types/layout.types';
+import { FlowAgentInput, FlowAgentOutput } from '../flow-agent/types/flow.types';
 import { MessageRole } from 'src/modules/chat/dto/chat-message.dto';
 import prompts from './consts/prompts';
 import { ChatMessage } from '../types';
-
-interface BaseAgentResponse {
-  toolCalls: ToolCall[];
-  metadata: Record<string, unknown>;
-}
-
-interface ToolCallArguments {
-  name?: string;
-  objName?: string;
-  data?: {
-    name: string;
-    relationships?: Array<{
-      targetObject: string;
-      [key: string]: unknown;
-    }>;
-    [key: string]: unknown;
-  };
-  [key: string]: unknown;
-}
-
-interface ToolCall {
-  order: number;
-  toolCall: {
-    functionName: string;
-    arguments: ToolCallArguments;
-  };
-}
+import {
+  BaseAgentResponse,
+  CoordinatorAgentInput,
+  CoordinatorAgentOutput,
+  ToolCall,
+} from './types';
+import { BaseAgentService } from '../base-agent.service';
+import { ContextLoaderService } from 'src/shared/services/context-loader.service';
+import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 
 @Injectable()
-export class CoordinatorService {
-  private readonly logger = new Logger(CoordinatorService.name);
+export class CoordinatorService extends BaseAgentService<
+  CoordinatorAgentInput,
+  CoordinatorAgentOutput
+> {
   private agentStatus: Record<ActiveAgent, AgentStatus> = { ...DEFAULT_AGENT_STATUS };
 
   constructor(
@@ -60,12 +44,22 @@ export class CoordinatorService {
     private readonly objectService: ObjectService,
     private readonly layoutService: LayoutService,
     private readonly flowService: FlowService,
-    private readonly openAIService: OpenAIService,
+    openAIService: OpenAIService,
     private readonly executorService: ExecutorService,
     private readonly chatMessageService: ChatMessageService,
-  ) {}
+    contextLoader: ContextLoaderService,
+  ) {
+    super(openAIService, contextLoader, AGENT_PATHS.COORDINATOR);
+  }
 
-  async processUserMessage(message: string, sessionId: string): Promise<{ reply: string }> {
+  async run(input: CoordinatorAgentInput): Promise<CoordinatorAgentOutput> {
+    return this.processUserMessage(input.message, input.sessionId);
+  }
+
+  private async processUserMessage(
+    message: string,
+    sessionId: string,
+  ): Promise<CoordinatorAgentOutput> {
     try {
       const chatContext = await this.getChatContext(sessionId);
       const intentPlan = await this.intentService.run({
@@ -226,12 +220,7 @@ export class CoordinatorService {
    */
   private async executeTask(
     task: IntentTask,
-  ): Promise<
-    | GenerateApplicationResponse
-    | GenerateObjectsResponse
-    | GenerateLayoutsResponse
-    | GenerateFlowsResponse
-  > {
+  ): Promise<ApplicationAgentOutput | ObjectAgentOutput | LayoutAgentOutput | FlowAgentOutput> {
     this.logger.log(`Executing task for ${task.agent}: ${task.description}`);
 
     const agentKey = task.agent as ActiveAgent;
@@ -246,13 +235,13 @@ export class CoordinatorService {
 
     switch (task.agent) {
       case 'ApplicationAgent':
-        return this.applicationService.run(task.data as GenerateApplicationParams);
+        return this.applicationService.run(task.data as ApplicationAgentInput);
       case 'ObjectAgent':
-        return this.objectService.run(task.data as GenerateObjectsParams);
+        return this.objectService.run(task.data as ObjectAgentInput);
       case 'LayoutAgent':
-        return this.layoutService.run(task.data as GenerateLayoutsParams);
+        return this.layoutService.run(task.data as LayoutAgentInput);
       case 'FlowAgent':
-        return this.flowService.run(task.data as GenerateFlowsParams);
+        return this.flowService.run(task.data as FlowAgentInput);
       default:
         throw new Error('Unknown agent type');
     }

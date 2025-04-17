@@ -25,7 +25,7 @@ export class ChatService {
    */
   async processMessage(chatRequestDto: ChatRequestDto): Promise<ChatResponseDto> {
     const { sessionId, message } = chatRequestDto;
-    const result = await this.coordinatorService.processUserMessage(message, sessionId);
+    const result = await this.coordinatorService.run({ message, sessionId });
     await this.updateSessionTitle(sessionId, result.reply);
 
     return {

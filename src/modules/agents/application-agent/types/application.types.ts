@@ -1,6 +1,6 @@
 import { AgentAction, AgentType } from '../../types';
 
-export interface GenerateApplicationParams {
+export interface ApplicationAgentInput {
   action: AgentAction;
   name: string;
   description: string;
@@ -20,7 +20,7 @@ export interface ApplicationToolCall {
   dependsOn?: string[]; // Names of functions this call depends on
 }
 
-export interface GenerateApplicationResponse {
+export interface ApplicationAgentOutput {
   toolCalls: ApplicationToolCall[];
   metadata?: {
     appUrl?: string;

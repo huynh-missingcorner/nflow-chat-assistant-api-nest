@@ -1,17 +1,63 @@
 # 🧠 Object Agent Examples
 
-This document shows example inputs and expected JSON outputs for the Object Agent. The Object Agent is responsible for translating object names into structured schema and generating valid tool calls to the Nflow backend via `ObjectController_changeObject` and `FieldController_changeField`.
+This document shows example inputs and expected outputs for the Object Agent. The Object Agent is responsible for translating object names into structured schemas and generating valid tool calls to the Nflow backend via `ObjectController_changeObject` and `FieldController_changeField`.
 
 ---
 
-## 📥 Input Example 1: Personal Finance App – Income & Expense
+## ✅ Technical Notes
+
+1. **Schema Design Process:**
+
+   - First, the Object Agent uses `SchemaDesigner_designSchema` to infer the full schema
+   - Then it creates tool calls for objects and fields
+
+2. **Object Creation Tool:**
+
+   - `ObjectController_changeObject` requires:
+     - `action`: The operation to perform (create, update, delete, recover)
+     - `name`: The name of the object
+     - `data`: Object containing name, displayName, description, recordName, and owd
+
+3. **Field Creation Tool:**
+
+   - `FieldController_changeField` requires:
+     - `action`: The operation to perform (create, update, delete, recover)
+     - `objName`: The name of the object this field belongs to
+     - `data`: Field definition with typeName, name, displayName, description, and attributes
+
+4. **Field Types and SubTypes:**
+
+   - `text` → subType: "short"
+   - `numeric` → subType: "integer"
+   - `dateTime` → subType: "date-time"
+   - `boolean` → subType: null
+
+5. **Record Name:**
+   - Always set to the primary identifier field for the object
+   - Type is typically "text"
+
+---
+
+## 📥 Example: Personal Finance App – Income & Expense
 
 **Input:**
 
 ```json
 {
+  "agentType": "object",
   "action": "create",
-  "objects": ["Income", "Expense"]
+  "objects": [
+    {
+      "name": "income",
+      "description": "Records of all income transactions.",
+      "fields": null
+    },
+    {
+      "name": "expense",
+      "description": "Records of all expense transactions.",
+      "fields": null
+    }
+  ]
 }
 ```
 
@@ -21,161 +67,163 @@ This document shows example inputs and expected JSON outputs for the Object Agen
 {
   "toolCalls": [
     {
-      "order": 1,
-      "toolCall": {
-        "functionName": "ObjectController_changeObject",
-        "arguments": {
-          "action": "create",
-          "name": "Income",
-          "data": {
-            "name": "Income",
-            "displayName": "Income",
-            "recordName": {
-              "label": "source",
-              "type": "text"
-            },
-            "owd": "Private",
-            "description": "Tracks sources of income"
+      "functionName": "ObjectController_changeObject",
+      "arguments": {
+        "action": "create",
+        "name": "income",
+        "data": {
+          "name": "income",
+          "displayName": "Income",
+          "description": "Tracks sources of income",
+          "recordName": {
+            "label": "source",
+            "type": "text"
+          },
+          "owd": "Private"
+        }
+      }
+    },
+    {
+      "functionName": "ObjectController_changeObject",
+      "arguments": {
+        "action": "create",
+        "name": "expense",
+        "data": {
+          "name": "expense",
+          "displayName": "Expense",
+          "description": "Tracks where money was spent",
+          "recordName": {
+            "label": "category",
+            "type": "text"
+          },
+          "owd": "Private"
+        }
+      }
+    },
+    {
+      "functionName": "FieldController_changeField",
+      "arguments": {
+        "action": "create",
+        "objName": "income",
+        "data": {
+          "typeName": "text",
+          "name": "source",
+          "displayName": "Source",
+          "description": "Source of income",
+          "attributes": {
+            "subType": "short"
           }
         }
       }
     },
     {
-      "order": 2,
-      "toolCall": {
-        "functionName": "ObjectController_changeObject",
-        "arguments": {
-          "action": "create",
-          "name": "Expense",
-          "data": {
-            "name": "Expense",
-            "displayName": "Expense",
-            "recordName": {
-              "label": "category",
-              "type": "text"
-            },
-            "owd": "Private",
-            "description": "Tracks where money was spent"
+      "functionName": "FieldController_changeField",
+      "arguments": {
+        "action": "create",
+        "objName": "income",
+        "data": {
+          "typeName": "numeric",
+          "name": "amount",
+          "displayName": "Amount",
+          "description": "Amount of money",
+          "attributes": {
+            "subType": "integer"
           }
         }
       }
     },
     {
-      "order": 3,
-      "toolCall": {
-        "functionName": "FieldController_changeField",
-        "arguments": {
-          "action": "create",
-          "objName": "Income",
-          "data": {
-            "typeName": "text",
-            "name": "title",
-            "displayName": "Title",
-            "description": "Income title",
-            "attributes": {
-              "isRequired": true,
-              "isSearchable": true
-            }
+      "functionName": "FieldController_changeField",
+      "arguments": {
+        "action": "create",
+        "objName": "income",
+        "data": {
+          "typeName": "dateTime",
+          "name": "date",
+          "displayName": "Date",
+          "description": "Date of the income",
+          "attributes": {
+            "subType": "date-time"
           }
         }
       }
     },
     {
-      "order": 4,
-      "toolCall": {
-        "functionName": "FieldController_changeField",
-        "arguments": {
-          "action": "create",
-          "objName": "Income",
-          "data": {
-            "typeName": "numeric",
-            "name": "amount",
-            "displayName": "Amount",
-            "description": "Amount of money",
-            "attributes": {
-              "isRequired": true,
-              "isSearchable": true
-            }
+      "functionName": "FieldController_changeField",
+      "arguments": {
+        "action": "create",
+        "objName": "income",
+        "data": {
+          "typeName": "text",
+          "name": "notes",
+          "displayName": "Notes",
+          "description": "Additional notes",
+          "attributes": {
+            "subType": "short"
           }
         }
       }
     },
     {
-      "order": 5,
-      "toolCall": {
-        "functionName": "FieldController_changeField",
-        "arguments": {
-          "action": "create",
-          "objName": "Income",
-          "data": {
-            "typeName": "dateTime",
-            "name": "createdAt",
-            "displayName": "created At",
-            "description": "Created Date of the Income",
-            "attributes": {
-              "isRequired": true,
-              "isSearchable": true
-            }
+      "functionName": "FieldController_changeField",
+      "arguments": {
+        "action": "create",
+        "objName": "expense",
+        "data": {
+          "typeName": "text",
+          "name": "category",
+          "displayName": "Category",
+          "description": "Expense category",
+          "attributes": {
+            "subType": "short"
           }
         }
       }
     },
     {
-      "order": 6,
-      "toolCall": {
-        "functionName": "FieldController_changeField",
-        "arguments": {
-          "action": "create",
-          "objName": "Expense",
-          "data": {
-            "typeName": "text",
-            "name": "title",
-            "displayName": "Title",
-            "description": "Expense title",
-            "attributes": {
-              "isRequired": true,
-              "isSearchable": true
-            }
+      "functionName": "FieldController_changeField",
+      "arguments": {
+        "action": "create",
+        "objName": "expense",
+        "data": {
+          "typeName": "numeric",
+          "name": "amount",
+          "displayName": "Amount",
+          "description": "Amount spent",
+          "attributes": {
+            "subType": "integer"
           }
         }
       }
     },
     {
-      "order": 7,
-      "toolCall": {
-        "functionName": "FieldController_changeField",
-        "arguments": {
-          "action": "create",
-          "objName": "Expense",
-          "data": {
-            "typeName": "numeric",
-            "name": "amount",
-            "displayName": "Amount",
-            "description": "Amount of money",
-            "attributes": {
-              "isRequired": true,
-              "isSearchable": true
-            }
+      "functionName": "FieldController_changeField",
+      "arguments": {
+        "action": "create",
+        "objName": "expense",
+        "data": {
+          "typeName": "dateTime",
+          "name": "date",
+          "displayName": "Date",
+          "description": "Date of the expense",
+          "attributes": {
+            "subType": "date-time"
           }
         }
       }
     },
     {
-      "order": 8,
-      "toolCall": {
-        "functionName": "FieldController_changeField",
-        "arguments": {
-          "action": "create",
-          "objName": "Expense",
-          "data": {
-            "typeName": "dateTime",
-            "name": "createdAt",
-            "displayName": "created At",
-            "description": "Created Date of the Expense",
-            "attributes": {
-              "isRequired": true,
-              "isSearchable": true
-            }
+      "functionName": "FieldController_changeField",
+      "arguments": {
+        "action": "create",
+        "objName": "expense",
+        "data": {
+          "typeName": "text",
+          "name": "notes",
+          "displayName": "Notes",
+          "description": "Additional notes",
+          "attributes": {
+            "subType": "short"
           }
         }
       }
@@ -183,87 +231,3 @@ This document shows example inputs and expected JSON outputs for the Object Agen
   ]
 }
 ```
-
----
-
-## 📥 Input Example 2: CRM System – Contact & Lead
-
-**Input:**
-
-```json
-{
-  "action": "create",
-  "objects": ["Contact", "Lead"]
-}
-```
-
-**Expected Output:**
-
-```json
-{
-  "toolCalls": [
-    {
-      "order": 1,
-      "toolCall": {
-        "functionName": "ObjectController_changeObject",
-        "arguments": {
-          "action": "create",
-          "name": "Contact",
-          "data": {
-            "name": "Contact",
-            "displayName": "Contact",
-            "recordName": {
-              "label": "name",
-              "type": "text"
-            },
-            "owd": "PublicRead",
-            "description": "Stores personal contact information"
-          },
-          "x-nc-lang": "en",
-          "x-nc-tenant": "example-org",
-          "x-nc-date": "2024-01-01T12:00:00Z",
-          "x-nc-payload": "base64-encoded",
-          "x-nc-digest": "SHA-256=...",
-          "x-nc-signature": "..."
-        }
-      }
-    },
-    {
-      "order": 2,
-      "toolCall": {
-        "functionName": "ObjectController_changeObject",
-        "arguments": {
-          "action": "create",
-          "name": "Lead",
-          "data": {
-            "name": "Lead",
-            "displayName": "Lead",
-            "recordName": {
-              "label": "company",
-              "type": "text"
-            },
-            "owd": "PublicRead",
-            "description": "Stores sales leads and contact points"
-          },
-          "x-nc-lang": "en",
-          "x-nc-tenant": "example-org",
-          "x-nc-date": "2024-01-01T12:00:00Z",
-          "x-nc-payload": "base64-encoded",
-          "x-nc-digest": "SHA-256=...",
-          "x-nc-signature": "..."
-        }
-      }
-    }
-  ]
-}
-```
-
----
-
-## ✅ Notes
-
-- `name` should be slugified for system use and must be unique, add a random number before the name if needed. For example: transform `income` to `income123`
-- `recordName.label` is typically the primary identifier field (e.g. `"name"`, `"title"`, `"category"`)
-- `owd` (object-level sharing setting) should default to `"PublicRead"` unless otherwise stated.
-- Headers (`x-nc-*`) should be filled by the Execution Agent.
-- The Object Agent only plans toolCalls and never executes them.

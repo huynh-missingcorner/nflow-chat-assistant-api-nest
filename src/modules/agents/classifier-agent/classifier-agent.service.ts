@@ -2,43 +2,25 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { classifyMessageTool } from './tools/classifier-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
-
-export type MessageType = 'nflow_action' | 'context_query' | 'casual_chat';
-
-export interface ClassificationResult {
-  type: MessageType;
-  message: string;
-}
+import { ChatMessage } from '../types';
+import { CLASSIFIER_ERRORS, CLASSIFIER_PROMPTS } from './constants/classifier.constants';
+import { ClassificationResult, MessageType } from './types/classifier.types';
 
 @Injectable()
 export class ClassifierAgentService {
   private readonly logger = new Logger(ClassifierAgentService.name);
-  private readonly SYSTEM_PROMPT = `You are ClassifierAgent — a message classification agent in a multi-agent system for the Nflow platform.
-
-Classify the user's message into one of:
-
-1. "nflow_action" → Create/update/delete/read resources in Nflow (apps, objects, layouts, data).
-2. "context_query" → Ask about what has been done in this session or memory.
-3. "casual_chat" → Greetings, FAQs, or small talk.
-
-Respond **only** in JSON format:
-{ "type": "nflow_action" }
-{ "type": "context_query" }
-{ "type": "casual_chat" }
-
-DO NOT explain. DO NOT include any other content.`;
 
   constructor(private readonly openAIService: OpenAIService) {}
 
   async classifyMessage(message: string): Promise<ClassificationResult> {
     try {
-      const messages = [
+      const messages: ChatMessage[] = [
         {
-          role: 'system' as const,
-          content: this.SYSTEM_PROMPT,
+          role: 'system',
+          content: CLASSIFIER_PROMPTS.SYSTEM_PROMPT,
         },
         {
-          role: 'user' as const,
+          role: 'user',
           content: message,
         },
       ];
@@ -47,7 +29,7 @@ DO NOT explain. DO NOT include any other content.`;
         tools: [classifyMessageTool],
         tool_choice: {
           type: 'function',
-          name: 'RouterAgent_classifyMessage',
+          name: 'ClassifierAgent_classifyMessage',
         } as ToolChoiceFunction,
         model: 'gpt-4.1',
         temperature: 0.2,
@@ -56,23 +38,50 @@ DO NOT explain. DO NOT include any other content.`;
       const completion = await this.openAIService.generateFunctionCompletion(messages, options);
 
       if (!completion.toolCalls?.length) {
-        this.logger.warn('No classification tool call returned');
-        // Default to nflow_action as a fallback
-        return { type: 'nflow_action', message };
+        this.logger.warn(CLASSIFIER_ERRORS.INVALID_RESPONSE);
+        return this.getDefaultClassification(message);
       }
 
       const toolCall = completion.toolCalls[0];
       const args = JSON.parse(toolCall.function.arguments) as ClassificationResult;
 
       this.logger.log(`Message classified as: ${args.type}`);
+
       return {
-        type: args.type,
+        type: this.validateMessageType(args.type),
         message,
       };
     } catch (error) {
-      this.logger.error('Error classifying message', error);
-      // Default to nflow_action on error
-      return { type: 'nflow_action', message };
+      this.handleClassificationError(error);
+      return this.getDefaultClassification(message);
     }
+  }
+
+  private validateMessageType(type: string): MessageType {
+    const validTypes: MessageType[] = ['nflow_action', 'context_query', 'casual_chat'];
+
+    if (validTypes.includes(type as MessageType)) {
+      return type as MessageType;
+    }
+
+    this.logger.warn(`Invalid message type "${type}" returned, defaulting to "nflow_action"`);
+    return 'nflow_action';
+  }
+
+  private handleClassificationError(error: unknown): void {
+    const errorMessage =
+      error instanceof Error ? error.message : CLASSIFIER_ERRORS.CLASSIFICATION_FAILED;
+
+    this.logger.error(
+      `${CLASSIFIER_ERRORS.CLASSIFICATION_FAILED}: ${errorMessage}`,
+      error instanceof Error ? error.stack : undefined,
+    );
+  }
+
+  private getDefaultClassification(message: string): ClassificationResult {
+    return {
+      type: 'nflow_action',
+      message,
+    };
   }
 }

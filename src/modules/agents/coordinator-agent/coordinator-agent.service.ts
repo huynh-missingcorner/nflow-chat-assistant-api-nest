@@ -11,7 +11,8 @@ import { TaskExecutorService } from './services/task-executor.service';
 import { ChatContextService } from './services/chat-context.service';
 import { IntentTask } from '../intent-agent/types/intent.types';
 import { ChatMessage } from '../types';
-import { ClassifierAgentService, MessageType } from '../classifier-agent/classifier-agent.service';
+import { ClassifierAgentService } from '../classifier-agent/classifier-agent.service';
+import { MessageType } from '../classifier-agent/types/classifier.types';
 
 @Injectable()
 export class CoordinatorAgentService extends BaseAgentService<
@@ -63,19 +64,15 @@ export class CoordinatorAgentService extends BaseAgentService<
 
     switch (messageType) {
       case 'nflow_action':
-        // Forward to nflow agents flow (IntentAgent → TaskExecutor → ExecutorAgent)
         return this.processNflowAgentsFlow(message, chatContext, sessionId);
 
       case 'context_query':
-        // Handle context queries using chat history
         return this.processContextQuery(message, chatContext);
 
       case 'casual_chat':
-        // Return a friendly response for casual chat
         return this.processCasualChat(message);
 
       default:
-        // Default to nflow_action as a fallback
         return this.processNflowAgentsFlow(message, chatContext, sessionId);
     }
   }
@@ -85,7 +82,6 @@ export class CoordinatorAgentService extends BaseAgentService<
     chatContext: ChatMessage[],
   ): Promise<CoordinatorAgentOutput> {
     try {
-      // Generate a response based on chat history
       const response = await this.openAIService.generateChatCompletion([
         {
           role: 'system',
@@ -115,7 +111,6 @@ export class CoordinatorAgentService extends BaseAgentService<
   }
 
   private async processCasualChat(message: string): Promise<CoordinatorAgentOutput> {
-    // For casual chat, return a friendly response
     const response = await this.openAIService.generateChatCompletion([
       {
         role: 'system',
@@ -139,10 +134,7 @@ export class CoordinatorAgentService extends BaseAgentService<
     hitlData: { taskId: string; remainingTasks: IntentTask[] },
   ): Promise<CoordinatorAgentOutput> {
     try {
-      // Get chat context
       const chatContext = await this.chatContextService.getChatContext(sessionId);
-
-      // Process the HITL response and continue execution
       const updatedResults = await this.taskExecutorService.processHITLResponse(
         hitlData.taskId,
         userResponse,
@@ -150,9 +142,7 @@ export class CoordinatorAgentService extends BaseAgentService<
         hitlData.remainingTasks,
       );
 
-      // Check if there are more HITL requests
       if (updatedResults.pendingHITL && Object.keys(updatedResults.pendingHITL).length > 0) {
-        // Handle the next HITL request
         const [taskId, hitlRequest] = Object.entries(updatedResults.pendingHITL)[0];
 
         return {
@@ -165,10 +155,8 @@ export class CoordinatorAgentService extends BaseAgentService<
         };
       }
 
-      // Extract tool calls from execution results
       const executionResult = await this.executorService.execute(updatedResults.results);
 
-      // Generate a response summarizing what was done
       const aiResponse = await this.openAIService.generateChatCompletion([
         {
           role: 'system',
@@ -202,21 +190,17 @@ export class CoordinatorAgentService extends BaseAgentService<
     chatContext: ChatMessage[],
     sessionId: string,
   ): Promise<CoordinatorAgentOutput> {
-    // Generate intent plan
     const intentPlan = await this.intentService.run({
       message,
       chatContext,
     });
 
-    // Execute tasks based on intent plan
     const taskResults = await this.taskExecutorService.executeTasksInOrder(
       intentPlan.tasks,
       sessionId,
     );
 
-    // Check if any tasks need human clarification
     if (taskResults.pendingHITL && Object.keys(taskResults.pendingHITL).length > 0) {
-      // Get the first HITL request (we'll handle one at a time)
       const [taskId, hitlRequest] = Object.entries(taskResults.pendingHITL)[0];
 
       return {
@@ -229,10 +213,7 @@ export class CoordinatorAgentService extends BaseAgentService<
       };
     }
 
-    // Execute the generated tool calls
     const executionResults = await this.executorService.execute(taskResults.results);
-
-    // Generate a response summarizing what was done
     const response = await this.openAIService.generateChatCompletion([
       {
         role: 'system',

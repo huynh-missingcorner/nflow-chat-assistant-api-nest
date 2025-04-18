@@ -11,6 +11,7 @@ import { TaskExecutorService } from './services/task-executor.service';
 import { ChatContextService } from './services/chat-context.service';
 import { IntentTask } from '../intent-agent/types/intent.types';
 import { ChatMessage } from '../types';
+import { ClassifierAgentService, MessageType } from '../classifier-agent/classifier-agent.service';
 
 @Injectable()
 export class CoordinatorAgentService extends BaseAgentService<
@@ -22,6 +23,7 @@ export class CoordinatorAgentService extends BaseAgentService<
     private readonly executorService: ExecutorAgentService,
     private readonly taskExecutorService: TaskExecutorService,
     private readonly chatContextService: ChatContextService,
+    private readonly classifierService: ClassifierAgentService,
     contextLoader: ContextLoaderService,
     openAIService: OpenAIService,
   ) {
@@ -37,8 +39,12 @@ export class CoordinatorAgentService extends BaseAgentService<
     sessionId: string,
   ): Promise<CoordinatorAgentOutput> {
     try {
-      const chatContext = await this.chatContextService.getChatContext(sessionId);
-      return this.processNflowAgentsFlow(message, chatContext, sessionId);
+      // Classify the user message
+      const classification = await this.classifierService.classifyMessage(message);
+      this.logger.log(`Message classified as: ${classification.type}`);
+
+      // Route the message based on its classification
+      return this.routeMessage(classification.type, message, sessionId);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
       this.logger.error('Error in processUserMessage', error);
@@ -46,6 +52,85 @@ export class CoordinatorAgentService extends BaseAgentService<
         reply: `I apologize, but I encountered an error while processing your message: ${errorMessage}`,
       };
     }
+  }
+
+  private async routeMessage(
+    messageType: MessageType,
+    message: string,
+    sessionId: string,
+  ): Promise<CoordinatorAgentOutput> {
+    const chatContext = await this.chatContextService.getChatContext(sessionId);
+
+    switch (messageType) {
+      case 'nflow_action':
+        // Forward to nflow agents flow (IntentAgent → TaskExecutor → ExecutorAgent)
+        return this.processNflowAgentsFlow(message, chatContext, sessionId);
+
+      case 'context_query':
+        // Handle context queries using chat history
+        return this.processContextQuery(message, chatContext);
+
+      case 'casual_chat':
+        // Return a friendly response for casual chat
+        return this.processCasualChat(message);
+
+      default:
+        // Default to nflow_action as a fallback
+        return this.processNflowAgentsFlow(message, chatContext, sessionId);
+    }
+  }
+
+  private async processContextQuery(
+    message: string,
+    chatContext: ChatMessage[],
+  ): Promise<CoordinatorAgentOutput> {
+    try {
+      // Generate a response based on chat history
+      const response = await this.openAIService.generateChatCompletion([
+        {
+          role: 'system',
+          content: prompts.CONTEXT_QUERY,
+        },
+        ...chatContext,
+        {
+          role: 'user',
+          content: message,
+        },
+      ]);
+
+      if (!response.content) {
+        throw new Error('Failed to generate response for context query');
+      }
+
+      return {
+        reply: response.content,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      this.logger.error('Error in processContextQuery', error);
+      return {
+        reply: `I apologize, but I encountered an error while retrieving context information: ${errorMessage}`,
+      };
+    }
+  }
+
+  private async processCasualChat(message: string): Promise<CoordinatorAgentOutput> {
+    // For casual chat, return a friendly response
+    const response = await this.openAIService.generateChatCompletion([
+      {
+        role: 'system',
+        content: prompts.CASUAL_CHAT,
+      },
+      { role: 'user', content: message },
+    ]);
+
+    if (!response.content) {
+      throw new Error('Failed to generate response for casual chat');
+    }
+
+    return {
+      reply: response.content,
+    };
   }
 
   async processHITLResponse(

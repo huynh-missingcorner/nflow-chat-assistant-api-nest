@@ -11,6 +11,7 @@ import { TaskExecutorService } from './services/task-executor.service';
 import { ChatContextService } from './services/chat-context.service';
 import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
 import { MemoryModule } from '../../memory/memory.module';
+import { ClassifierAgentModule } from '../classifier-agent/classifier-agent.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { MemoryModule } from '../../memory/memory.module';
     ExecutorAgentModule,
     forwardRef(() => ChatModule),
     forwardRef(() => MemoryModule),
+    ClassifierAgentModule,
   ],
   providers: [CoordinatorAgentService, TaskExecutorService, ChatContextService],
   exports: [CoordinatorAgentService, ChatContextService],

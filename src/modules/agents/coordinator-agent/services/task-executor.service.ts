@@ -11,7 +11,6 @@ import { FlowAgentInput } from '../../flow-agent/types/flow.types';
 import { BaseAgentResponse, HITLRequest } from '../types';
 import { ActiveAgent, AgentStatus, DEFAULT_AGENT_STATUS } from '../consts';
 import { ProcessedTasks } from '../../executor-agent/types/executor.types';
-import { ToolNameGeneratorService } from './tool-name-generator.service';
 import { MemoryService } from 'src/modules/memory/memory.service';
 import { Agent, AgentOutput, SessionContext } from '../../types';
 
@@ -25,7 +24,6 @@ export class TaskExecutorService {
     private readonly objectService: ObjectAgentService,
     private readonly layoutService: LayoutAgentService,
     private readonly flowService: FlowAgentService,
-    private readonly toolNameGenerator: ToolNameGeneratorService,
     private readonly memoryService: MemoryService,
   ) {}
 
@@ -111,11 +109,6 @@ export class TaskExecutorService {
             sessionContext = this.memoryService.patch(sessionContext, result.memoryPatch);
           }
 
-          // Process tool call names for standardization
-          if (this.isAgentResponse(result)) {
-            this.toolNameGenerator.processToolCallNames(result.toolCalls);
-          }
-
           taskResults[task.id] = result;
           completed.add(task.id);
 
@@ -197,11 +190,6 @@ export class TaskExecutorService {
 
     // Re-execute the task with the clarification
     const result = await this.executeTask(updatedTask);
-
-    // Process and return the results
-    if (this.isAgentResponse(result)) {
-      this.toolNameGenerator.processToolCallNames(result.toolCalls);
-    }
 
     // Update memory if needed
     if ('memoryPatch' in result && result.memoryPatch) {

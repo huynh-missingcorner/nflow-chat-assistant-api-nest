@@ -176,11 +176,11 @@ export class OpenAIService implements OnModuleInit {
             toolCalls,
           };
         }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error: unknown) {
         this.logger.debug(
           'Message content is not a valid JSON with toolCalls, treating as regular text',
         );
-        this.logger.error(error);
       }
     }
 

@@ -47,5 +47,3 @@ export interface ObjectSchema {
     description: string;
   }>;
 }
-
-export type ObjectSchemaWithoutFields = Omit<ObjectSchema, 'fields'>;

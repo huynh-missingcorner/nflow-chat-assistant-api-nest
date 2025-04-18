@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { ObjectAgentInput, ObjectSchema, ObjectSchemaWithoutFields } from './types/object.types';
+import { ObjectAgentInput, ObjectSchema } from './types/object.types';
 import { ObjectErrors, ObjectPrompts } from './constants/object.constants';
 import { createNewFieldTool, createNewObjectTool, schemaDesignerTool } from './tools/object-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
@@ -14,6 +14,8 @@ export class ObjectAgentService extends BaseAgentService<
   AgentInput<ObjectAgentInput>,
   AgentOutput
 > {
+  private readonly MAX_TOOL_CALL_RETRIES = 3;
+
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
     super(openAIService, contextLoader, AGENT_PATHS.OBJECT);
   }
@@ -54,6 +56,9 @@ export class ObjectAgentService extends BaseAgentService<
     const options = {
       tools: [schemaDesignerTool],
       tool_choice: { type: 'function', name: 'SchemaDesigner_designSchema' } as ToolChoiceFunction,
+      model: 'gpt-4.1',
+      max_output_tokens: 32000,
+      temperature: 0.2,
     };
     const completion = await this.openAIService.generateFunctionCompletion(
       schemaDesignMessages,
@@ -81,8 +86,40 @@ export class ObjectAgentService extends BaseAgentService<
       const allToolCalls: ToolCall[] = [];
 
       for (const schema of schemas) {
-        const schemaToolCalls = await this.generateCombinedToolCallsPerSchema(schema, action);
+        let schemaToolCalls: ToolCall[] = [];
+        let retryCount = 0;
+
+        // Retry logic for empty tool calls
+        while (schemaToolCalls.length === 0 && retryCount < this.MAX_TOOL_CALL_RETRIES) {
+          if (retryCount > 0) {
+            this.logger.warn(
+              `Retry #${retryCount} generating tool calls for schema ${schema.name}`,
+            );
+          }
+
+          schemaToolCalls = await this.generateCombinedToolCallsPerSchema(schema, action);
+
+          if (schemaToolCalls.length > 0) {
+            this.logger.log(
+              `Successfully generated ${schemaToolCalls.length} tool calls for schema ${schema.name} on attempt ${retryCount + 1}`,
+            );
+            break;
+          }
+
+          retryCount++;
+        }
+
+        if (schemaToolCalls.length === 0) {
+          this.logger.error(
+            `Failed to generate tool calls for schema ${schema.name} after ${retryCount} attempts`,
+          );
+        }
+
         allToolCalls.push(...schemaToolCalls);
+      }
+
+      if (allToolCalls.length === 0) {
+        throw new Error(ObjectErrors.TOOL_CALLS_GENERATION_FAILED);
       }
 
       return allToolCalls;
@@ -111,6 +148,8 @@ export class ObjectAgentService extends BaseAgentService<
         primaryField: schema.primaryField,
       };
 
+      const timestamp = Date.now();
+
       const combinedPrompt = `
 Create the following object and all of its fields:
 
@@ -122,13 +161,13 @@ Requirements:
 1. First create the object using ObjectController_changeObject
 2. Then create each field using FieldController_changeField
 3. For each field:
-   - Set objName to "${schema.name.toLowerCase()}"
+   - Set objName to "${schema.name.toLowerCase()}_${timestamp}"
    - Set action to "${action}"
    - Map field types correctly
    - Include all field attributes
 4. For the object:
    - Set action to "${action}"
-   - Set name to "${schema.name.toLowerCase()}"
+   - Set name to "${schema.name.toLowerCase()}_${timestamp}"
    - Include all object attributes`;
 
       const messages = [
@@ -144,7 +183,10 @@ Requirements:
 
       const options = {
         tools: [createNewObjectTool, createNewFieldTool],
-        tool_choice: 'auto' as const, // Allow the model to choose which tool to use for each call
+        tool_choice: 'auto' as const,
+        model: 'gpt-4.1',
+        max_output_tokens: 32000,
+        temperature: 0.2,
       };
 
       const completion = await this.openAIService.generateFunctionCompletion(messages, options);
@@ -171,137 +213,6 @@ Requirements:
       );
       return [];
     }
-  }
-
-  private async generateObjectCreationCalls(
-    action: string,
-    schemas: ObjectSchema[],
-  ): Promise<ToolCall[]> {
-    // Load tool generation-specific context
-    const toolGenerationContext = await this.loadToolGenerationContext();
-
-    const objectList = this.getObjectListFromSchemas(schemas);
-    const allObjectToolCalls: ToolCall[] = [];
-
-    for (const objectSchema of objectList) {
-      try {
-        const prompt = (ObjectPrompts.SINGLE_OBJECT_CREATION_PROMPT as string)
-          .replace('{action}', action)
-          .replace('{schema}', JSON.stringify(objectSchema, null, 2));
-
-        const messages = [
-          {
-            role: 'system' as const,
-            content: toolGenerationContext,
-          },
-          {
-            role: 'user' as const,
-            content: prompt,
-          },
-        ];
-
-        const options = {
-          tools: [createNewObjectTool],
-          tool_choice: {
-            type: 'function',
-            name: 'ObjectController_changeObject',
-          } as ToolChoiceFunction,
-        };
-
-        const completion = await this.openAIService.generateFunctionCompletion(messages, options);
-        if (!completion.toolCalls?.length) {
-          this.logger.warn(`No object tool call generated for object ${objectSchema.name}`);
-          continue;
-        }
-
-        const objectToolCalls = completion.toolCalls.map((toolCall) => ({
-          id: toolCall.id,
-          functionName: toolCall.function.name,
-          arguments: JSON.parse(toolCall.function.arguments) as Record<string, unknown>,
-        }));
-
-        allObjectToolCalls.push(...objectToolCalls);
-      } catch (error) {
-        this.logger.error(
-          `Failed to generate tool call for object ${objectSchema.name}`,
-          error instanceof Error ? error.stack : String(error),
-        );
-        // Continue with the next object instead of failing the entire process
-      }
-    }
-
-    if (allObjectToolCalls.length === 0) {
-      throw new Error(ObjectErrors.TOOL_CALLS_GENERATION_FAILED);
-    }
-
-    return allObjectToolCalls;
-  }
-
-  private async generateFieldCreationCalls(
-    action: string,
-    schemas: ObjectSchema[],
-  ): Promise<ToolCall[]> {
-    // Load tool generation-specific context
-    const toolGenerationContext = await this.loadToolGenerationContext();
-
-    const allFieldToolCalls: ToolCall[] = [];
-
-    for (const schema of schemas) {
-      for (const field of schema.fields) {
-        const messages = [
-          {
-            role: 'system' as const,
-            content: toolGenerationContext,
-          },
-          {
-            role: 'user' as const,
-            content: `Create a field with these specifications for object "${schema.name}":
-${JSON.stringify(field, null, 2)}
-
-Requirements:
-1. Set objName to "${schema.name.toLowerCase()}"
-2. Set action to "${action}"
-3. Map the field type correctly
-4. Include all field attributes`,
-          },
-        ];
-
-        const options = {
-          tools: [createNewFieldTool],
-          tool_choice: {
-            type: 'function',
-            name: 'FieldController_changeField',
-          } as ToolChoiceFunction,
-        };
-
-        const completion = await this.openAIService.generateFunctionCompletion(messages, options);
-        if (!completion.toolCalls?.length) {
-          this.logger.warn(
-            `No field tool call generated for field ${field.name} in object ${schema.name}`,
-          );
-          continue;
-        }
-
-        const fieldToolCalls = completion.toolCalls.map((toolCall) => ({
-          id: toolCall.id,
-          functionName: toolCall.function.name,
-          arguments: JSON.parse(toolCall.function.arguments) as Record<string, unknown>,
-        }));
-
-        allFieldToolCalls.push(...fieldToolCalls);
-      }
-    }
-
-    return allFieldToolCalls;
-  }
-
-  private getObjectListFromSchemas(schemas: ObjectSchema[]): ObjectSchemaWithoutFields[] {
-    return schemas.map((schema) => ({
-      name: schema.name,
-      displayName: schema.displayName,
-      description: schema.description,
-      primaryField: schema.primaryField,
-    }));
   }
 
   private async loadSchemaDesignContext(): Promise<string> {

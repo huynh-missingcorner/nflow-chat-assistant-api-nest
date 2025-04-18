@@ -46,15 +46,15 @@ export class CoordinatorAgentService extends BaseAgentService<
       });
 
       // Execute tasks based on intent plan
-      const executionResults = await this.taskExecutorService.executeTasksInOrder(
+      const taskResults = await this.taskExecutorService.executeTasksInOrder(
         intentPlan.tasks,
         sessionId,
       );
 
       // Check if any tasks need human clarification
-      if (executionResults.pendingHITL && Object.keys(executionResults.pendingHITL).length > 0) {
+      if (taskResults.pendingHITL && Object.keys(taskResults.pendingHITL).length > 0) {
         // Get the first HITL request (we'll handle one at a time)
-        const [taskId, hitlRequest] = Object.entries(executionResults.pendingHITL)[0];
+        const [taskId, hitlRequest] = Object.entries(taskResults.pendingHITL)[0];
 
         return {
           reply: hitlRequest.prompt,
@@ -67,7 +67,7 @@ export class CoordinatorAgentService extends BaseAgentService<
       }
 
       // Execute the generated tool calls
-      const executionResult = await this.executorService.execute(executionResults.results);
+      const executionResults = await this.executorService.execute(taskResults.results);
 
       // Generate a response summarizing what was done
       const response = await this.openAIService.generateChatCompletion([
@@ -78,7 +78,7 @@ export class CoordinatorAgentService extends BaseAgentService<
         ...chatContext,
         {
           role: 'user',
-          content: `Here is what was done: ${JSON.stringify({ executionResults, executionResult })}. ${prompts.RETURN_APP_LINK}`,
+          content: `Here is what was done: ${JSON.stringify({ executionResults: taskResults, executionResult: executionResults })}. ${prompts.RETURN_APP_LINK}`,
         },
       ]);
 

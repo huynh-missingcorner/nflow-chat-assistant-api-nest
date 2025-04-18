@@ -275,13 +275,4 @@ export class TaskExecutorService {
       !!(result.clarification as HITLRequest).prompt
     );
   }
-
-  /**
-   * Type guard to check if a result is an agent response
-   * @param result Result to check
-   * @returns Type predicate for BaseAgentResponse
-   */
-  private isAgentResponse(result: unknown): result is BaseAgentResponse {
-    return result !== null && typeof result === 'object' && 'toolCalls' in result;
-  }
 }

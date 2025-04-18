@@ -14,7 +14,7 @@ export class ObjectAgentService extends BaseAgentService<
   AgentInput<ObjectAgentInput>,
   AgentOutput
 > {
-  private readonly MAX_TOOL_CALL_RETRIES = 3;
+  private readonly MAX_TOOL_CALL_RETRIES = 2;
 
   constructor(openAIService: OpenAIService, contextLoader: ContextLoaderService) {
     super(openAIService, contextLoader, AGENT_PATHS.OBJECT);

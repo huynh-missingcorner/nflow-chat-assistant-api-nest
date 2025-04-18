@@ -10,6 +10,7 @@ import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { TaskExecutorService } from './services/task-executor.service';
 import { ChatContextService } from './services/chat-context.service';
 import { IntentTask } from '../intent-agent/types/intent.types';
+import { ChatMessage } from '../types';
 
 @Injectable()
 export class CoordinatorAgentService extends BaseAgentService<
@@ -36,59 +37,8 @@ export class CoordinatorAgentService extends BaseAgentService<
     sessionId: string,
   ): Promise<CoordinatorAgentOutput> {
     try {
-      // Get chat context
       const chatContext = await this.chatContextService.getChatContext(sessionId);
-
-      // Generate intent plan
-      const intentPlan = await this.intentService.run({
-        message,
-        chatContext,
-      });
-
-      // Execute tasks based on intent plan
-      const taskResults = await this.taskExecutorService.executeTasksInOrder(
-        intentPlan.tasks,
-        sessionId,
-      );
-
-      // Check if any tasks need human clarification
-      if (taskResults.pendingHITL && Object.keys(taskResults.pendingHITL).length > 0) {
-        // Get the first HITL request (we'll handle one at a time)
-        const [taskId, hitlRequest] = Object.entries(taskResults.pendingHITL)[0];
-
-        return {
-          reply: hitlRequest.prompt,
-          requiresHITL: true,
-          hitlData: {
-            taskId,
-            remainingTasks: intentPlan.tasks,
-          },
-        };
-      }
-
-      // Execute the generated tool calls
-      const executionResults = await this.executorService.execute(taskResults.results);
-
-      // Generate a response summarizing what was done
-      const response = await this.openAIService.generateChatCompletion([
-        {
-          role: 'system',
-          content: prompts.SUMMARY,
-        },
-        ...chatContext,
-        {
-          role: 'user',
-          content: `Here is what was done: ${JSON.stringify({ executionResults: taskResults, executionResult: executionResults })}. ${prompts.RETURN_APP_LINK}`,
-        },
-      ]);
-
-      if (!response.content) {
-        throw new Error('Failed to generate response');
-      }
-
-      return {
-        reply: response.content,
-      };
+      return this.processNflowAgentsFlow(message, chatContext, sessionId);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
       this.logger.error('Error in processUserMessage', error);
@@ -160,5 +110,62 @@ export class CoordinatorAgentService extends BaseAgentService<
         reply: `I apologize, but I encountered an error while processing your response: ${errorMessage}`,
       };
     }
+  }
+
+  private async processNflowAgentsFlow(
+    message: string,
+    chatContext: ChatMessage[],
+    sessionId: string,
+  ): Promise<CoordinatorAgentOutput> {
+    // Generate intent plan
+    const intentPlan = await this.intentService.run({
+      message,
+      chatContext,
+    });
+
+    // Execute tasks based on intent plan
+    const taskResults = await this.taskExecutorService.executeTasksInOrder(
+      intentPlan.tasks,
+      sessionId,
+    );
+
+    // Check if any tasks need human clarification
+    if (taskResults.pendingHITL && Object.keys(taskResults.pendingHITL).length > 0) {
+      // Get the first HITL request (we'll handle one at a time)
+      const [taskId, hitlRequest] = Object.entries(taskResults.pendingHITL)[0];
+
+      return {
+        reply: hitlRequest.prompt,
+        requiresHITL: true,
+        hitlData: {
+          taskId,
+          remainingTasks: intentPlan.tasks,
+        },
+      };
+    }
+
+    // Execute the generated tool calls
+    const executionResults = await this.executorService.execute(taskResults.results);
+
+    // Generate a response summarizing what was done
+    const response = await this.openAIService.generateChatCompletion([
+      {
+        role: 'system',
+        content: prompts.SUMMARY,
+      },
+      ...chatContext,
+      {
+        role: 'user',
+        content: `Here is what was done: ${JSON.stringify({ executionResults: taskResults, executionResult: executionResults })}. ${prompts.RETURN_APP_LINK}`,
+      },
+    ]);
+
+    if (!response.content) {
+      throw new Error('Failed to generate response');
+    }
+
+    return {
+      reply: response.content ?? '',
+    };
   }
 }

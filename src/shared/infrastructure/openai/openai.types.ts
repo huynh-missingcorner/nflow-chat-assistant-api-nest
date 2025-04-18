@@ -50,3 +50,10 @@ export interface FunctionCallInputs {
   functionCalls?: ResponseFunctionToolCall[];
   functionCallOutputs?: ResponseInputItem.FunctionCallOutput[];
 }
+
+export interface ToolCallContent {
+  toolCalls: Array<{
+    functionName: string;
+    arguments: Record<string, unknown>;
+  }>;
+}

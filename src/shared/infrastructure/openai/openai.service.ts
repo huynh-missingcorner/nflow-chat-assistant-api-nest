@@ -9,9 +9,11 @@ import {
   ChatMessage,
   OpenAIResponseWithRequestId,
   FunctionCallInputs,
+  ToolCallContent,
 } from './openai.types';
 import {
   ResponseCreateParamsNonStreaming,
+  ResponseOutputMessage,
   Tool,
   ToolChoiceFunction,
   ToolChoiceOptions,
@@ -136,16 +138,60 @@ export class OpenAIService implements OnModuleInit {
       throw new Error('No response from OpenAI');
     }
 
-    // Handle message type outputs
     const messageOutput = response.output.find((item) => item.type === 'message');
     if (messageOutput) {
-      return {
-        content:
-          messageOutput.content[0]?.type === 'output_text' ? messageOutput.content[0].text : '',
-      };
+      return this.processTextResponse(messageOutput);
     }
 
-    // Handle function call outputs
+    return this.processFunctionCallResponse(response);
+  }
+
+  private processTextResponse(messageOutput: ResponseOutputMessage): ChatCompletionResponse {
+    const messageContent =
+      messageOutput.content[0]?.type === 'output_text' ? messageOutput.content[0].text : '';
+
+    if (messageContent) {
+      try {
+        const parsedContent = JSON.parse(messageContent) as ToolCallContent;
+
+        if (
+          parsedContent &&
+          Array.isArray(parsedContent.toolCalls) &&
+          parsedContent.toolCalls.length > 0
+        ) {
+          this.logger.log('Detected tool calls in message content JSON');
+
+          const toolCalls = parsedContent.toolCalls.map((toolCall, index: number) => ({
+            id: `tool_call_${index}_${Date.now()}`,
+            type: 'function' as const,
+            function: {
+              call_id: `call_${index}_${Date.now()}`,
+              name: toolCall.functionName,
+              arguments: JSON.stringify(toolCall.arguments),
+            },
+          }));
+
+          return {
+            content: '',
+            toolCalls,
+          };
+        }
+      } catch (error: unknown) {
+        this.logger.debug(
+          'Message content is not a valid JSON with toolCalls, treating as regular text',
+        );
+        this.logger.error(error);
+      }
+    }
+
+    return {
+      content: messageContent,
+    };
+  }
+
+  private processFunctionCallResponse(
+    response: OpenAIResponseWithRequestId,
+  ): ChatCompletionResponse {
     const functionCalls = response.output
       .filter((item) => item.type === 'function_call')
       .map((item) => ({

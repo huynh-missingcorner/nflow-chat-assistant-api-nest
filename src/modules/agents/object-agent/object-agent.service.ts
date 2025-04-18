@@ -78,18 +78,98 @@ export class ObjectAgentService extends BaseAgentService<
 
   private async generateToolCalls(action: string, schemas: ObjectSchema[]): Promise<ToolCall[]> {
     try {
-      const objectToolCalls = await this.generateObjectCreationCalls(action, schemas);
-      const fieldToolCalls = await this.generateFieldCreationCalls(action, schemas);
-      const allToolCalls = [...objectToolCalls, ...fieldToolCalls];
+      const allToolCalls: ToolCall[] = [];
 
-      return allToolCalls.map((toolCall) => ({
-        id: toolCall.id,
-        functionName: toolCall.functionName,
-        arguments: toolCall.arguments,
-      }));
+      for (const schema of schemas) {
+        const schemaToolCalls = await this.generateCombinedToolCallsPerSchema(schema, action);
+        allToolCalls.push(...schemaToolCalls);
+      }
+
+      return allToolCalls;
     } catch (error) {
       this.logger.error('Failed to generate tool calls', error);
       throw new Error(ObjectErrors.TOOL_CALLS_GENERATION_FAILED);
+    }
+  }
+
+  /**
+   * Optimized method that generates tool calls for a single schema and all its fields in one API call
+   */
+  private async generateCombinedToolCallsPerSchema(
+    schema: ObjectSchema,
+    action: string,
+  ): Promise<ToolCall[]> {
+    // Load tool generation-specific context
+    const toolGenerationContext = await this.loadToolGenerationContext();
+
+    try {
+      // Create a combined prompt for the object and all its fields
+      const objectData = {
+        name: schema.name,
+        displayName: schema.displayName,
+        description: schema.description,
+        primaryField: schema.primaryField,
+      };
+
+      const combinedPrompt = `
+Create the following object and all of its fields:
+
+Object: ${JSON.stringify(objectData, null, 2)}
+
+Fields: ${JSON.stringify(schema.fields, null, 2)}
+
+Requirements:
+1. First create the object using ObjectController_changeObject
+2. Then create each field using FieldController_changeField
+3. For each field:
+   - Set objName to "${schema.name.toLowerCase()}"
+   - Set action to "${action}"
+   - Map field types correctly
+   - Include all field attributes
+4. For the object:
+   - Set action to "${action}"
+   - Set name to "${schema.name.toLowerCase()}"
+   - Include all object attributes`;
+
+      const messages = [
+        {
+          role: 'system' as const,
+          content: toolGenerationContext,
+        },
+        {
+          role: 'user' as const,
+          content: combinedPrompt,
+        },
+      ];
+
+      const options = {
+        tools: [createNewObjectTool, createNewFieldTool],
+        tool_choice: 'auto' as const, // Allow the model to choose which tool to use for each call
+      };
+
+      const completion = await this.openAIService.generateFunctionCompletion(messages, options);
+
+      if (!completion.toolCalls?.length) {
+        this.logger.warn(`No tool calls generated for schema ${schema.name}`);
+        return [];
+      }
+
+      const combinedToolCalls = completion.toolCalls.map((toolCall) => ({
+        id: toolCall.id,
+        functionName: toolCall.function.name,
+        arguments: JSON.parse(toolCall.function.arguments) as Record<string, unknown>,
+      }));
+
+      this.logger.log(
+        `Generated ${combinedToolCalls.length} tool calls for schema ${schema.name} in a single API call`,
+      );
+      return combinedToolCalls;
+    } catch (error) {
+      this.logger.error(
+        `Failed to generate combined tool calls for schema ${schema.name}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      return [];
     }
   }
 

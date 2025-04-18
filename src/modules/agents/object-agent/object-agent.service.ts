@@ -37,12 +37,14 @@ export class ObjectAgentService extends BaseAgentService<
   }
 
   private async designObjectSchemas(params: ObjectAgentInput): Promise<ObjectSchema[]> {
-    const combinedContext = await this.loadAgentContexts();
+    // Load schema design-specific context
+    const schemaDesignContext = await this.loadSchemaDesignContext();
+
     const schemaDesignPrompt = `${ObjectPrompts.OBJECT_DESIGN_PROMPT} ${JSON.stringify(params.objects, null, 2)}`;
     const schemaDesignMessages = [
       {
         role: 'system' as const,
-        content: combinedContext,
+        content: schemaDesignContext,
       },
       {
         role: 'user' as const,
@@ -95,7 +97,9 @@ export class ObjectAgentService extends BaseAgentService<
     action: string,
     schemas: ObjectSchema[],
   ): Promise<ToolCall[]> {
-    const combinedContext = await this.loadAgentContexts();
+    // Load tool generation-specific context
+    const toolGenerationContext = await this.loadToolGenerationContext();
+
     const objectList = this.getObjectListFromSchemas(schemas);
     const allObjectToolCalls: ToolCall[] = [];
 
@@ -108,7 +112,7 @@ export class ObjectAgentService extends BaseAgentService<
         const messages = [
           {
             role: 'system' as const,
-            content: combinedContext,
+            content: toolGenerationContext,
           },
           {
             role: 'user' as const,
@@ -157,7 +161,9 @@ export class ObjectAgentService extends BaseAgentService<
     action: string,
     schemas: ObjectSchema[],
   ): Promise<ToolCall[]> {
-    const combinedContext = await this.loadAgentContexts();
+    // Load tool generation-specific context
+    const toolGenerationContext = await this.loadToolGenerationContext();
+
     const allFieldToolCalls: ToolCall[] = [];
 
     for (const schema of schemas) {
@@ -165,7 +171,7 @@ export class ObjectAgentService extends BaseAgentService<
         const messages = [
           {
             role: 'system' as const,
-            content: combinedContext,
+            content: toolGenerationContext,
           },
           {
             role: 'user' as const,
@@ -173,7 +179,7 @@ export class ObjectAgentService extends BaseAgentService<
 ${JSON.stringify(field, null, 2)}
 
 Requirements:
-1. Set objName to "${schema.name}"
+1. Set objName to "${schema.name.toLowerCase()}"
 2. Set action to "${action}"
 3. Map the field type correctly
 4. Include all field attributes`,
@@ -216,5 +222,43 @@ Requirements:
       description: schema.description,
       primaryField: schema.primaryField,
     }));
+  }
+
+  private async loadSchemaDesignContext(): Promise<string> {
+    try {
+      // Use loadAgentContexts to load specific files
+      const contextPath = `${this.agentPath}/${this.CONTEXTS_PATH}`;
+      const contextFiles = await this.contextLoader.loadContextDirectory(contextPath);
+
+      // Filter only schema design files
+      const schemaDesignFiles = contextFiles.filter(
+        (file) =>
+          file.name === 'schema_design_context.md' || file.name === 'schema_design_examples.md',
+      );
+
+      return schemaDesignFiles.map((file) => file.content).join('\n\n');
+    } catch (error) {
+      this.logger.error('Failed to load schema design context', error);
+      throw new Error(ObjectErrors.CONTEXT_LOAD_ERROR);
+    }
+  }
+
+  private async loadToolGenerationContext(): Promise<string> {
+    try {
+      // Use loadAgentContexts to load specific files
+      const contextPath = `${this.agentPath}/${this.CONTEXTS_PATH}`;
+      const contextFiles = await this.contextLoader.loadContextDirectory(contextPath);
+
+      // Filter only tool generation files
+      const toolGenerationFiles = contextFiles.filter(
+        (file) =>
+          file.name === 'tool_generation_context.md' || file.name === 'tool_generation_examples.md',
+      );
+
+      return toolGenerationFiles.map((file) => file.content).join('\n\n');
+    } catch (error) {
+      this.logger.error('Failed to load tool generation context', error);
+      throw new Error(ObjectErrors.CONTEXT_LOAD_ERROR);
+    }
   }
 }

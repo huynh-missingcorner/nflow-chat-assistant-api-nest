@@ -1,5 +1,4 @@
-import { HITLRequest } from '../../coordinator-agent/types';
-import { AgentOutput } from '../../types';
+import { AgentOutput, HITLRequest } from '../../types';
 
 export interface ExecutionResult {
   id: string;

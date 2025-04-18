@@ -1,23 +1,9 @@
-import { AgentOutput, ToolCall } from '../../types';
+import { AgentOutput, HITLRequest, ToolCall } from '../../types';
 
 export interface BaseAgentResponse extends AgentOutput {
   toolCalls: ToolCall[];
   memoryPatch?: any;
   clarification?: HITLRequest;
-}
-
-export interface ToolCallArguments {
-  name?: string;
-  objName?: string;
-  data?: {
-    name: string;
-    relationships?: Array<{
-      targetObject: string;
-      [key: string]: unknown;
-    }>;
-    [key: string]: unknown;
-  };
-  [key: string]: unknown;
 }
 
 export interface CoordinatorAgentInput {
@@ -32,10 +18,4 @@ export interface CoordinatorAgentOutput {
     taskId: string;
     remainingTasks: any[];
   };
-}
-
-export interface HITLRequest {
-  prompt: string;
-  taskId: string;
-  missing: string[];
 }

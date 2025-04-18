@@ -8,11 +8,12 @@ import { ApplicationAgentInput } from '../../application-agent/types/application
 import { ObjectAgentInput } from '../../object-agent/types/object.types';
 import { LayoutAgentInput } from '../../layout-agent/types/layout.types';
 import { FlowAgentInput } from '../../flow-agent/types/flow.types';
-import { BaseAgentResponse, HITLRequest } from '../types';
+import { BaseAgentResponse } from '../types';
 import { ActiveAgent, AgentStatus, DEFAULT_AGENT_STATUS } from '../consts';
 import { ProcessedTasks } from '../../executor-agent/types/executor.types';
 import { MemoryService } from 'src/modules/memory/memory.service';
-import { Agent, AgentOutput, SessionContext } from '../../types';
+import { Agent, AgentOutput, HITLRequest } from '../../types';
+import { ShortTermMemory } from 'src/modules/memory/types';
 
 @Injectable()
 export class TaskExecutorService {
@@ -222,7 +223,7 @@ export class TaskExecutorService {
    * @param task The task to execute with context
    * @returns Result of the task execution
    */
-  private async executeTask(task: IntentTask, context?: SessionContext): Promise<AgentOutput> {
+  private async executeTask(task: IntentTask, context?: ShortTermMemory): Promise<AgentOutput> {
     this.logger.log(`Executing task ${task.id} for ${task.agent}: ${task.description}`);
 
     const agentKey = task.agent;
@@ -269,10 +270,6 @@ export class TaskExecutorService {
    * @returns Boolean indicating if HITL is required
    */
   private requiresHITL(result: AgentOutput): boolean {
-    return (
-      'clarification' in result &&
-      !!result.clarification &&
-      !!(result.clarification as HITLRequest).prompt
-    );
+    return 'clarification' in result && !!result.clarification && !!result.clarification.prompt;
   }
 }

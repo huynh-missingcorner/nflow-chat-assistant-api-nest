@@ -38,13 +38,10 @@ export class TaskExecutorService {
     tasks: IntentTask[],
     sessionId: string,
   ): Promise<ProcessedTasks> {
-    // Initialize results to store execution outputs
     const taskResults: Record<string, AgentOutput> = {};
-    const completed = new Set<string>();
+    const completedTasks = new Set<string>();
     const pendingHITL: Record<string, HITLRequest> = {};
-
-    // Get the current session context
-    let sessionContext = await this.memoryService.getContext(sessionId);
+    let shortTermMemory = await this.memoryService.getContext(sessionId);
 
     // Filter out tasks for disabled agents
     const filteredTasks = tasks.filter((task) => {
@@ -52,7 +49,7 @@ export class TaskExecutorService {
       if (!isEnabled) {
         this.logger.log(`Skipping task for disabled agent: ${task.agent}`);
         // Mark as completed so dependent tasks don't get stuck
-        completed.add(task.id);
+        completedTasks.add(task.id);
       }
       return isEnabled;
     });
@@ -62,7 +59,7 @@ export class TaskExecutorService {
     while (remainingTasks.length > 0) {
       // Find tasks that can be executed (dependencies satisfied)
       let executableTasks = remainingTasks.filter(
-        (task) => !task.dependsOn || task.dependsOn.every((dep) => completed.has(dep)),
+        (task) => !task.dependsOn || task.dependsOn.every((dep) => completedTasks.has(dep)),
       );
 
       // If there is only one task, we don't need to check for circular dependencies
@@ -87,16 +84,7 @@ export class TaskExecutorService {
       // Execute all tasks that can be run in parallel
       const taskPromises = executableTasks.map(async (task) => {
         try {
-          // Add context to the task data
-          const taskWithContext = {
-            ...task,
-            data: {
-              ...task.data,
-              context: sessionContext,
-            },
-          };
-
-          const result = await this.executeTask(taskWithContext);
+          const result = await this.executeTask(task, shortTermMemory);
 
           // Check if the task execution requires human clarification
           if (this.requiresHITL(result)) {
@@ -107,11 +95,11 @@ export class TaskExecutorService {
 
           // Update session context with any memory patches
           if ('memoryPatch' in result && result.memoryPatch) {
-            sessionContext = this.memoryService.patch(sessionContext, result.memoryPatch);
+            shortTermMemory = this.memoryService.patch(shortTermMemory, result.memoryPatch);
           }
 
           taskResults[task.id] = result;
-          completed.add(task.id);
+          completedTasks.add(task.id);
 
           // Remove completed task from remaining tasks
           const index = remainingTasks.findIndex((t) => t.id === task.id);
@@ -129,7 +117,7 @@ export class TaskExecutorService {
             error: (error as Error).message,
           };
           // Mark as completed to continue the flow
-          completed.add(task.id);
+          completedTasks.add(task.id);
           const index = remainingTasks.findIndex((t) => t.id === task.id);
           if (index !== -1) {
             remainingTasks.splice(index, 1);
@@ -147,10 +135,6 @@ export class TaskExecutorService {
         };
       }
     }
-
-    // TODO: Update the full session context with task results
-    // We should update the task results only if the task execution by ExecutorAgent is successful
-    // await this.memoryService.updateTaskResults(sessionId, { results: taskResults });
 
     return {
       results: taskResults,
@@ -171,7 +155,7 @@ export class TaskExecutorService {
     remainingTasks: IntentTask[],
   ): Promise<ProcessedTasks> {
     // Get the current session context
-    const sessionContext = await this.memoryService.getContext(sessionId);
+    const shortTermMemory = await this.memoryService.getContext(sessionId);
 
     // Find the task that needs clarification
     const task = remainingTasks.find((t) => t.id === taskId);
@@ -184,7 +168,7 @@ export class TaskExecutorService {
       ...task,
       data: {
         ...task.data,
-        context: sessionContext,
+        context: shortTermMemory,
         clarification: response,
       },
     };
@@ -194,7 +178,7 @@ export class TaskExecutorService {
 
     // Update memory if needed
     if ('memoryPatch' in result && result.memoryPatch) {
-      this.memoryService.patch(sessionContext, result.memoryPatch);
+      this.memoryService.patch(shortTermMemory, result.memoryPatch);
     }
 
     // Continue with the remaining tasks
@@ -230,7 +214,6 @@ export class TaskExecutorService {
     if (!this.agentStatus[agentKey]?.enabled) {
       this.logger.warn(`Attempted to execute task for disabled agent: ${task.agent}`);
 
-      // Return an empty response for disabled agents
       return {
         toolCalls: [],
       };

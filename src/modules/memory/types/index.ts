@@ -10,7 +10,7 @@ export interface ShortTermMemory {
   chatHistory: ChatMessage[];
 
   // Nflow memory
-  createdApplication?: CreatedApplication;
+  createdApplication: CreatedApplication[];
   createdObjects: CreatedObject[];
   createdLayouts: CreatedLayout[];
   createdFlows: CreatedFlow[];

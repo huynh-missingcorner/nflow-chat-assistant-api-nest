@@ -31,14 +31,10 @@ export class ExecutorAgentService {
     private readonly flowService: NFlowFlowService,
   ) {}
 
-  /**
-   * Execute all processed tasks in order
-   */
   async execute(tasks: Record<string, AgentOutput>): Promise<ExecutionResult[]> {
     const results: ExecutionResult[] = [];
 
     try {
-      // Sort all tool calls by order
       const sortedCalls = this.getSortedToolCalls(tasks);
 
       // Execute each tool call in order
@@ -60,9 +56,6 @@ export class ExecutorAgentService {
     }
   }
 
-  /**
-   * Get all tool calls sorted by order
-   */
   private getSortedToolCalls(
     tasks: Record<string, AgentOutput>,
   ): Array<{ agentName: string; call: NflowRequest }> {
@@ -75,14 +68,13 @@ export class ExecutorAgentService {
             agentName,
             call: {
               ...call,
-              order: call.order ?? 0, // Provide default order if not present
+              order: call.order ?? 0,
             },
           });
         }
       }
     }
 
-    // Sort by order if available, otherwise keep original sequence
     return allCalls.sort((a, b) => (a.call.order ?? 0) - (b.call.order ?? 0));
   }
 

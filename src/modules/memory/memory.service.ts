@@ -18,6 +18,7 @@ export class MemoryService {
       context = {
         sessionId,
         chatHistory,
+        createdApplication: [],
         createdObjects: [],
         createdLayouts: [],
         createdFlows: [],
@@ -37,6 +38,10 @@ export class MemoryService {
     const updatedContext = {
       ...context,
       ...patchData,
+      createdApplication: [
+        ...(context.createdApplication || []),
+        ...(patchData.createdApplication || []),
+      ],
       createdObjects: [...(context.createdObjects || []), ...(patchData.createdObjects || [])],
       createdLayouts: [...(context.createdLayouts || []), ...(patchData.createdLayouts || [])],
       createdFlows: [...(context.createdFlows || []), ...(patchData.createdFlows || [])],

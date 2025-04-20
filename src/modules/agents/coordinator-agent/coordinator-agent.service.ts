@@ -10,7 +10,6 @@ import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { TaskExecutorService } from './services/task-executor.service';
 import { ChatContextService } from './services/chat-context.service';
 import { IntentTask } from '../intent-agent/types/intent.types';
-import { ChatMessage } from '../types';
 import { ClassifierAgentService } from '../classifier-agent/classifier-agent.service';
 import { MessageType } from '../classifier-agent/types/classifier.types';
 import { MemoryService } from 'src/modules/memory/memory.service';
@@ -71,30 +70,31 @@ export class CoordinatorAgentService extends BaseAgentService<
 
     switch (messageType) {
       case 'nflow_action':
-        return this.processNflowAgentsFlow(message, chatContext, sessionId);
+        return this.processNflowAgentsFlow(message, sessionId);
 
       case 'context_query':
-        return this.processContextQuery(message, chatContext);
+        return this.processContextQuery(message, sessionId);
 
       case 'casual_chat':
-        return this.processCasualChat(message);
+        return this.processCasualChat(message, sessionId);
 
       default:
-        return this.processNflowAgentsFlow(message, chatContext, sessionId);
+        return this.processNflowAgentsFlow(message, sessionId);
     }
   }
 
   private async processContextQuery(
     message: string,
-    chatContext: ChatMessage[],
+    sessionId: string,
   ): Promise<CoordinatorAgentOutput> {
     try {
+      const shortTermMemory = await this.memoryService.getContext(sessionId);
       const response = await this.openAIService.generateChatCompletion([
         {
           role: 'system',
-          content: prompts.CONTEXT_QUERY,
+          content: `${prompts.CONTEXT_QUERY}\n\nHere is the short term memory: ${JSON.stringify(shortTermMemory)}`,
         },
-        ...chatContext,
+        ...shortTermMemory.chatHistory,
         {
           role: 'user',
           content: message,
@@ -117,13 +117,21 @@ export class CoordinatorAgentService extends BaseAgentService<
     }
   }
 
-  private async processCasualChat(message: string): Promise<CoordinatorAgentOutput> {
+  private async processCasualChat(
+    message: string,
+    sessionId: string,
+  ): Promise<CoordinatorAgentOutput> {
+    const shortTermMemory = await this.memoryService.getContext(sessionId);
     const response = await this.openAIService.generateChatCompletion([
       {
         role: 'system',
-        content: prompts.CASUAL_CHAT,
+        content: `${prompts.CASUAL_CHAT}\n\nHere is the short term memory: ${JSON.stringify(shortTermMemory)}`,
       },
-      { role: 'user', content: message },
+      ...shortTermMemory.chatHistory,
+      {
+        role: 'user',
+        content: message,
+      },
     ]);
 
     if (!response.content) {
@@ -194,12 +202,12 @@ export class CoordinatorAgentService extends BaseAgentService<
 
   private async processNflowAgentsFlow(
     message: string,
-    chatContext: ChatMessage[],
     sessionId: string,
   ): Promise<CoordinatorAgentOutput> {
+    const shortTermMemory = await this.memoryService.getContext(sessionId);
     const intentPlan = await this.intentService.run({
       message,
-      chatContext,
+      sessionId,
     });
 
     const taskResults = await this.taskExecutorService.executeTasksInOrder(
@@ -221,13 +229,12 @@ export class CoordinatorAgentService extends BaseAgentService<
     }
 
     const executionResults = await this.executorService.execute(taskResults.results, sessionId);
-    const shortTermMemory = await this.memoryService.getContext(sessionId);
     const response = await this.openAIService.generateChatCompletion([
       {
         role: 'system',
         content: prompts.SUMMARY,
       },
-      ...chatContext,
+      ...shortTermMemory.chatHistory,
       {
         role: 'user',
         content: `Here is what was done: ${JSON.stringify({

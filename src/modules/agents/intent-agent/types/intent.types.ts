@@ -1,9 +1,8 @@
-import { FunctionCallInputs } from 'src/shared/infrastructure/openai/openai.types';
 import { ApplicationAgentInput } from '../../application-agent/types/application.types';
 import { FlowAgentInput } from '../../flow-agent/types/flow.types';
 import { LayoutAgentInput } from '../../layout-agent/types/layout.types';
 import { ObjectAgentInput } from '../../object-agent/types/object.types';
-import { Agent, ChatMessage } from '../../types';
+import { Agent } from '../../types';
 
 export interface IntentPlan {
   summary: string;
@@ -35,8 +34,7 @@ export interface ObjectAgentData {
 
 export interface IntentAgentInput {
   message: string;
-  chatContext?: Array<ChatMessage>;
-  functionCallInputs?: FunctionCallInputs;
+  sessionId: string;
 }
 
 export interface IntentToolResponse {

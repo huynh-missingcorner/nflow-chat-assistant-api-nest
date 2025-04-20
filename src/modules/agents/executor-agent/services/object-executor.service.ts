@@ -23,7 +23,7 @@ export class ObjectExecutorService {
 
     if (data.action === 'delete') {
       shortTermMemoryClone.createdObjects = shortTermMemoryClone.createdObjects.filter(
-        (object) => object.name !== objectResponse.name,
+        (object) => object.name !== data.name,
       );
     } else if (existingObject) {
       shortTermMemoryClone.createdObjects = shortTermMemoryClone.createdObjects.map((object) =>
@@ -50,13 +50,19 @@ export class ObjectExecutorService {
       (object) => object.name === data.objName,
     );
     if (existingObject) {
-      const existingField = existingObject.fields.find((field) => field.name === data.name);
-      if (existingField) {
-        existingObject.fields = existingObject.fields.map((field) =>
-          field.name === data.name ? { ...field, ...fieldResponse } : field,
+      if (data.action === 'delete') {
+        existingObject.fields = existingObject.fields.filter(
+          (field) => field.name !== data.name && field.name !== data.data.name,
         );
       } else {
-        existingObject.fields.push(fieldResponse);
+        const existingField = existingObject.fields.find((field) => field.name === data.name);
+        if (existingField) {
+          existingObject.fields = existingObject.fields.map((field) =>
+            field.name === data.name ? { ...field, ...fieldResponse } : field,
+          );
+        } else {
+          existingObject.fields.push(fieldResponse);
+        }
       }
     } else {
       throw new Error('Object not found in short term memory');

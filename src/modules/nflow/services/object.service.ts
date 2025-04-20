@@ -33,7 +33,14 @@ export class NFlowObjectService extends BaseNFlowService {
 
   // CUD operations for fields
   async changeField(data: FieldDto): Promise<FieldResponse> {
-    const { objName, ...rest } = data;
+    if (data.action === 'delete') {
+      return this.makeRequest('POST', `/mo/${data.objName}/fields`, {
+        action: 'delete',
+        name: data.name ?? data.data.name,
+      });
+    }
+
+    const { objName, ...rest } = data; // objName is not used
     return this.makeRequest('POST', `/mo/${objName}/fields`, rest);
   }
 }

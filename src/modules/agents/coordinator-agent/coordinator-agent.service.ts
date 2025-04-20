@@ -13,6 +13,7 @@ import { IntentTask } from '../intent-agent/types/intent.types';
 import { ChatMessage } from '../types';
 import { ClassifierAgentService } from '../classifier-agent/classifier-agent.service';
 import { MessageType } from '../classifier-agent/types/classifier.types';
+import { MemoryService } from 'src/modules/memory/memory.service';
 
 @Injectable()
 export class CoordinatorAgentService extends BaseAgentService<
@@ -25,6 +26,7 @@ export class CoordinatorAgentService extends BaseAgentService<
     private readonly taskExecutorService: TaskExecutorService,
     private readonly chatContextService: ChatContextService,
     private readonly classifierService: ClassifierAgentService,
+    private readonly memoryService: MemoryService,
     contextLoader: ContextLoaderService,
     openAIService: OpenAIService,
   ) {
@@ -61,6 +63,11 @@ export class CoordinatorAgentService extends BaseAgentService<
     sessionId: string,
   ): Promise<CoordinatorAgentOutput> {
     const chatContext = await this.chatContextService.getChatContext(sessionId);
+    const shortTermMemory = await this.memoryService.getContext(sessionId);
+
+    this.memoryService.patch(shortTermMemory, {
+      chatHistory: chatContext,
+    });
 
     switch (messageType) {
       case 'nflow_action':
@@ -155,7 +162,7 @@ export class CoordinatorAgentService extends BaseAgentService<
         };
       }
 
-      const executionResult = await this.executorService.execute(updatedResults.results);
+      const executionResult = await this.executorService.execute(updatedResults.results, sessionId);
 
       const aiResponse = await this.openAIService.generateChatCompletion([
         {
@@ -213,7 +220,8 @@ export class CoordinatorAgentService extends BaseAgentService<
       };
     }
 
-    const executionResults = await this.executorService.execute(taskResults.results);
+    const executionResults = await this.executorService.execute(taskResults.results, sessionId);
+    const shortTermMemory = await this.memoryService.getContext(sessionId);
     const response = await this.openAIService.generateChatCompletion([
       {
         role: 'system',
@@ -222,7 +230,13 @@ export class CoordinatorAgentService extends BaseAgentService<
       ...chatContext,
       {
         role: 'user',
-        content: `Here is what was done: ${JSON.stringify({ executionResults: taskResults, executionResult: executionResults })}. ${prompts.RETURN_APP_LINK}`,
+        content: `Here is what was done: ${JSON.stringify({
+          executionResults,
+          createdApplications: shortTermMemory.createdApplications,
+          createdObjects: shortTermMemory.createdObjects,
+          createdLayouts: shortTermMemory.createdLayouts,
+          createdFlows: shortTermMemory.createdFlows,
+        })}. ${prompts.RETURN_APP_LINK}`,
       },
     ]);
 

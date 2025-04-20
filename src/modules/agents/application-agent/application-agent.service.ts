@@ -4,7 +4,7 @@ import { ContextLoaderService } from 'src/shared/services/context-loader.service
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { ApplicationAgentInput } from './types/application.types';
 import { ApplicationErrors } from './constants/application.constants';
-import { tools as applicationTools } from './tools/application-tools';
+import { createNewApplicationTool, updateApplicationTool } from './tools/application-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
 import { AgentInput, AgentOutput, ToolCall } from '../types';
@@ -26,6 +26,18 @@ export class ApplicationAgentService extends BaseAgentService<
     try {
       const combinedContext = await this.loadAgentContexts();
 
+      const combinedPrompt = `
+Create the following application:
+
+Application Parameters: ${JSON.stringify(params, null, 2)}
+
+Requirements:
+1. First create the application using ApiAppBuilderController_createApp
+2. For application parameters, use the following:
+   - displayName: Use a name that is easy to understand and remember
+   - description: Use a description that is easy to understand and remember
+   - name: Name should be unique and generated from the displayName. Use the following format: ${params.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}
+`;
       const messages = [
         {
           role: 'system' as const,
@@ -33,16 +45,19 @@ export class ApplicationAgentService extends BaseAgentService<
         },
         {
           role: 'user' as const,
-          content: `Application Parameters: ${JSON.stringify(params, null, 2)}`,
+          content: combinedPrompt,
         },
       ];
 
       const options = {
-        tools: applicationTools,
+        tools: [createNewApplicationTool, updateApplicationTool],
         tool_choice: {
           type: 'function',
           name: 'ApiAppBuilderController_createApp',
         } as ToolChoiceFunction,
+        model: 'gpt-4.1',
+        max_output_tokens: 32000,
+        temperature: 0.2,
       };
 
       const response = await this.openAIService.generateFunctionCompletion(messages, options);

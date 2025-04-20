@@ -12,6 +12,12 @@ export class NFlowApplicationService extends BaseNFlowService {
   }
 
   async createApp(data: CreateApplicationDto): Promise<BuilderAppResponse> {
+    if (!data.credentials) {
+      data.credentials = [];
+    }
+    if (!data.profiles) {
+      data.profiles = [];
+    }
     return this.makeRequest('POST', '/builder/apps', {
       ...data,
       profiles: ['admin'],

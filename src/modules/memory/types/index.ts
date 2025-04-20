@@ -2,6 +2,14 @@ import { ChatMessage, ToolCall } from 'src/modules/agents/types';
 import { ExecutionResult } from 'src/modules/agents/executor-agent/types/executor.types';
 import { HITLRequest } from 'src/modules/agents/types';
 import { IntentPlan } from 'src/modules/agents/intent-agent/types/intent.types';
+import {
+  BasicProfileResponse,
+  DataTypeResponse,
+  FieldAttributes,
+  NameDisplayName,
+  TagResponse,
+} from 'src/modules/nflow/types';
+import { ObjectRecordName } from 'src/modules/nflow/types';
 
 export interface ShortTermMemory {
   sessionId: string;
@@ -10,7 +18,7 @@ export interface ShortTermMemory {
   chatHistory: ChatMessage[];
 
   // Nflow memory
-  createdApplication: CreatedApplication[];
+  createdApplications: CreatedApplication[];
   createdObjects: CreatedObject[];
   createdLayouts: CreatedLayout[];
   createdFlows: CreatedFlow[];
@@ -31,39 +39,72 @@ export interface ShortTermMemory {
 
 export interface CreatedApplication {
   id: string;
-  name: string;
+  name: string; // name is the slugified version of displayName
+  displayName: string;
   description?: string;
-  slug: string;
 }
 
 export interface Field {
-  id?: string;
+  id: string;
   name: string;
-  type: string;
-  required: boolean;
-  defaultValue?: any;
-  enumValues?: string[];
-  relation?: {
-    targetObject: string;
-    type: string;
-  };
+  displayName: string;
+  isRequired: boolean;
+  description: string;
+  isExternalId: boolean;
+  attributes: FieldAttributes;
+  isSystemDefault: boolean;
+  value?: string;
+  pickListId?: string;
+  isDeleted: boolean;
+  dataType: DataTypeResponse;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreatedObject {
-  objectId: string;
+  id: string;
   name: string;
+  isSystemDefault: boolean;
+  description?: string;
+  displayName: string;
+  orgId: number;
+  isHidden: boolean;
+  isExternal: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  recordName: ObjectRecordName;
+  owd: 'PublicRead' | 'PublicReadWrite' | 'Private';
+  tags?: TagResponse[];
   fields: Field[];
 }
 
 export interface CreatedLayout {
-  layoutId: string;
+  script: Record<string, any>;
+  id: string;
   name: string;
-  pages: string[];
+  displayName: string;
+  description?: string;
+  type: 'dashboard' | 'app-page' | 'record-page';
+  objectName?: string;
+  createdAt: string;
+  updatedAt: string;
+  tags?: TagResponse[];
+  object?: NameDisplayName;
 }
 
 export interface CreatedFlow {
-  flowId: string;
+  updatedAt: string;
+  id: string;
   name: string;
-  trigger: string;
-  actions: any[];
+  type: 'screen' | 'action' | 'time-based' | 'data' | 'event' | 'ai-chat';
+  createdAt: string;
+  version: string;
+  displayName: string;
+  status: 'active' | 'inactive' | 'draft';
+  triggerType: 'public' | 'private' | 'by-profile';
+  profiles?: BasicProfileResponse[];
+  attributes: Record<string, any>;
+  description?: string;
+  objectRefs?: NameDisplayName[];
+  tags?: TagResponse[];
 }

@@ -18,7 +18,7 @@ export class MemoryService {
       context = {
         sessionId,
         chatHistory,
-        createdApplication: [],
+        createdApplications: [],
         createdObjects: [],
         createdLayouts: [],
         createdFlows: [],
@@ -38,9 +38,9 @@ export class MemoryService {
     const updatedContext = {
       ...context,
       ...patchData,
-      createdApplication: [
-        ...(context.createdApplication || []),
-        ...(patchData.createdApplication || []),
+      createdApplications: [
+        ...(context.createdApplications || []),
+        ...(patchData.createdApplications || []),
       ],
       createdObjects: [...(context.createdObjects || []), ...(patchData.createdObjects || [])],
       createdLayouts: [...(context.createdLayouts || []), ...(patchData.createdLayouts || [])],
@@ -67,8 +67,8 @@ export class MemoryService {
 
   public getLastCreatedApplication(
     context: ShortTermMemory,
-  ): ShortTermMemory['createdApplication'] {
-    return context.createdApplication;
+  ): ShortTermMemory['createdApplications'] {
+    return context.createdApplications;
   }
 
   public async updateTaskResults(sessionId: string, results: ExecutionResult): Promise<void> {

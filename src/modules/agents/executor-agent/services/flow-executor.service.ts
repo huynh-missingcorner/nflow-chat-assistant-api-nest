@@ -14,7 +14,7 @@ export class FlowExecutorService {
     const flowResponse = await this.flowService.createFlow(data);
 
     const shortTermMemory = await this.memoryService.getContext(sessionId);
-    this.memoryService.patch(shortTermMemory, {
+    await this.memoryService.patch(shortTermMemory, {
       createdFlows: [...(shortTermMemory.createdFlows || []), flowResponse],
     });
 

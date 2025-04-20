@@ -20,7 +20,7 @@ export class ExecutorAgentService {
   private readonly logger = new Logger(ExecutorAgentService.name);
   private readonly defaultOptions: Required<ExecutorOptions> = {
     stopOnError: true,
-    retryAttempts: 3,
+    retryAttempts: 1,
     retryDelay: 1000,
   };
 

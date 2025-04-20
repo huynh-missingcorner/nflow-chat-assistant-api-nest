@@ -18,7 +18,7 @@ export class AppExecutorService {
     const appResponse = await this.applicationService.createApp(data);
 
     const shortTermMemory = await this.memoryService.getContext(sessionId);
-    this.memoryService.patch(shortTermMemory, {
+    await this.memoryService.patch(shortTermMemory, {
       createdApplications: [
         ...shortTermMemory.createdApplications,
         {
@@ -37,7 +37,7 @@ export class AppExecutorService {
     const appResponse = await this.applicationService.updateApp(data);
 
     const shortTermMemory = await this.memoryService.getContext(sessionId);
-    this.memoryService.patch(shortTermMemory, {
+    await this.memoryService.patch(shortTermMemory, {
       createdApplications: shortTermMemory.createdApplications.map((app) =>
         app.name === data.name
           ? {

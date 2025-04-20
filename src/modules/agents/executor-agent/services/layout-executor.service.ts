@@ -14,7 +14,7 @@ export class LayoutExecutorService {
     const layoutResponse = await this.layoutService.createLayout(data);
 
     const shortTermMemory = await this.memoryService.getContext(sessionId);
-    this.memoryService.patch(shortTermMemory, {
+    await this.memoryService.patch(shortTermMemory, {
       createdLayouts: [...(shortTermMemory.createdLayouts || []), layoutResponse],
     });
 

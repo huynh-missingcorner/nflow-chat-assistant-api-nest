@@ -64,7 +64,7 @@ export class CoordinatorAgentService extends BaseAgentService<
     const chatContext = await this.chatContextService.getChatContext(sessionId);
     const shortTermMemory = await this.memoryService.getContext(sessionId);
 
-    this.memoryService.patch(shortTermMemory, {
+    await this.memoryService.patch(shortTermMemory, {
       chatHistory: chatContext,
     });
 

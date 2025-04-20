@@ -56,8 +56,6 @@ Requirements:
           type: 'function',
           name: 'ApiAppBuilderController_createApp',
         } as ToolChoiceFunction,
-        model: 'gpt-4.1',
-        max_output_tokens: 32000,
         temperature: 0.2,
       };
 

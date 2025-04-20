@@ -9,6 +9,7 @@ import { SharedModule } from './shared/shared.module';
 import { ChatSessionModule } from './modules/chat-session/chat-session.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MemoryModule } from './modules/memory/memory.module';
+import { RedisModule } from './shared/infrastructure/redis/redis.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { MemoryModule } from './modules/memory/memory.module';
     SharedModule,
     ChatSessionModule,
     MemoryModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

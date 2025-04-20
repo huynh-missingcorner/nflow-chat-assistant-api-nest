@@ -56,8 +56,6 @@ export class ObjectAgentService extends BaseAgentService<
     const options = {
       tools: [schemaDesignerTool],
       tool_choice: { type: 'function', name: 'SchemaDesigner_designSchema' } as ToolChoiceFunction,
-      model: 'gpt-4.1',
-      max_output_tokens: 32000,
       temperature: 0.2,
     };
     const completion = await this.openAIService.generateFunctionCompletion(
@@ -185,8 +183,6 @@ Requirements:
       const options = {
         tools: [createNewObjectTool, createNewFieldTool],
         tool_choice: 'auto' as const,
-        model: 'gpt-4.1',
-        max_output_tokens: 32000,
         temperature: 0.2,
       };
 

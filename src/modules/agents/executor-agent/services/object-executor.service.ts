@@ -16,19 +16,21 @@ export class ObjectExecutorService {
 
     // Update the short term memory
     const shortTermMemory = await this.memoryService.getContext(sessionId);
-    const existingObject = shortTermMemory.createdObjects.find(
+    const shortTermMemoryClone = structuredClone(shortTermMemory);
+    const existingObject = shortTermMemoryClone.createdObjects.find(
       (object) => object.name === objectResponse.name,
     );
     if (existingObject) {
-      shortTermMemory.createdObjects = shortTermMemory.createdObjects.map((object) =>
+      shortTermMemoryClone.createdObjects = shortTermMemoryClone.createdObjects.map((object) =>
         object.name === objectResponse.name ? { ...object, ...objectResponse } : object,
       );
     } else {
-      shortTermMemory.createdObjects.push({
+      shortTermMemoryClone.createdObjects.push({
         ...objectResponse,
         fields: [],
       });
     }
+    await this.memoryService.patch(shortTermMemory, shortTermMemoryClone);
 
     return objectResponse;
   }
@@ -38,7 +40,8 @@ export class ObjectExecutorService {
 
     // Update the short term memory
     const shortTermMemory = await this.memoryService.getContext(sessionId);
-    const existingObject = shortTermMemory.createdObjects.find(
+    const shortTermMemoryClone = structuredClone(shortTermMemory);
+    const existingObject = shortTermMemoryClone.createdObjects.find(
       (object) => object.name === data.objName,
     );
     if (existingObject) {
@@ -53,6 +56,8 @@ export class ObjectExecutorService {
     } else {
       throw new Error('Object not found in short term memory');
     }
+    await this.memoryService.patch(shortTermMemory, shortTermMemoryClone);
+
     return fieldResponse;
   }
 }

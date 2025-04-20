@@ -215,6 +215,10 @@ export class CoordinatorAgentService extends BaseAgentService<
       sessionId,
     );
 
+    await this.memoryService.patch(shortTermMemory, {
+      pendingHITL: Object.values(taskResults.pendingHITL ?? {}),
+    });
+
     if (taskResults.pendingHITL && Object.keys(taskResults.pendingHITL).length > 0) {
       const [taskId, hitlRequest] = Object.entries(taskResults.pendingHITL)[0];
 

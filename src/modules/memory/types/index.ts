@@ -31,7 +31,7 @@ export interface ShortTermMemory {
   taskResults: Record<string, ExecutionResult>;
 
   // HITL status
-  pendingClarifications: HITLRequest[];
+  pendingHITL: HITLRequest[];
 
   // Utility
   timestamp: Date;

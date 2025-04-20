@@ -31,7 +31,7 @@ export class MemoryService {
         createdFlows: [],
         toolCallsLog: [],
         taskResults: {},
-        pendingClarifications: [],
+        pendingHITL: [],
         timestamp: new Date(),
       };
 

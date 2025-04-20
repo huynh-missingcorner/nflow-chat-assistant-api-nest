@@ -7,7 +7,8 @@ import { ObjectErrors, ObjectPrompts } from './constants/object.constants';
 import { createNewFieldTool, createNewObjectTool, schemaDesignerTool } from './tools/object-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
-import { AgentInput, AgentOutput, ToolCall } from '../types';
+import { AgentInput, AgentOutput, ChatMessage, ToolCall } from '../types';
+import { ShortTermMemory } from 'src/modules/memory/types';
 
 @Injectable()
 export class ObjectAgentService extends BaseAgentService<
@@ -21,13 +22,75 @@ export class ObjectAgentService extends BaseAgentService<
   }
 
   async run(input: AgentInput<ObjectAgentInput>): Promise<AgentOutput> {
-    return this.generateObjects(input.taskData);
+    if (input.taskData.action === 'create') {
+      return this.generateObjects(input.taskData);
+    }
+
+    if (input.taskData.action === 'update') {
+      return this.updateObject(input.taskData, input.context);
+    }
+
+    return {
+      toolCalls: [],
+    };
+  }
+
+  private async updateObject(
+    params: ObjectAgentInput,
+    context?: ShortTermMemory,
+  ): Promise<AgentOutput> {
+    try {
+      const updateInstructionContext = await this.loadUpdateObjectContext();
+      const memorySummary = context ? this.summarizeShortTermMemory(context) : '';
+      const combinedContext = `
+        ${updateInstructionContext}
+
+        ${memorySummary}
+      `.trim();
+
+      const messages: ChatMessage[] = [
+        {
+          role: 'system' as const,
+          content: combinedContext,
+        },
+        {
+          role: 'user' as const,
+          content: `
+            The user wants to update the following objects:
+            ${JSON.stringify(params.objects, null, 2)}
+          `,
+        },
+      ];
+
+      const options = {
+        tools: [createNewObjectTool, createNewFieldTool],
+        tool_choice: 'auto' as const,
+        temperature: 0.2,
+      };
+
+      const response = await this.openAIService.generateFunctionCompletion(messages, options);
+
+      if (!response.toolCalls?.length) {
+        throw new Error(ObjectErrors.TOOL_CALLS_GENERATION_FAILED);
+      }
+
+      return {
+        toolCalls: response.toolCalls.map((toolCall) => ({
+          id: toolCall.id,
+          functionName: toolCall.function.name,
+          arguments: JSON.parse(toolCall.function.arguments) as Record<string, unknown>,
+        })),
+      };
+    } catch (error) {
+      this.logger.error('Object update failed', error);
+      throw new Error(error instanceof Error ? error.message : ObjectErrors.UPDATE_FAILED);
+    }
   }
 
   private async generateObjects(params: ObjectAgentInput): Promise<AgentOutput> {
     try {
       const schemas = await this.designObjectSchemas(params);
-      const toolCalls = await this.generateToolCalls(params.action, schemas);
+      const toolCalls = await this.generateToolCallsFromSchema(params.action, schemas);
 
       return {
         toolCalls,
@@ -79,7 +142,10 @@ export class ObjectAgentService extends BaseAgentService<
     }
   }
 
-  private async generateToolCalls(action: string, schemas: ObjectSchema[]): Promise<ToolCall[]> {
+  private async generateToolCallsFromSchema(
+    action: string,
+    schemas: ObjectSchema[],
+  ): Promise<ToolCall[]> {
     try {
       const allToolCalls: ToolCall[] = [];
 
@@ -248,5 +314,36 @@ Requirements:
       this.logger.error('Failed to load tool generation context', error);
       throw new Error(ObjectErrors.CONTEXT_LOAD_ERROR);
     }
+  }
+
+  private async loadUpdateObjectContext(): Promise<string> {
+    try {
+      // Use loadAgentContexts to load specific files
+      const contextPath = `${this.agentPath}/${this.CONTEXTS_PATH}`;
+      const contextFiles = await this.contextLoader.loadContextDirectory(contextPath);
+
+      // Filter only tool generation files
+      const toolGenerationFiles = contextFiles.filter(
+        (file) => file.name === 'object-agent-update-instruction.md',
+      );
+
+      return toolGenerationFiles.map((file) => file.content).join('\n\n');
+    } catch (error) {
+      this.logger.error('Failed to load tool generation context', error);
+      throw new Error(ObjectErrors.CONTEXT_LOAD_ERROR);
+    }
+  }
+
+  private summarizeShortTermMemory(context: ShortTermMemory): string {
+    const objects = context.createdObjects;
+
+    return `
+      ## Short Term Memory
+
+      Here is the created objects of the chat session:
+      ${objects ? JSON.stringify(objects) : '(none)'}
+
+      Use this memory to avoid duplicate creations and to resolve references like "the user object".
+    `.trim();
   }
 }

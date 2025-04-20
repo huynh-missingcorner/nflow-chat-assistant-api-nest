@@ -33,7 +33,7 @@ The plan must respect dependency order between tasks, based on the presence of o
 
 ```json
 {
-  "id": "task-1",
+  "id": "application-task-1",
   "agent": "ApplicationAgent",
   "description": "Create the personal finance app",
   "data": {
@@ -59,7 +59,7 @@ The plan must respect dependency order between tasks, based on the presence of o
 
 ```json
 {
-  "id": "task-2",
+  "id": "object-task-1",
   "agent": "ObjectAgent",
   "description": "Create objects to track income and expenses",
   "dependsOn": ["task-1"],
@@ -93,7 +93,7 @@ The plan must respect dependency order between tasks, based on the presence of o
 
 ```json
 {
-  "id": "task-3",
+  "id": "layout-task-1",
   "agent": "LayoutAgent",
   "description": "Create pages to add and view transactions",
   "dependsOn": ["task-2"],
@@ -115,7 +115,7 @@ The plan must respect dependency order between tasks, based on the presence of o
 
 ```json
 {
-  "id": "task-4",
+  "id": "flow-task-1",
   "agent": "FlowAgent",
   "description": "Trigger when a transaction is added to update totals",
   "dependsOn": ["task-2"],

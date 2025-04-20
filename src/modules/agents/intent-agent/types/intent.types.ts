@@ -7,6 +7,7 @@ import { Agent } from '../../types';
 export interface IntentPlan {
   summary: string;
   tasks: IntentTask[];
+  originalMessage?: string;
 }
 
 export interface IntentTask {

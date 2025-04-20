@@ -8,7 +8,7 @@ import { RedisService } from '../../shared/infrastructure/redis/redis.service';
 export class MemoryService {
   private readonly logger = new Logger(MemoryService.name);
   private readonly REDIS_PREFIX = 'memory:session:';
-  private readonly SESSION_TTL = 60 * 60 * 24 * 1; // 1 day in seconds
+  private readonly SESSION_TTL = 60 * 60 * 24 * 7; // 1 week in seconds
 
   constructor(
     private readonly chatContextService: ChatContextService,

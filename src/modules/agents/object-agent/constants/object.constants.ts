@@ -8,6 +8,7 @@ export const ObjectErrors = {
   CONTEXT_LOAD_ERROR: 'Failed to load agent contexts',
   TOOL_CALLS_GENERATION_FAILED: 'Failed to generate tool calls',
   SCHEMA_DESIGN_FAILED: 'Failed to design object schemas',
+  UPDATE_FAILED: 'Failed to update object',
 } as const;
 
 export const ObjectPrompts = {

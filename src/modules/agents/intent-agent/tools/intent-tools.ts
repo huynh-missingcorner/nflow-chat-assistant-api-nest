@@ -82,7 +82,7 @@ export const tools: FunctionTool[] = [
                       },
                       action: {
                         type: 'string',
-                        enum: ['create', 'update', 'delete', 'read'],
+                        enum: ['create', 'update', 'delete'],
                         description: 'Action to perform',
                       },
                       objects: {

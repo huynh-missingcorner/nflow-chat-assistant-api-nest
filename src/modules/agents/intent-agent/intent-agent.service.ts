@@ -58,6 +58,7 @@ export class IntentAgentService extends BaseAgentService<IntentAgentInput, Inten
       const toolCall = response.toolCalls[0] as IntentToolResponse;
       try {
         const intentPlan = JSON.parse(toolCall.function.arguments) as IntentPlan;
+        intentPlan.originalMessage = message;
         return intentPlan;
       } catch (parseError) {
         this.logger.error('Failed to parse OpenAI response', parseError);
@@ -69,26 +70,28 @@ export class IntentAgentService extends BaseAgentService<IntentAgentInput, Inten
     }
   }
 
-  public summarizeShortTermMemory(context: ShortTermMemory): string {
-    const apps = context.createdApplications.map((app) => `- ${app.name}`).join('\n');
-    const objects = context.createdObjects.map((obj) => `- ${obj.name}`).join('\n');
-    const layouts = context.createdLayouts.map((layout) => `- ${layout.name}`).join('\n');
-    const flows = context.createdFlows.map((flow) => `- ${flow.name}`).join('\n');
+  private summarizeShortTermMemory(context: ShortTermMemory): string {
+    const apps = context.createdApplications;
+    const objects = context.createdObjects;
+    const layouts = context.createdLayouts;
+    const flows = context.createdFlows;
 
     return `
+      ## Short Term Memory
+
       Here is the current state of the chat session:
 
       Created Applications:
-      ${apps || '(none)'}
+      ${apps ? JSON.stringify(apps) : '(none)'}
 
       Created Objects:
-      ${objects || '(none)'}
+      ${objects ? JSON.stringify(objects) : '(none)'}
 
       Created Layouts:
-      ${layouts || '(none)'}
+      ${layouts ? JSON.stringify(layouts) : '(none)'}
 
       Created Flows:
-      ${flows || '(none)'}
+      ${flows ? JSON.stringify(flows) : '(none)'}
 
       Use this memory to avoid duplicate creations and to resolve references like "the user object".
     `.trim();

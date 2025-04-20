@@ -4,7 +4,7 @@ import { ContextLoaderService } from 'src/shared/services/context-loader.service
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { ObjectAgentInput, ObjectSchema } from './types/object.types';
 import { ObjectErrors, ObjectPrompts } from './constants/object.constants';
-import { createNewFieldTool, createNewObjectTool, schemaDesignerTool } from './tools/object-tools';
+import { changeFieldTool, changeObjectTool, schemaDesignerTool } from './tools/object-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
 import { AgentInput, AgentOutput, ChatMessage, ToolCall } from '../types';
@@ -26,7 +26,7 @@ export class ObjectAgentService extends BaseAgentService<
       return this.generateObjects(input.taskData);
     }
 
-    if (input.taskData.action === 'update') {
+    if (input.taskData.action === 'update' || input.taskData.action === 'delete') {
       return this.updateObject(input.taskData, input.context);
     }
 
@@ -63,7 +63,7 @@ export class ObjectAgentService extends BaseAgentService<
       ];
 
       const options = {
-        tools: [createNewObjectTool, createNewFieldTool],
+        tools: [changeObjectTool, changeFieldTool],
         tool_choice: 'auto' as const,
         temperature: 0.2,
       };
@@ -247,7 +247,7 @@ Requirements:
       ];
 
       const options = {
-        tools: [createNewObjectTool, createNewFieldTool],
+        tools: [changeObjectTool, changeFieldTool],
         tool_choice: 'auto' as const,
         temperature: 0.2,
       };

@@ -6,7 +6,7 @@ import { ObjectAgentInput } from '../object-agent/types/object.types';
 
 export type AgentType = 'application' | 'object' | 'layout' | 'flow' | 'coordinator' | 'executor';
 
-export type AgentAction = 'create' | 'update' | 'remove' | 'recover' | 'read';
+export type AgentAction = 'create' | 'update' | 'delete' | 'recover' | 'read';
 
 export enum Agent {
   ApplicationAgent = 'ApplicationAgent',

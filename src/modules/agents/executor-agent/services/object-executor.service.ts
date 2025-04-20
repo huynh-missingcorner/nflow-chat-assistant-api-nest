@@ -20,7 +20,12 @@ export class ObjectExecutorService {
     const existingObject = shortTermMemoryClone.createdObjects.find(
       (object) => object.name === objectResponse.name,
     );
-    if (existingObject) {
+
+    if (data.action === 'delete') {
+      shortTermMemoryClone.createdObjects = shortTermMemoryClone.createdObjects.filter(
+        (object) => object.name !== objectResponse.name,
+      );
+    } else if (existingObject) {
       shortTermMemoryClone.createdObjects = shortTermMemoryClone.createdObjects.map((object) =>
         object.name === objectResponse.name ? { ...object, ...objectResponse } : object,
       );

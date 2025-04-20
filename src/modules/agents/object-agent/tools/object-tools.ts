@@ -1,10 +1,10 @@
 import { FunctionTool } from 'openai/resources/responses/responses.mjs';
 
-export const createNewFieldTool: FunctionTool = {
+export const changeFieldTool: FunctionTool = {
   type: 'function',
   strict: true,
   name: 'FieldController_changeField',
-  description: 'Create new Field in Object',
+  description: 'Create/Update/Delete Field in Object',
   parameters: {
     type: 'object',
     properties: {
@@ -61,11 +61,11 @@ export const createNewFieldTool: FunctionTool = {
   },
 };
 
-export const createNewObjectTool: FunctionTool = {
+export const changeObjectTool: FunctionTool = {
   type: 'function',
   strict: true,
   name: 'ObjectController_changeObject',
-  description: 'Create new Object',
+  description: 'Create/Update/Delete Object',
   parameters: {
     type: 'object',
     properties: {

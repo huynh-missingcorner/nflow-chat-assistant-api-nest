@@ -29,7 +29,7 @@ export const createNewFieldTool: FunctionTool = {
             description: 'Display name of the field',
           },
           attributes: {
-            type: 'object',
+            type: ['object', 'null'],
             properties: {
               subType: {
                 type: ['string', 'null'],
@@ -196,40 +196,8 @@ export const schemaDesignerTool: FunctionTool = {
                     type: 'boolean',
                     description: 'Whether this field is required',
                   },
-                  searchable: {
-                    type: 'boolean',
-                    description: 'Whether this field should be searchable',
-                  },
-                  attributes: {
-                    type: ['object', 'null'],
-                    properties: {
-                      isUnique: {
-                        type: ['boolean', 'null'],
-                        description: 'Whether this field should have unique values',
-                      },
-                      defaultValue: {
-                        type: ['string', 'null'],
-                        description: 'Default value for the field',
-                      },
-                      validation: {
-                        type: ['object', 'null'],
-                        description: 'Validation rules for the field',
-                        additionalProperties: false,
-                      },
-                    },
-                    required: ['isUnique', 'defaultValue', 'validation'],
-                    additionalProperties: false,
-                  },
                 },
-                required: [
-                  'name',
-                  'type',
-                  'displayName',
-                  'description',
-                  'required',
-                  'searchable',
-                  'attributes',
-                ],
+                required: ['name', 'type', 'displayName', 'description', 'required'],
                 additionalProperties: false,
               },
             },

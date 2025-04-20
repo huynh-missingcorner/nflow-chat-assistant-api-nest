@@ -14,12 +14,21 @@ export class ObjectExecutorService {
   async changeObject(data: ObjectDto, sessionId: string): Promise<ObjectResponse> {
     const objectResponse = await this.objectService.changeObject(data);
 
+    // Update the short term memory
     const shortTermMemory = await this.memoryService.getContext(sessionId);
-    this.memoryService.patch(shortTermMemory, {
-      createdObjects: shortTermMemory.createdObjects.map((object) =>
+    const existingObject = shortTermMemory.createdObjects.find(
+      (object) => object.name === objectResponse.name,
+    );
+    if (existingObject) {
+      shortTermMemory.createdObjects = shortTermMemory.createdObjects.map((object) =>
         object.name === objectResponse.name ? { ...object, ...objectResponse } : object,
-      ),
-    });
+      );
+    } else {
+      shortTermMemory.createdObjects.push({
+        ...objectResponse,
+        fields: [],
+      });
+    }
 
     return objectResponse;
   }
@@ -27,20 +36,23 @@ export class ObjectExecutorService {
   async changeField(data: FieldDto, sessionId: string): Promise<FieldResponse> {
     const fieldResponse = await this.objectService.changeField(data);
 
+    // Update the short term memory
     const shortTermMemory = await this.memoryService.getContext(sessionId);
-    this.memoryService.patch(shortTermMemory, {
-      createdObjects: shortTermMemory.createdObjects.map((object) =>
-        object.name === data.objName
-          ? {
-              ...object,
-              fields: object.fields.map((field) =>
-                field.name === data.name ? { ...field, ...fieldResponse } : field,
-              ),
-            }
-          : object,
-      ),
-    });
-
+    const existingObject = shortTermMemory.createdObjects.find(
+      (object) => object.name === data.objName,
+    );
+    if (existingObject) {
+      const existingField = existingObject.fields.find((field) => field.name === data.name);
+      if (existingField) {
+        existingObject.fields = existingObject.fields.map((field) =>
+          field.name === data.name ? { ...field, ...fieldResponse } : field,
+        );
+      } else {
+        existingObject.fields.push(fieldResponse);
+      }
+    } else {
+      throw new Error('Object not found in short term memory');
+    }
     return fieldResponse;
   }
 }

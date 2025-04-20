@@ -168,7 +168,8 @@ Requirements:
 4. For the object:
    - Set action to "${action}"
    - Set name to "${schema.name.toLowerCase()}_${timestamp}"
-   - Include all object attributes`;
+   - Include all object attributes
+5. Important: If any of the parameters are null, do not include them in the tool call arguments.`;
 
       const messages = [
         {

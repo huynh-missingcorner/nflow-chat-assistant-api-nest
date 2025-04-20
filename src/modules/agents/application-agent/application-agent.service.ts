@@ -37,6 +37,7 @@ Requirements:
    - displayName: Use a name that is easy to understand and remember
    - description: Use a description that is easy to understand and remember
    - name: Name should be unique and generated from the displayName. Use the following format: ${params.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}
+3. Important: If any of the parameters are null, do not include them in the tool call arguments.
 `;
       const messages = [
         {

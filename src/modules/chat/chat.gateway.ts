@@ -16,7 +16,6 @@ import { MessageRole } from './dto/chat-message.dto';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
   WebSocketChatMessageDto,
-  WebSocketChatResponseDto,
   WebSocketMessageAckDto,
   WebSocketSessionJoinDto,
   WebSocketErrorDto,
@@ -112,16 +111,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         role: MessageRole.ASSISTANT,
       });
 
-      // Send response back to client
-      const chatResponse: WebSocketChatResponseDto = {
-        id: responseMessage.id,
-        sessionId: responseMessage.sessionId,
-        content: responseMessage.content,
-        role: responseMessage.role,
-        createdAt: responseMessage.createdAt,
-        updatedAt: responseMessage.updatedAt,
-      };
-      this.server.to(payload.sessionId).emit('messageResponse', chatResponse);
+      client.emit('messageResponse', responseMessage);
     } catch (error: unknown) {
       if (error instanceof Error) {
         this.logger.error(`Error processing message: ${error.message}`);

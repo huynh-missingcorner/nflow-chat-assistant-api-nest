@@ -1,33 +1,40 @@
 version: '3.8'
 
 services:
-  api:
-    container_name: nflow-assistant-api-dev
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    restart: unless-stopped
-    ports:
-      - '3000:3000'
-    volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules
-    environment:
-      NODE_ENV: development
-      PORT: 3000
-      DATABASE_URL: postgresql://${PGUSER:-pg}:${PGPASSWORD:-pg}@postgres:5432/${PGDATABASE:-nflow-chat-assistant}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redis}@redis:6379
-      # Include other environment variables from .env
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      NFLOW_API_URL: ${NFLOW_API_URL}
-      NFLOW_API_KEY: ${NFLOW_API_KEY}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    networks:
-      - nflow-assistant
+  # api:
+  #   container_name: nflow-assistant-api-dev
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.dev
+  #   restart: unless-stopped
+  #   ports:
+  #     - '3000:3000'
+  #   volumes:
+  #     - .:/usr/src/app
+  #     - /usr/src/app/node_modules
+  #   environment:
+  #     NODE_ENV: development
+  #     PORT: 3000
+  #     # Database
+  #     DATABASE_URL: postgresql://${PGUSER:-pg}:${PGPASSWORD:-pg}@postgres:5432/${PGDATABASE:-nflow-chat-assistant}
+  #     # Redis
+  #     REDIS_URL: redis://:${REDIS_PASSWORD:-redis}@redis:6379
+  #     # OpenAI
+  #     OPENAI_API_KEY: ${OPENAI_API_KEY}
+  #     OPENAI_MODEL: ${OPENAI_MODEL}
+  #     OPENAI_MAX_TOKENS: ${OPENAI_MAX_TOKENS}
+  #     OPENAI_TEMPERATURE: ${OPENAI_TEMPERATURE}
+  #     # Nflow
+  #     NFLOW_CLIENT_URL: ${NFLOW_CLIENT_URL}
+  #     NFLOW_API_URL: ${NFLOW_API_URL}
+  #     NFLOW_API_KEY: ${NFLOW_API_KEY}
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_started
+  #   networks:
+  #     - nflow-assistant
 
   postgres:
     container_name: nflow-assistant-db-dev

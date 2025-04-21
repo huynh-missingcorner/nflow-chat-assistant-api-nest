@@ -171,6 +171,7 @@ export class CoordinatorAgentService extends BaseAgentService<
       }
 
       const executionResult = await this.executorService.execute(updatedResults.results, sessionId);
+      const shortTermMemory = await this.memoryService.getContext(sessionId);
 
       const aiResponse = await this.openAIService.generateChatCompletion([
         {
@@ -180,7 +181,14 @@ export class CoordinatorAgentService extends BaseAgentService<
         ...chatContext,
         {
           role: 'user',
-          content: `Here is what was done: ${JSON.stringify({ updatedResults, executionResult })}. ${prompts.RETURN_APP_LINK}`,
+          content: `Here is what was done: ${JSON.stringify({
+            updatedResults,
+            executionResult,
+            createdApplications: shortTermMemory.createdApplications,
+            createdObjects: shortTermMemory.createdObjects,
+            createdLayouts: shortTermMemory.createdLayouts,
+            createdFlows: shortTermMemory.createdFlows,
+          })}. ${prompts.RETURN_COMPONENT_LINKS}`,
         },
       ]);
 
@@ -247,7 +255,7 @@ export class CoordinatorAgentService extends BaseAgentService<
           createdObjects: shortTermMemory.createdObjects,
           createdLayouts: shortTermMemory.createdLayouts,
           createdFlows: shortTermMemory.createdFlows,
-        })}. ${prompts.RETURN_APP_LINK}`,
+        })}. ${prompts.RETURN_COMPONENT_LINKS}`,
       },
     ]);
 

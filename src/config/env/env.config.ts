@@ -27,6 +27,7 @@ export const envSchema = z.object({
   OPENAI_TEMPERATURE: z.coerce.number().default(0.7),
 
   // Nflow
+  NFLOW_CLIENT_URL: z.string().url(),
   NFLOW_API_URL: z.string().url(),
   NFLOW_API_KEY: z.string(),
 });

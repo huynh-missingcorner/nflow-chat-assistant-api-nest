@@ -9,6 +9,12 @@ export const CLASSIFIER_PROMPTS = {
 
 ## Examples:
 
+User: "Give me the link to the app I created"
+Classifier: { "type": "context_query" }
+
+User: "Give me the link to the objects I created"
+Classifier: { "type": "context_query" }
+
 User: "I want to create a new app"
 Classifier: { "type": "nflow_action" }
 

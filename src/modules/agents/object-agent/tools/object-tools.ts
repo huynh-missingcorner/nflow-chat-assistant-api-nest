@@ -18,7 +18,7 @@ export const changeFieldTool: FunctionTool = {
           typeName: {
             type: 'string',
             description: 'Type of the field',
-            enum: ['numeric', 'text', 'dateTime', 'boolean'],
+            enum: ['numeric', 'text', 'dateTime', 'boolean', 'pickList', 'json', 'relation'],
           },
           name: {
             type: 'string',
@@ -34,8 +34,19 @@ export const changeFieldTool: FunctionTool = {
               subType: {
                 type: ['string', 'null'],
                 description:
-                  'Subtype of the field. If typeName is numeric, subtype is integer. If typeName is text, subtype is short. If typeName is dateTime, subtype is date-time',
-                enum: ['integer', 'short', 'date-time'],
+                  'Subtype of the field. Select this follow the Nflow data types instruction.',
+                enum: [
+                  'short',
+                  'long',
+                  'rich',
+                  'integer',
+                  'float',
+                  'single',
+                  'multiple',
+                  'date-time',
+                  'date',
+                  'time',
+                ],
               },
             },
             required: ['subType'],
@@ -45,8 +56,25 @@ export const changeFieldTool: FunctionTool = {
             type: ['string', 'null'],
             description: 'Description of the field',
           },
+          pickListId: {
+            type: ['string', 'null'],
+            description: 'Pick list id for pickList type. Only use this when typeName is pickList.',
+          },
+          value: {
+            type: ['string', 'null'],
+            description:
+              'Name of the target object. Only use this when typeName is relation. If user mentions the target object name, use the name of the mentioned object.',
+          },
         },
-        required: ['typeName', 'name', 'displayName', 'attributes', 'description'],
+        required: [
+          'typeName',
+          'name',
+          'displayName',
+          'attributes',
+          'description',
+          'pickListId',
+          'value',
+        ],
         description: 'Data to create the field',
         additionalProperties: false,
       },

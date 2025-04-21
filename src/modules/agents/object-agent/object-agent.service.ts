@@ -287,7 +287,9 @@ Requirements:
       // Filter only schema design files
       const schemaDesignFiles = contextFiles.filter(
         (file) =>
-          file.name === 'schema_design_context.md' || file.name === 'schema_design_examples.md',
+          file.name === 'schema_design_context.md' ||
+          file.name === 'schema_design_examples.md' ||
+          file.name === 'nflow-data-types-instruction.md',
       );
 
       return schemaDesignFiles.map((file) => file.content).join('\n\n');
@@ -306,7 +308,9 @@ Requirements:
       // Filter only tool generation files
       const toolGenerationFiles = contextFiles.filter(
         (file) =>
-          file.name === 'tool_generation_context.md' || file.name === 'tool_generation_examples.md',
+          file.name === 'tool_generation_context.md' ||
+          file.name === 'tool_generation_examples.md' ||
+          file.name === 'nflow-data-types-instruction.md',
       );
 
       return toolGenerationFiles.map((file) => file.content).join('\n\n');
@@ -324,7 +328,9 @@ Requirements:
 
       // Filter only tool generation files
       const toolGenerationFiles = contextFiles.filter(
-        (file) => file.name === 'object-agent-update-instruction.md',
+        (file) =>
+          file.name === 'object-agent-update-instruction.md' ||
+          file.name === 'nflow-data-types-instruction.md',
       );
 
       return toolGenerationFiles.map((file) => file.content).join('\n\n');

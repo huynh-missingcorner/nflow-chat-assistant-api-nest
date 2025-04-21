@@ -56,7 +56,7 @@ export interface FieldAttributesDto {
   defaultValue?: Record<string, any>;
   onDelete?: 'noAction' | 'setNull' | 'cascade';
   sensitivity?: 'none' | 'partial' | 'all';
-  subType: string;
+  subType?: string;
 }
 
 export interface LayoutComponent {

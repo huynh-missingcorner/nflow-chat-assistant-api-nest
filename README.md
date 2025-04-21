@@ -31,54 +31,95 @@ The system uses a multi-agent approach where each agent specializes in a specifi
 
 ## Prerequisites
 
+- Docker and Docker Compose (for containerized setup)
+- OpenAI API Key
+- Nflow API Credentials
+
+For local development without Docker:
+
 - Node.js (v18+)
 - pnpm (v10+)
 - PostgreSQL (v15+)
 - Redis
-- OpenAI API Key
 
-## Getting Started
+## Quick Start with Docker
 
-### Environment Setup
-
-1. Clone the repository
-
-   ```bash
-   git clone https://github.com/your-username/nflow-ai-assitant-api-nest.git
-   cd nflow-ai-assitant-api-nest
-   ```
-
-2. Install dependencies
-
-   ```bash
-   pnpm install
-   ```
-
-3. Copy the example environment file and update with your settings
-
-   ```bash
-   cp .env.example .env
-   ```
-
-4. Configure your environment variables in `.env`
-   - Set your OpenAI API key
-   - Configure database connection
-   - Set Nflow API credentials
-
-### Running with Docker
+### 1. Clone the repository
 
 ```bash
-# Development mode
-docker-compose up -d
-
-# Production mode
-docker-compose -f docker-compose.yml up -d
+git clone https://github.com/your-username/nflow-ai-assitant-api-nest.git
+cd nflow-ai-assitant-api-nest
 ```
 
-### Running Locally
+### 2. Configure environment variables
 
 ```bash
-# Development mode
+cp .env.example .env
+```
+
+Edit the `.env` file with your:
+
+- OpenAI API key
+- Nflow API credentials
+- Other required settings
+
+### 3. Start the application
+
+#### Development mode
+
+```bash
+docker compose -f docker-compose.dev.yml up -d
+```
+
+This will start:
+
+- API server in development mode with hot-reload
+- PostgreSQL database
+- Redis instance
+- Automatically run Prisma migrations
+
+#### Production mode
+
+```bash
+docker compose up -d
+```
+
+This will start:
+
+- API server in production mode
+- PostgreSQL database
+- Redis instance
+- Automatically run Prisma migrations
+
+### 4. Access the API
+
+Once the services are running, you can access:
+
+- API: http://localhost:3000/api
+- Swagger Documentation: http://localhost:3000/api/docs
+
+## Local Development (Non-Docker)
+
+### 1. Install dependencies
+
+```bash
+pnpm install
+```
+
+### 2. Set up database and Redis
+
+Ensure PostgreSQL and Redis are running locally or update `.env` with their connection details.
+
+### 3. Run database migrations
+
+```bash
+pnpm prisma migrate dev
+```
+
+### 4. Run the application
+
+```bash
+# Development mode with hot-reload
 pnpm start:dev
 
 # Production mode
@@ -86,15 +127,7 @@ pnpm build
 pnpm start:prod
 ```
 
-## API Documentation
-
-Once the server is running, you can access the Swagger API documentation at:
-
-```
-http://localhost:3000/api
-```
-
-## Development
+## Development Tools
 
 ```bash
 # Run unit tests
@@ -108,6 +141,59 @@ pnpm lint
 
 # Format code
 pnpm format
+
+# Generate Prisma client
+pnpm prisma generate
+
+# Run database migrations
+pnpm prisma migrate dev
+```
+
+## Troubleshooting
+
+### Database Issues
+
+If you encounter database-related errors like "table does not exist":
+
+1. Make sure the database container is running:
+
+   ```bash
+   docker compose ps
+   ```
+
+2. Manually run migrations:
+
+   ```bash
+   # For development
+   docker compose -f docker-compose.dev.yml exec api pnpm prisma migrate deploy
+
+   # For production
+   docker compose exec api pnpm prisma migrate deploy
+   ```
+
+3. Reset database (caution: this will delete all data):
+
+   ```bash
+   # For development
+   docker compose -f docker-compose.dev.yml exec api pnpm prisma migrate reset --force
+
+   # For production
+   docker compose exec api pnpm prisma migrate reset --force
+   ```
+
+### Container Access
+
+To access container shells:
+
+```bash
+# API container
+docker compose -f docker-compose.dev.yml exec api sh
+
+# Database container
+docker compose -f docker-compose.dev.yml exec postgres psql -U pg -d nflow-chat-assistant
+
+# Redis container
+docker compose -f docker-compose.dev.yml exec redis redis-cli -a redis
 ```
 
 ## Project Roadmap

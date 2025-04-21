@@ -17,9 +17,6 @@ export const envSchema = z.object({
   // Redis
   REDIS_URL: z.string().url(),
 
-  // RabbitMQ
-  RABBITMQ_URL: z.string().url(),
-
   // OpenAI
   OPENAI_API_KEY: z.string(),
   OPENAI_MODEL: z.string().default('gpt-4'),

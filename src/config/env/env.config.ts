@@ -27,6 +27,18 @@ export const envSchema = z.object({
   NFLOW_CLIENT_URL: z.string().url(),
   NFLOW_API_URL: z.string().url(),
   NFLOW_API_KEY: z.string(),
+
+  // Keycloak
+  KEYCLOAK_CLIENT_ID: z.string(),
+  KEYCLOAK_CLIENT_SECRET: z.string(),
+  KEYCLOAK_REALM: z.string(),
+  KEYCLOAK_AUTH_SERVER_URL: z.string().url(),
+  KEYCLOAK_CALLBACK_URL: z.string().url(),
+  SESSION_SECRET: z.string().min(32),
+  REFRESH_TOKEN_ENCRYPTION_KEY: z.string().min(32),
+
+  // Frontend
+  FRONTEND_URL: z.string().url(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

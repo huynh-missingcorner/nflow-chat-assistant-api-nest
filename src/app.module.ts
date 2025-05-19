@@ -10,6 +10,7 @@ import { ChatSessionModule } from './modules/chat-session/chat-session.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MemoryModule } from './modules/memory/memory.module';
 import { RedisModule } from './shared/infrastructure/redis/redis.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { RedisModule } from './shared/infrastructure/redis/redis.module';
     ChatSessionModule,
     MemoryModule,
     RedisModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

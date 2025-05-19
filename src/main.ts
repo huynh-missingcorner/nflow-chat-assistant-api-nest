@@ -3,6 +3,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import validationConfig from './config/validation/validation.config';
+import { Request, Response } from 'express';
+import session from 'express-session';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,20 +16,45 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Set global prefix for all routes
+  app.setGlobalPrefix('api');
+
+  // Configure session middleware
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || 'your-secret-key',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        sameSite: 'lax',
+      },
+    }),
+  );
+
   app.useGlobalPipes(new ValidationPipe(validationConfig()));
 
-  // Set up Swagger documentation
-  const configSwagger = new DocumentBuilder()
-    .setTitle('Nflow Chat Assistant API')
-    .setDescription(
-      'API for the Nflow Chat Assistant that interprets user prompts and interacts with the Nflow no-code platform',
-    )
-    .setVersion('1.0')
-    .addTag('Chat')
-    .build();
+  // Set up Swagger documentation (only in non-production)
+  if (process.env.NODE_ENV !== 'production') {
+    const configSwagger = new DocumentBuilder()
+      .setTitle('Nflow Chat Assistant API')
+      .setDescription(
+        'API for the Nflow Chat Assistant that interprets user prompts and interacts with the Nflow no-code platform',
+      )
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
 
-  const document = SwaggerModule.createDocument(app, configSwagger);
-  SwaggerModule.setup('api', app, document);
+    const document = SwaggerModule.createDocument(app, configSwagger);
+    SwaggerModule.setup('api/docs', app, document);
+
+    // Add route to download swagger.json
+    app.getHttpAdapter().get('/api/docs/swagger.json', (req: Request, res: Response) => {
+      res.json(document);
+    });
+  }
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);

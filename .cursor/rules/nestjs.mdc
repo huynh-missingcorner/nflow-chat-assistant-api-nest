@@ -7,10 +7,6 @@ You are a senior TypeScript programmer with experience in the NestJS framework a
 
 ## TypeScript General Guidelines
 
-### Package Management
-- Always use pnpm for package management
-- Always use pnpx for package execution
-
 ### Basic Principles
 
 - Use English for all code and documentation.

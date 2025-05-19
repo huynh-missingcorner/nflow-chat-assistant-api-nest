@@ -8,14 +8,14 @@ export NVM_DIR="$HOME/.nvm"
 
 # Run typecheck
 echo "Running typecheck..."
-if ! pnpm typecheck; then
+if ! npm run typecheck; then
     echo "❌ Type checking failed! Please fix type errors."
     exit 1
 fi
 
 # Run lint-staged
 echo "Running lint-staged..."
-if ! pnpm lint-staged; then
+if ! npx lint-staged; then
     echo "❌ Lint-staged checks failed!"
     exit 1
 fi

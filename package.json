@@ -1,8 +1,8 @@
 {
-  "name": "ecommerce-nestjs-template",
+  "name": "nflow-ai-assistant-api",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "NFlow AI Assistant API",
+  "author": "Huy Nguyen",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -19,7 +19,21 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prepare": "husky",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:prod": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
+    "prisma:push": "prisma db push",
+    "prisma:seed": "prisma db seed",
+    "docker:build": "docker build -t nflow-ai-assistant-api:latest .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env nflow-ai-assistant-api:latest",
+    "docker:dev": "docker compose -f docker-compose.dev.yml up",
+    "docker:dev:infra": "docker compose -f docker-compose.dev.yml up postgres redis",
+    "docker:dev:down": "docker compose -f docker-compose.dev.yml down",
+    "docker:dev:logs": "docker compose -f docker-compose.dev.yml logs -f",
+    "dev:local": "npm run docker:dev:infra -- -d && npm run start:dev",
+    "lint-staged": "lint-staged"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.0",
@@ -118,5 +132,5 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },
-  "packageManager": "pnpm@10.6.5+sha512.cdf928fca20832cd59ec53826492b7dc25dc524d4370b6b4adbf65803d32efaa6c1c88147c0ae4e8d579a6c9eec715757b50d4fa35eea179d868eada4ed043af"
+  "packageManager": "npm@10.2.4"
 }

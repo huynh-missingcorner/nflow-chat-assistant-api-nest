@@ -1,29 +1,37 @@
 import { ApiProperty } from '@nestjs/swagger';
-
-export class AuthStatusResponseDto {
-  @ApiProperty({
-    description: 'Whether the user is currently authenticated',
-    example: true,
-  })
-  authenticated: boolean;
-}
+import { KeycloakUserInfo } from '../types/keycloak';
 
 export class TokenResponseDto {
   @ApiProperty({
-    description: 'Access token for API calls',
-    example: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...',
+    description: 'The access token for API requests',
   })
   accessToken: string;
 
   @ApiProperty({
-    description: 'Token used to refresh the access token',
-    example: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...',
+    description: 'The refresh token to get new access tokens',
   })
   refreshToken: string;
 
   @ApiProperty({
-    description: 'OpenID Connect ID token containing user information',
-    example: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...',
+    description: 'The ID token containing user information',
   })
   idToken: string;
+}
+
+export class AuthStatusResponseDto {
+  @ApiProperty({
+    description: 'Whether the user is currently authenticated',
+  })
+  authenticated: boolean;
+
+  @ApiProperty({
+    description: 'User information from the ID token',
+    properties: {
+      email: { type: 'string', example: 'user@example.com' },
+      name: { type: 'string', example: 'John Doe' },
+    },
+    type: 'object',
+    additionalProperties: true,
+  })
+  user: KeycloakUserInfo;
 }

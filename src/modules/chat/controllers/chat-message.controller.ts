@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ChatMessageService } from '../services/chat-message.service';
@@ -18,9 +19,11 @@ import {
   UpdateMessageDto,
   DeleteMessageResponseDto,
 } from '../dto/chat-message.dto';
+import { NflowAuthGuard } from '@/modules/auth/guards/nflow-auth.guard';
 
 @ApiTags('Chat Messages')
 @Controller('chat-messages')
+@UseGuards(NflowAuthGuard)
 export class ChatMessageController {
   constructor(private readonly chatMessageService: ChatMessageService) {}
 

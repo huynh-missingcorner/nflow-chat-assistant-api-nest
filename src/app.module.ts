@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { InfrastructureModule } from './shared/infrastructure/infrastructure.module';
 import { ConfigModule } from './config/config.module';
 import { ChatModule } from './modules/chat/chat.module';
@@ -26,6 +25,5 @@ import { AuthModule } from './modules/auth/auth.module';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

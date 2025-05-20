@@ -17,6 +17,7 @@ import { SessionData } from '../types/session';
 import { AuthStatusResponseDto, TokenResponseDto } from '../dto/auth-response.dto';
 import { ConfigService } from '@nestjs/config';
 import { EnvConfig } from '@/config/env/env.config';
+import { KeycloakUserInfo } from '../types/keycloak';
 
 @ApiTags('Authentication')
 @Controller('auth/keycloak')
@@ -190,8 +191,12 @@ export class KeycloakController {
     type: AuthStatusResponseDto,
   })
   public getStatus(@Session() session: SessionData): AuthStatusResponseDto {
-    return {
-      authenticated: !!session.accessToken,
-    };
+    const authenticated = !!session.accessToken;
+    const user: KeycloakUserInfo = this.keycloakService.getAuthenticatedUserInfo(
+      session.accessToken,
+      session.idToken,
+    );
+
+    return { authenticated, user };
   }
 }

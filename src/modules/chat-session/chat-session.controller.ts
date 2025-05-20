@@ -8,14 +8,17 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ChatSessionService } from './chat-session.service';
 import { CreateChatSessionDto } from './dto/create-chat-session.dto';
 import { UpdateChatSessionDto } from './dto/update-chat-session.dto';
+import { NflowAuthGuard } from '@/modules/auth/guards/nflow-auth.guard';
 
 @ApiTags('Chat Sessions')
 @Controller('chat-sessions')
+@UseGuards(NflowAuthGuard)
 export class ChatSessionController {
   constructor(private readonly chatSessionService: ChatSessionService) {}
 

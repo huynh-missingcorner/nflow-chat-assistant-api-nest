@@ -5,11 +5,13 @@ export interface SessionData extends Session {
   refreshToken?: string;
   idToken?: string;
   state?: string;
-  userInfo?: {
-    username?: string;
-    email?: string;
-    roles?: string[];
-  };
+  userInfo?: UserInfo;
+}
+
+export interface UserInfo {
+  username?: string;
+  email?: string;
+  roles?: string[];
 }
 
 declare module 'express-session' {
@@ -18,10 +20,6 @@ declare module 'express-session' {
     refreshToken?: string;
     idToken?: string;
     state?: string;
-    userInfo?: {
-      username?: string;
-      email?: string;
-      roles?: string[];
-    };
+    userInfo?: UserInfo;
   }
 }

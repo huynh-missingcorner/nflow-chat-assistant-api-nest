@@ -4,7 +4,12 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
 import { EnvConfig } from '../../../config/env/env.config';
-import { KeycloakTokenResponse, TokenInfo, KeycloakErrorResponse } from '../types/keycloak';
+import {
+  KeycloakTokenResponse,
+  TokenInfo,
+  KeycloakErrorResponse,
+  KeycloakUserInfo,
+} from '../types/keycloak';
 
 @Injectable()
 export class KeycloakService {
@@ -147,5 +152,32 @@ export class KeycloakService {
       throw new UnauthorizedException('Failed to authenticate with Keycloak');
     }
     throw error;
+  }
+
+  private isKeycloakUserInfo(obj: unknown): obj is KeycloakUserInfo {
+    return typeof obj === 'object' && obj !== null && 'sub' in obj;
+  }
+
+  public getAuthenticatedUserInfo(
+    accessToken: string | undefined,
+    idToken: string | undefined,
+  ): KeycloakUserInfo {
+    if (!accessToken || !idToken) {
+      return {};
+    }
+
+    try {
+      const [, payload] = idToken.split('.');
+      if (!payload) {
+        return {};
+      }
+      const decodedPayload = Buffer.from(payload, 'base64').toString();
+      const parsed = JSON.parse(decodedPayload) as unknown;
+
+      return this.isKeycloakUserInfo(parsed) ? parsed : {};
+    } catch (error) {
+      this.logger.error('Failed to decode ID token:', error);
+      return {};
+    }
   }
 }

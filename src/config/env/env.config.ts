@@ -26,7 +26,6 @@ export const envSchema = z.object({
   // Nflow
   NFLOW_CLIENT_URL: z.string().url(),
   NFLOW_API_URL: z.string().url(),
-  NFLOW_API_KEY: z.string(),
 
   // Keycloak
   KEYCLOAK_CLIENT_ID: z.string(),

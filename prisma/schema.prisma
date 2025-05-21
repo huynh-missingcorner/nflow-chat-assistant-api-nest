@@ -38,11 +38,11 @@ model Message {
   updatedAt DateTime @updatedAt
 
   // Relations
-  sessionId    String
-  session      ChatSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  chatSessionId    String
+  chatSession      ChatSession   @relation(fields: [chatSessionId], references: [id], onDelete: Cascade)
   agentResults AgentResult[]
 
-  @@index([sessionId])
+  @@index([chatSessionId])
   @@map("messages")
 }
 
@@ -59,12 +59,12 @@ model AgentResult {
   updatedAt DateTime  @updatedAt
 
   // Relations
-  sessionId String
-  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  chatSessionId String
+  chatSession   ChatSession @relation(fields: [chatSessionId], references: [id], onDelete: Cascade)
   messageId String
   message   Message     @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
-  @@index([sessionId])
+  @@index([chatSessionId])
   @@index([messageId])
   @@map("agent_results")
 }
@@ -80,10 +80,10 @@ model GeneratedApp {
   updatedAt  DateTime @updatedAt
 
   // Relations
-  sessionId String      @unique // One-to-one relation with ChatSession
-  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  chatSessionId String      @unique // One-to-one relation with ChatSession
+  chatSession   ChatSession @relation(fields: [chatSessionId], references: [id], onDelete: Cascade)
 
-  @@index([sessionId])
+  @@index([chatSessionId])
   @@map("generated_apps")
 }
 

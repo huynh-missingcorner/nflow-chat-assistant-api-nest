@@ -7,7 +7,7 @@ import { RedisService } from '../../shared/infrastructure/redis/redis.service';
 @Injectable()
 export class MemoryService {
   private readonly logger = new Logger(MemoryService.name);
-  private readonly REDIS_PREFIX = 'memory:session:';
+  private readonly REDIS_PREFIX = 'memory:chat-session:';
   private readonly SESSION_TTL = 60 * 60 * 24 * 7; // 1 week in seconds
 
   constructor(
@@ -15,15 +15,15 @@ export class MemoryService {
     private readonly redisService: RedisService,
   ) {}
 
-  public async getContext(sessionId: string): Promise<ShortTermMemory> {
-    const redisKey = this.getRedisKey(sessionId);
+  public async getContext(chatSessionId: string): Promise<ShortTermMemory> {
+    const redisKey = this.getRedisKey(chatSessionId);
     let context = await this.redisService.get<ShortTermMemory>(redisKey);
 
     if (!context) {
-      const chatHistory = await this.chatContextService.getChatContext(sessionId);
+      const chatHistory = await this.chatContextService.getChatContext(chatSessionId);
 
       context = {
-        sessionId,
+        chatSessionId,
         chatHistory,
         createdApplications: [],
         createdObjects: [],
@@ -36,7 +36,7 @@ export class MemoryService {
       };
 
       await this.redisService.set(redisKey, context, this.SESSION_TTL);
-      this.logger.debug(`Created new session context for ${sessionId}`);
+      this.logger.debug(`Created new session context for ${chatSessionId}`);
     }
 
     return context;
@@ -52,17 +52,17 @@ export class MemoryService {
       timestamp: new Date(),
     };
 
-    const redisKey = this.getRedisKey(context.sessionId);
+    const redisKey = this.getRedisKey(context.chatSessionId);
     await this.redisService.set(redisKey, updatedContext, this.SESSION_TTL);
-    this.logger.debug(`Updated session context for ${context.sessionId}`);
+    this.logger.debug(`Updated session context for ${context.chatSessionId}`);
 
     return updatedContext;
   }
 
-  public async reset(sessionId: string): Promise<void> {
-    const redisKey = this.getRedisKey(sessionId);
+  public async reset(chatSessionId: string): Promise<void> {
+    const redisKey = this.getRedisKey(chatSessionId);
     await this.redisService.del(redisKey);
-    this.logger.debug(`Reset session context for ${sessionId}`);
+    this.logger.debug(`Reset session context for ${chatSessionId}`);
   }
 
   public findObjectByName(context: ShortTermMemory, objectName: string): CreatedObject | undefined {
@@ -77,20 +77,20 @@ export class MemoryService {
     return context.createdApplications;
   }
 
-  public async updateTaskResults(sessionId: string, results: ExecutionResult): Promise<void> {
-    const context = await this.getContext(sessionId);
+  public async updateTaskResults(chatSessionId: string, results: ExecutionResult): Promise<void> {
+    const context = await this.getContext(chatSessionId);
 
     context.taskResults = {
       ...context.taskResults,
       [results.id]: results,
     };
 
-    const redisKey = this.getRedisKey(sessionId);
+    const redisKey = this.getRedisKey(chatSessionId);
     await this.redisService.set(redisKey, context, this.SESSION_TTL);
-    this.logger.debug(`Updated task results for session ${sessionId}`);
+    this.logger.debug(`Updated task results for session ${chatSessionId}`);
   }
 
-  private getRedisKey(sessionId: string): string {
-    return `${this.REDIS_PREFIX}${sessionId}`;
+  private getRedisKey(chatSessionId: string): string {
+    return `${this.REDIS_PREFIX}${chatSessionId}`;
   }
 }

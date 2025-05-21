@@ -1,5 +1,5 @@
 export interface WebSocketChatMessageDto {
-  sessionId: string;
+  chatSessionId: string;
   message: string;
 }
 
@@ -9,7 +9,7 @@ export interface WebSocketMessageChunkDto {
 }
 
 export interface WebSocketSessionJoinDto {
-  sessionId: string;
+  chatSessionId: string;
   timestamp: string;
 }
 
@@ -24,7 +24,7 @@ export interface WebSocketErrorDto {
 }
 
 export interface WebSocketSessionTitleUpdatedDto {
-  sessionId: string;
+  chatSessionId: string;
   title: string;
   timestamp: string;
 }

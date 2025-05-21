@@ -14,10 +14,10 @@ export class AppExecutorService {
     private readonly memoryService: MemoryService,
   ) {}
 
-  async createApp(data: CreateApplicationDto, sessionId: string): Promise<BuilderAppResponse> {
+  async createApp(data: CreateApplicationDto, chatSessionId: string): Promise<BuilderAppResponse> {
     const appResponse = await this.applicationService.createApp(data);
 
-    const shortTermMemory = await this.memoryService.getContext(sessionId);
+    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
     await this.memoryService.patch(shortTermMemory, {
       createdApplications: [
         ...shortTermMemory.createdApplications,
@@ -33,10 +33,10 @@ export class AppExecutorService {
     return appResponse;
   }
 
-  async updateApp(data: UpdateApplicationDto, sessionId: string): Promise<BuilderAppResponse> {
+  async updateApp(data: UpdateApplicationDto, chatSessionId: string): Promise<BuilderAppResponse> {
     const appResponse = await this.applicationService.updateApp(data);
 
-    const shortTermMemory = await this.memoryService.getContext(sessionId);
+    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
     await this.memoryService.patch(shortTermMemory, {
       createdApplications: shortTermMemory.createdApplications.map((app) =>
         app.name === data.name

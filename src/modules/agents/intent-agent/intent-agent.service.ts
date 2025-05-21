@@ -26,8 +26,8 @@ export class IntentAgentService extends BaseAgentService<IntentAgentInput, Inten
 
   private async createIntentPlan(params: IntentAgentInput): Promise<IntentPlan> {
     try {
-      const { sessionId, message } = params;
-      const shortTermMemory = await this.memoryService.getContext(sessionId);
+      const { chatSessionId, message } = params;
+      const shortTermMemory = await this.memoryService.getContext(chatSessionId);
       const baseContext = await this.loadAgentContexts();
       const memorySummary = this.summarizeShortTermMemory(shortTermMemory);
       const combinedContext = `

@@ -47,13 +47,13 @@ export class ChatMessageController {
     type: [MessageResponseDto],
   })
   @ApiQuery({
-    name: 'sessionId',
+    name: 'chatSessionId',
     required: false,
-    description: 'Filter messages by session ID',
+    description: 'Filter messages by chat session ID',
   })
-  async findAll(@Query('sessionId') sessionId?: string): Promise<MessageResponseDto[]> {
-    if (sessionId) {
-      return this.chatMessageService.findAllBySessionId(sessionId);
+  async findAll(@Query('chatSessionId') chatSessionId?: string): Promise<MessageResponseDto[]> {
+    if (chatSessionId) {
+      return this.chatMessageService.findAllBySessionId(chatSessionId);
     }
     return this.chatMessageService.findAll();
   }
@@ -115,11 +115,11 @@ export class ChatMessageController {
     };
   }
 
-  @Delete('session/:sessionId')
+  @Delete('session/:chatSessionId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete all messages for a chat session' })
   @ApiParam({
-    name: 'sessionId',
+    name: 'chatSessionId',
     description: 'The ID of the chat session',
   })
   @ApiResponse({
@@ -127,9 +127,9 @@ export class ChatMessageController {
     description: 'The chat messages have been successfully deleted.',
   })
   async removeAllBySession(
-    @Param('sessionId') sessionId: string,
+    @Param('chatSessionId') chatSessionId: string,
   ): Promise<{ deletedCount: number }> {
-    const deletedCount = await this.chatMessageService.removeAllBySessionId(sessionId);
+    const deletedCount = await this.chatMessageService.removeAllBySessionId(chatSessionId);
     return { deletedCount };
   }
 }

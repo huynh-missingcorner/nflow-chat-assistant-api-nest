@@ -31,17 +31,17 @@ export class TaskExecutorService {
   /**
    * Get the tool calls for the intent plan
    * @param tasks The intent tasks to execute
-   * @param sessionId The session ID for memory context
+   * @param chatSessionId The session ID for memory context
    * @returns The processed tasks with their results
    */
   public async executeTasksInOrder(
     tasks: IntentTask[],
-    sessionId: string,
+    chatSessionId: string,
   ): Promise<ProcessedTasks> {
     const taskResults: Record<string, AgentOutput> = {};
     const completedTasks = new Set<string>();
     const pendingHITL: Record<string, HITLRequest> = {};
-    let shortTermMemory = await this.memoryService.getContext(sessionId);
+    let shortTermMemory = await this.memoryService.getContext(chatSessionId);
 
     // Filter out tasks for disabled agents
     const filteredTasks = tasks.filter((task) => {
@@ -145,17 +145,17 @@ export class TaskExecutorService {
    * Process HITL response and resume task execution
    * @param taskId The ID of the task requiring clarification
    * @param response The user's response to the clarification request
-   * @param sessionId The session ID
+   * @param chatSessionId The session ID
    * @returns Updated processed tasks
    */
   public async processHITLResponse(
     taskId: string,
     response: string,
-    sessionId: string,
+    chatSessionId: string,
     remainingTasks: IntentTask[],
   ): Promise<ProcessedTasks> {
     // Get the current session context
-    const shortTermMemory = await this.memoryService.getContext(sessionId);
+    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
 
     // Find the task that needs clarification
     const task = remainingTasks.find((t) => t.id === taskId);
@@ -187,7 +187,7 @@ export class TaskExecutorService {
 
     // If there are more tasks, continue execution
     if (updatedRemainingTasks.length > 0) {
-      const remainingResults = await this.executeTasksInOrder(updatedRemainingTasks, sessionId);
+      const remainingResults = await this.executeTasksInOrder(updatedRemainingTasks, chatSessionId);
       return {
         results: {
           ...partialResults,

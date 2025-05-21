@@ -33,12 +33,12 @@ export class CoordinatorAgentService extends BaseAgentService<
   }
 
   async run(input: CoordinatorAgentInput): Promise<CoordinatorAgentOutput> {
-    return this.processUserMessage(input.message, input.sessionId);
+    return this.processUserMessage(input.message, input.chatSessionId);
   }
 
   private async processUserMessage(
     message: string,
-    sessionId: string,
+    chatSessionId: string,
   ): Promise<CoordinatorAgentOutput> {
     try {
       // Classify the user message
@@ -46,7 +46,7 @@ export class CoordinatorAgentService extends BaseAgentService<
       this.logger.log(`Message classified as: ${classification.type}`);
 
       // Route the message based on its classification
-      return this.routeMessage(classification.type, message, sessionId);
+      return this.routeMessage(classification.type, message, chatSessionId);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
       this.logger.error('Error in processUserMessage', error);
@@ -59,10 +59,10 @@ export class CoordinatorAgentService extends BaseAgentService<
   private async routeMessage(
     messageType: MessageType,
     message: string,
-    sessionId: string,
+    chatSessionId: string,
   ): Promise<CoordinatorAgentOutput> {
-    const chatContext = await this.chatContextService.getChatContext(sessionId);
-    const shortTermMemory = await this.memoryService.getContext(sessionId);
+    const chatContext = await this.chatContextService.getChatContext(chatSessionId);
+    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
 
     await this.memoryService.patch(shortTermMemory, {
       chatHistory: chatContext,
@@ -70,25 +70,25 @@ export class CoordinatorAgentService extends BaseAgentService<
 
     switch (messageType) {
       case 'nflow_action':
-        return this.processNflowAgentsFlow(message, sessionId);
+        return this.processNflowAgentsFlow(message, chatSessionId);
 
       case 'context_query':
-        return this.processContextQuery(message, sessionId);
+        return this.processContextQuery(message, chatSessionId);
 
       case 'casual_chat':
-        return this.processCasualChat(message, sessionId);
+        return this.processCasualChat(message, chatSessionId);
 
       default:
-        return this.processNflowAgentsFlow(message, sessionId);
+        return this.processNflowAgentsFlow(message, chatSessionId);
     }
   }
 
   private async processContextQuery(
     message: string,
-    sessionId: string,
+    chatSessionId: string,
   ): Promise<CoordinatorAgentOutput> {
     try {
-      const shortTermMemory = await this.memoryService.getContext(sessionId);
+      const shortTermMemory = await this.memoryService.getContext(chatSessionId);
       const response = await this.openAIService.generateChatCompletion([
         {
           role: 'system',
@@ -119,9 +119,9 @@ export class CoordinatorAgentService extends BaseAgentService<
 
   private async processCasualChat(
     message: string,
-    sessionId: string,
+    chatSessionId: string,
   ): Promise<CoordinatorAgentOutput> {
-    const shortTermMemory = await this.memoryService.getContext(sessionId);
+    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
     const response = await this.openAIService.generateChatCompletion([
       {
         role: 'system',
@@ -145,15 +145,15 @@ export class CoordinatorAgentService extends BaseAgentService<
 
   async processHITLResponse(
     userResponse: string,
-    sessionId: string,
+    chatSessionId: string,
     hitlData: { taskId: string; remainingTasks: IntentTask[] },
   ): Promise<CoordinatorAgentOutput> {
     try {
-      const chatContext = await this.chatContextService.getChatContext(sessionId);
+      const chatContext = await this.chatContextService.getChatContext(chatSessionId);
       const updatedResults = await this.taskExecutorService.processHITLResponse(
         hitlData.taskId,
         userResponse,
-        sessionId,
+        chatSessionId,
         hitlData.remainingTasks,
       );
 
@@ -170,8 +170,11 @@ export class CoordinatorAgentService extends BaseAgentService<
         };
       }
 
-      const executionResult = await this.executorService.execute(updatedResults.results, sessionId);
-      const shortTermMemory = await this.memoryService.getContext(sessionId);
+      const executionResult = await this.executorService.execute(
+        updatedResults.results,
+        chatSessionId,
+      );
+      const shortTermMemory = await this.memoryService.getContext(chatSessionId);
 
       const aiResponse = await this.openAIService.generateChatCompletion([
         {
@@ -210,17 +213,17 @@ export class CoordinatorAgentService extends BaseAgentService<
 
   private async processNflowAgentsFlow(
     message: string,
-    sessionId: string,
+    chatSessionId: string,
   ): Promise<CoordinatorAgentOutput> {
-    const shortTermMemory = await this.memoryService.getContext(sessionId);
+    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
     const intentPlan = await this.intentService.run({
       message,
-      sessionId,
+      chatSessionId,
     });
 
     const taskResults = await this.taskExecutorService.executeTasksInOrder(
       intentPlan.tasks,
-      sessionId,
+      chatSessionId,
     );
 
     await this.memoryService.patch(shortTermMemory, {
@@ -240,7 +243,7 @@ export class CoordinatorAgentService extends BaseAgentService<
       };
     }
 
-    const executionResults = await this.executorService.execute(taskResults.results, sessionId);
+    const executionResults = await this.executorService.execute(taskResults.results, chatSessionId);
     const response = await this.openAIService.generateChatCompletion([
       {
         role: 'system',

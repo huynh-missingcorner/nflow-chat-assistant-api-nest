@@ -56,24 +56,24 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
    * Listen for session.title.updated events and emit session title updates to clients
    */
   @OnEvent('session.title.updated')
-  handleSessionTitleUpdated(payload: { sessionId: string; title: string }): void {
-    const { sessionId, title } = payload;
-    this.emitSessionTitleUpdate(sessionId, title);
+  handleSessionTitleUpdated(payload: { chatSessionId: string; title: string }): void {
+    const { chatSessionId, title } = payload;
+    this.emitSessionTitleUpdate(chatSessionId, title);
   }
 
   /**
    * Emit a session title update event to all clients in the session
-   * @param sessionId The session ID
+   * @param chatSessionId The session ID
    * @param title The new session title
    */
-  private emitSessionTitleUpdate(sessionId: string, title: string): void {
+  private emitSessionTitleUpdate(chatSessionId: string, title: string): void {
     const titleUpdate: WebSocketSessionTitleUpdatedDto = {
-      sessionId,
+      chatSessionId: chatSessionId,
       title,
       timestamp: new Date().toISOString(),
     };
-    this.server.to(sessionId).emit('sessionTitleUpdated', titleUpdate);
-    this.logger.debug(`Emitted title update for session ${sessionId}: ${title}`);
+    this.server.to(chatSessionId).emit('sessionTitleUpdated', titleUpdate);
+    this.logger.debug(`Emitted title update for session ${chatSessionId}: ${title}`);
   }
 
   @SubscribeMessage('sendMessage')
@@ -93,20 +93,20 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
       // Save the user message to history
       await this.chatMessageService.create({
-        sessionId: payload.sessionId,
+        chatSessionId: payload.chatSessionId,
         content: payload.message,
         role: MessageRole.USER,
       });
 
       // Process the message
       const response = await this.chatWebsocketService.processMessage(
-        payload.sessionId,
+        payload.chatSessionId,
         payload.message,
       );
 
       // Save the assistant response to history
       const responseMessage = await this.chatMessageService.create({
-        sessionId: payload.sessionId,
+        chatSessionId: payload.chatSessionId,
         content: response,
         role: MessageRole.ASSISTANT,
       });
@@ -134,12 +134,12 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('getSessionMessages')
   async handleGetSessionMessages(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { sessionId: string },
+    @MessageBody() payload: { chatSessionId: string },
   ): Promise<void> {
     try {
-      const messages = await this.chatMessageService.findAllBySessionId(payload.sessionId);
+      const messages = await this.chatMessageService.findAllBySessionId(payload.chatSessionId);
       client.emit('sessionMessages', {
-        sessionId: payload.sessionId,
+        chatSessionId: payload.chatSessionId,
         messages,
         timestamp: new Date().toISOString(),
       });
@@ -165,23 +165,23 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('joinSession')
   async handleJoinSession(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { sessionId: string },
+    @MessageBody() payload: { chatSessionId: string },
   ): Promise<void> {
-    await client.join(payload.sessionId);
-    this.logger.log(`Client ${client.id} joined session: ${payload.sessionId}`);
+    await client.join(payload.chatSessionId);
+    this.logger.log(`Client ${client.id} joined session: ${payload.chatSessionId}`);
 
     // Acknowledge the join
     const response: WebSocketSessionJoinDto = {
-      sessionId: payload.sessionId,
+      chatSessionId: payload.chatSessionId,
       timestamp: new Date().toISOString(),
     };
     client.emit('sessionJoined', response);
 
     // Send existing messages for this session
     try {
-      const messages = await this.chatMessageService.findAllBySessionId(payload.sessionId);
+      const messages = await this.chatMessageService.findAllBySessionId(payload.chatSessionId);
       client.emit('sessionMessages', {
-        sessionId: payload.sessionId,
+        chatSessionId: payload.chatSessionId,
         messages,
         timestamp: new Date().toISOString(),
       });
@@ -197,9 +197,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('leaveSession')
   async handleLeaveSession(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { sessionId: string },
+    @MessageBody() payload: { chatSessionId: string },
   ): Promise<void> {
-    await client.leave(payload.sessionId);
-    this.logger.log(`Client ${client.id} left session: ${payload.sessionId}`);
+    await client.leave(payload.chatSessionId);
+    this.logger.log(`Client ${client.id} left session: ${payload.chatSessionId}`);
   }
 }

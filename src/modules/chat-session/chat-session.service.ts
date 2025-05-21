@@ -33,7 +33,7 @@ export class ChatSessionService {
 
   async findOne(id: string) {
     try {
-      const session = await this.prisma.chatSession.findUnique({
+      const chatSession = await this.prisma.chatSession.findUnique({
         where: { id },
         include: {
           messages: true,
@@ -41,11 +41,11 @@ export class ChatSessionService {
         },
       });
 
-      if (!session) {
+      if (!chatSession) {
         throw new NotFoundException(`Chat session with ID ${id} not found`);
       }
 
-      return session;
+      return chatSession;
     } catch (error) {
       this.logger.error(`Failed to fetch chat session with ID ${id}`, error);
       throw error;
@@ -54,16 +54,16 @@ export class ChatSessionService {
 
   async update(id: string, updateChatSessionDto: UpdateChatSessionDto) {
     try {
-      const session = await this.prisma.chatSession.update({
+      const chatSession = await this.prisma.chatSession.update({
         where: { id },
         data: updateChatSessionDto,
       });
 
-      if (!session) {
+      if (!chatSession) {
         throw new NotFoundException(`Chat session with ID ${id} not found`);
       }
 
-      return session;
+      return chatSession;
     } catch (error) {
       this.logger.error(`Failed to update chat session with ID ${id}`, error);
       throw error;
@@ -72,15 +72,15 @@ export class ChatSessionService {
 
   async remove(id: string) {
     try {
-      const session = await this.prisma.chatSession.delete({
+      const chatSession = await this.prisma.chatSession.delete({
         where: { id },
       });
 
-      if (!session) {
+      if (!chatSession) {
         throw new NotFoundException(`Chat session with ID ${id} not found`);
       }
 
-      return session;
+      return chatSession;
     } catch (error) {
       this.logger.error(`Failed to delete chat session with ID ${id}`, error);
       throw error;

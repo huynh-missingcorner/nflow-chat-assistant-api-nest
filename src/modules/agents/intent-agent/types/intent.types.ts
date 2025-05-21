@@ -35,7 +35,7 @@ export interface ObjectAgentData {
 
 export interface IntentAgentInput {
   message: string;
-  sessionId: string;
+  chatSessionId: string;
 }
 
 export interface IntentToolResponse {

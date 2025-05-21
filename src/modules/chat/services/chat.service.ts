@@ -19,34 +19,34 @@ export class ChatService {
   ) {}
 
   async processMessage(chatRequestDto: ChatRequestDto): Promise<ChatResponseDto> {
-    const { sessionId, message } = chatRequestDto;
-    const result = await this.coordinatorService.run({ message, sessionId });
-    await this.updateSessionTitle(sessionId, result.reply);
+    const { chatSessionId, message } = chatRequestDto;
+    const result = await this.coordinatorService.run({ message, chatSessionId });
+    await this.updateSessionTitle(chatSessionId, result.reply);
 
     return {
-      sessionId,
+      chatSessionId,
       reply: result.reply,
     };
   }
 
-  private async updateSessionTitle(sessionId: string, message: string) {
-    const session = await this.prisma.chatSession.findUnique({
-      where: { id: sessionId },
+  private async updateSessionTitle(chatSessionId: string, message: string) {
+    const chatSession = await this.prisma.chatSession.findUnique({
+      where: { id: chatSessionId },
     });
 
-    if (!session) {
-      throw new NotFoundException(`Session with ID ${sessionId} not found`);
+    if (!chatSession) {
+      throw new NotFoundException(`Session with ID ${chatSessionId} not found`);
     }
 
     // Count the total messages in the session
     const messagesCount = await this.prisma.message.count({
-      where: { sessionId },
+      where: { chatSessionId },
     });
 
     // Only update title if this is a new session (2 messages: 1 from user, 1 from AI)
     if (messagesCount !== 1) {
       this.logger.debug(
-        `Skipping title update for session ${sessionId} with ${messagesCount} messages`,
+        `Skipping title update for session ${chatSessionId} with ${messagesCount} messages`,
       );
       return;
     }
@@ -64,11 +64,14 @@ export class ChatService {
     }
 
     await this.prisma.chatSession.update({
-      where: { id: sessionId },
+      where: { id: chatSessionId },
       data: { title: titleResponse.content },
     });
 
-    this.logger.log(`Updated title for session ${sessionId} to: ${titleResponse.content}`);
-    this.eventEmitter.emit('session.title.updated', { sessionId, title: titleResponse.content });
+    this.logger.log(`Updated title for session ${chatSessionId} to: ${titleResponse.content}`);
+    this.eventEmitter.emit('session.title.updated', {
+      chatSessionId,
+      title: titleResponse.content,
+    });
   }
 }

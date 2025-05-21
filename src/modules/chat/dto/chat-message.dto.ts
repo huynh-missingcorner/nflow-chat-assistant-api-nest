@@ -15,7 +15,7 @@ export class CreateMessageDto {
   })
   @IsUUID()
   @IsNotEmpty()
-  sessionId: string;
+  chatSessionId: string;
 
   @ApiProperty({
     description: 'The content of the message',
@@ -47,7 +47,7 @@ export class MessageResponseDto {
     description: 'The unique identifier of the chat session',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  sessionId: string;
+  chatSessionId: string;
 
   @ApiProperty({
     description: 'The content of the message',

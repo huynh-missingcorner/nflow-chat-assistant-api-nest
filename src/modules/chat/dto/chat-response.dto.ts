@@ -5,7 +5,7 @@ export class ChatResponseDto {
     description: 'Unique identifier for the chat session',
     example: 'abc123',
   })
-  readonly sessionId: string;
+  readonly chatSessionId: string;
 
   @ApiProperty({
     description: 'The reply message from the AI assistant',

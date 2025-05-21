@@ -12,7 +12,7 @@ import {
 import { ObjectRecordName } from 'src/modules/nflow/types';
 
 export interface ShortTermMemory {
-  sessionId: string;
+  chatSessionId: string;
 
   // User messages (chat history)
   chatHistory: ChatMessage[];

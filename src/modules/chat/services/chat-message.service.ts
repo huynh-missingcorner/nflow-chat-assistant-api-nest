@@ -16,22 +16,22 @@ export class ChatMessageService {
 
   async create(createMessageDto: CreateMessageDto): Promise<MessageResponseDto> {
     try {
-      const { sessionId, content, role } = createMessageDto;
+      const { chatSessionId, content, role } = createMessageDto;
 
-      const session = await this.prisma.chatSession.findUnique({
-        where: { id: sessionId },
+      const chatSession = await this.prisma.chatSession.findUnique({
+        where: { id: chatSessionId },
       });
 
-      if (!session) {
-        throw new NotFoundException(`Session with ID ${sessionId} not found`);
+      if (!chatSession) {
+        throw new NotFoundException(`Session with ID ${chatSessionId} not found`);
       }
 
       const message = await this.prisma.message.create({
         data: {
           content,
           role: this.mapMessageRoleToPrisma(role),
-          session: {
-            connect: { id: sessionId },
+          chatSession: {
+            connect: { id: chatSessionId },
           },
         },
       });
@@ -40,7 +40,7 @@ export class ChatMessageService {
 
       return {
         id: message.id,
-        sessionId: message.sessionId,
+        chatSessionId: message.chatSessionId,
         content: message.content,
         role: this.mapPrismaRoleToMessageRole(message.role),
         createdAt: message.createdAt,
@@ -60,7 +60,7 @@ export class ChatMessageService {
 
       return messages.map((message) => ({
         id: message.id,
-        sessionId: message.sessionId,
+        chatSessionId: message.chatSessionId,
         content: message.content,
         role: this.mapPrismaRoleToMessageRole(message.role),
         createdAt: message.createdAt,
@@ -72,23 +72,23 @@ export class ChatMessageService {
     }
   }
 
-  async findAllBySessionId(sessionId: string): Promise<MessageResponseDto[]> {
+  async findAllBySessionId(chatSessionId: string): Promise<MessageResponseDto[]> {
     try {
       const messages = await this.prisma.message.findMany({
-        where: { sessionId },
+        where: { chatSessionId },
         orderBy: { createdAt: 'asc' },
       });
 
       return messages.map((message) => ({
         id: message.id,
-        sessionId: message.sessionId,
+        chatSessionId: message.chatSessionId,
         content: message.content,
         role: this.mapPrismaRoleToMessageRole(message.role),
         createdAt: message.createdAt,
         updatedAt: message.updatedAt,
       }));
     } catch (error) {
-      this.logger.error(`Failed to fetch messages for session ${sessionId}`, error);
+      this.logger.error(`Failed to fetch messages for session ${chatSessionId}`, error);
       throw error;
     }
   }
@@ -105,7 +105,7 @@ export class ChatMessageService {
 
       return {
         id: message.id,
-        sessionId: message.sessionId,
+        chatSessionId: message.chatSessionId,
         content: message.content,
         role: this.mapPrismaRoleToMessageRole(message.role),
         createdAt: message.createdAt,
@@ -126,7 +126,7 @@ export class ChatMessageService {
 
       return {
         id: message.id,
-        sessionId: message.sessionId,
+        chatSessionId: message.chatSessionId,
         content: message.content,
         role: this.mapPrismaRoleToMessageRole(message.role),
         createdAt: message.createdAt,
@@ -152,16 +152,16 @@ export class ChatMessageService {
     }
   }
 
-  async removeAllBySessionId(sessionId: string): Promise<number> {
+  async removeAllBySessionId(chatSessionId: string): Promise<number> {
     try {
       const result = await this.prisma.message.deleteMany({
-        where: { sessionId },
+        where: { chatSessionId },
       });
 
-      this.logger.log(`Removed ${result.count} messages for session ID: ${sessionId}`);
+      this.logger.log(`Removed ${result.count} messages for session ID: ${chatSessionId}`);
       return result.count;
     } catch (error) {
-      this.logger.error(`Failed to delete messages for session ID ${sessionId}`, error);
+      this.logger.error(`Failed to delete messages for session ID ${chatSessionId}`, error);
       throw error;
     }
   }

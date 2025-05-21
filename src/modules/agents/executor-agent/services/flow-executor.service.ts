@@ -10,10 +10,10 @@ export class FlowExecutorService {
     private readonly memoryService: MemoryService,
   ) {}
 
-  async createFlow(data: FlowCreateDto, sessionId: string): Promise<FlowResponse> {
+  async createFlow(data: FlowCreateDto, chatSessionId: string): Promise<FlowResponse> {
     const flowResponse = await this.flowService.createFlow(data);
 
-    const shortTermMemory = await this.memoryService.getContext(sessionId);
+    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
     await this.memoryService.patch(shortTermMemory, {
       createdFlows: [...(shortTermMemory.createdFlows || []), flowResponse],
     });

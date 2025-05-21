@@ -8,12 +8,12 @@ export class ChatWebsocketService {
 
   constructor(private readonly chatService: ChatService) {}
 
-  async processMessage(sessionId: string, message: string): Promise<string> {
-    this.logger.log(`Processing WebSocket message for session ${sessionId}: ${message}`);
+  async processMessage(chatSessionId: string, message: string): Promise<string> {
+    this.logger.log(`Processing WebSocket message for session ${chatSessionId}: ${message}`);
 
     try {
       const chatRequest: ChatRequestDto = {
-        sessionId,
+        chatSessionId: chatSessionId,
         message,
       };
 
@@ -35,8 +35,8 @@ export class ChatWebsocketService {
     }
   }
 
-  async streamResponse(sessionId: string, message: string): Promise<string[]> {
-    this.logger.debug(`Streaming response for session ${sessionId}`);
+  async streamResponse(chatSessionId: string, message: string): Promise<string[]> {
+    this.logger.debug(`Streaming response for session ${chatSessionId}`);
     await new Promise((resolve) => setTimeout(resolve, 100)); // Mock async operation
     return message.split(' ').map((word) => word + ' ');
   }

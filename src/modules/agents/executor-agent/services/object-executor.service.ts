@@ -11,11 +11,11 @@ export class ObjectExecutorService {
     private readonly memoryService: MemoryService,
   ) {}
 
-  async changeObject(data: ObjectDto, sessionId: string): Promise<ObjectResponse> {
+  async changeObject(data: ObjectDto, chatSessionId: string): Promise<ObjectResponse> {
     const objectResponse = await this.objectService.changeObject(data);
 
     // Update the short term memory
-    const shortTermMemory = await this.memoryService.getContext(sessionId);
+    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
     const shortTermMemoryClone = structuredClone(shortTermMemory);
     const existingObject = shortTermMemoryClone.createdObjects.find(
       (object) => object.name === objectResponse.name,
@@ -40,11 +40,11 @@ export class ObjectExecutorService {
     return objectResponse;
   }
 
-  async changeField(data: FieldDto, sessionId: string): Promise<FieldResponse> {
+  async changeField(data: FieldDto, chatSessionId: string): Promise<FieldResponse> {
     const fieldResponse = await this.objectService.changeField(data);
 
     // Update the short term memory
-    const shortTermMemory = await this.memoryService.getContext(sessionId);
+    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
     const shortTermMemoryClone = structuredClone(shortTermMemory);
     const existingObject = shortTermMemoryClone.createdObjects.find(
       (object) => object.name === data.objName,

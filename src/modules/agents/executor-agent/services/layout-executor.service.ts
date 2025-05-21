@@ -10,10 +10,10 @@ export class LayoutExecutorService {
     private readonly memoryService: MemoryService,
   ) {}
 
-  async createLayout(data: CreateLayoutDto, sessionId: string): Promise<LayoutResponse> {
+  async createLayout(data: CreateLayoutDto, chatSessionId: string): Promise<LayoutResponse> {
     const layoutResponse = await this.layoutService.createLayout(data);
 
-    const shortTermMemory = await this.memoryService.getContext(sessionId);
+    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
     await this.memoryService.patch(shortTermMemory, {
       createdLayouts: [...(shortTermMemory.createdLayouts || []), layoutResponse],
     });

@@ -8,7 +8,7 @@ export class ChatRequestDto {
   })
   @IsString()
   @IsNotEmpty()
-  readonly sessionId: string;
+  readonly chatSessionId: string;
 
   @ApiProperty({
     description: 'Message content from the user',

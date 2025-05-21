@@ -34,19 +34,19 @@ export class RedisSessionService {
     return this.redisService.getClient();
   }
 
-  public async getAccessToken(sessionId: string): Promise<string | undefined> {
+  public async getAccessToken(chatSessionId: string): Promise<string | undefined> {
     try {
-      const session = await this.redisService.get<{ accessToken?: string }>(
-        `${this.SESSION_PREFIX}${sessionId}`,
+      const chatSession = await this.redisService.get<{ accessToken?: string }>(
+        `${this.SESSION_PREFIX}${chatSessionId}`,
       );
 
-      if (!session?.accessToken) {
-        throw new Error(`Session not found for sessionId ${sessionId}`);
+      if (!chatSession?.accessToken) {
+        throw new Error(`Session not found for chatSessionId ${chatSessionId}`);
       }
 
-      return session.accessToken;
+      return chatSession.accessToken;
     } catch {
-      throw new Error(`Failed to get access token for session ${sessionId}`);
+      throw new Error(`Failed to get access token for session ${chatSessionId}`);
     }
   }
 }

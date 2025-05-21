@@ -31,7 +31,10 @@ export class ExecutorAgentService {
     private readonly objectExecutorService: ObjectExecutorService,
   ) {}
 
-  async execute(tasks: Record<string, AgentOutput>, sessionId: string): Promise<ExecutionResult[]> {
+  async execute(
+    tasks: Record<string, AgentOutput>,
+    chatSessionId: string,
+  ): Promise<ExecutionResult[]> {
     const results: ExecutionResult[] = [];
 
     try {
@@ -39,7 +42,7 @@ export class ExecutorAgentService {
 
       // Execute each tool call in order
       for (const { agentName, call } of sortedCalls) {
-        const result = await this.executeToolCall(call, sessionId);
+        const result = await this.executeToolCall(call, chatSessionId);
         results.push({
           id: call.id,
           agent: agentName,
@@ -83,12 +86,12 @@ export class ExecutorAgentService {
    */
   private async executeToolCall(
     call: NflowRequest,
-    sessionId: string,
+    chatSessionId: string,
     callTime: number = 1,
   ): Promise<unknown> {
     this.logger.log(`Executing tool call: ${call.functionName}`);
     try {
-      return await this.executeFunction(call.functionName, call.arguments, sessionId);
+      return await this.executeFunction(call.functionName, call.arguments, chatSessionId);
     } catch (error) {
       if (error instanceof AxiosError) {
         this.logger.error(
@@ -100,7 +103,7 @@ export class ExecutorAgentService {
 
       if (this.defaultOptions.retryAttempts > 0 && callTime < this.defaultOptions.retryAttempts) {
         await this.delay(this.defaultOptions.retryDelay);
-        return this.executeToolCall(call, sessionId, callTime + 1);
+        return this.executeToolCall(call, chatSessionId, callTime + 1);
       }
 
       // Log final failure and return null instead of throwing
@@ -117,32 +120,32 @@ export class ExecutorAgentService {
   private async executeFunction(
     functionName: string,
     args: Record<string, unknown>,
-    sessionId: string,
+    chatSessionId: string,
   ): Promise<unknown> {
     switch (functionName) {
       case 'ApiAppBuilderController_createApp': {
         const typedArgs = args as unknown as CreateApplicationDto;
-        return this.appExecutorService.createApp(typedArgs, sessionId);
+        return this.appExecutorService.createApp(typedArgs, chatSessionId);
       }
       case 'ApiAppBuilderController_updateApp': {
         const typedArgs = args as unknown as UpdateApplicationDto;
-        return this.appExecutorService.updateApp(typedArgs, sessionId);
+        return this.appExecutorService.updateApp(typedArgs, chatSessionId);
       }
       case 'ObjectController_changeObject': {
         const typedArgs = args as unknown as ObjectDto;
-        return this.objectExecutorService.changeObject(typedArgs, sessionId);
+        return this.objectExecutorService.changeObject(typedArgs, chatSessionId);
       }
       case 'FieldController_changeField': {
         const typedArgs = args as unknown as FieldDto;
-        return this.objectExecutorService.changeField(typedArgs, sessionId);
+        return this.objectExecutorService.changeField(typedArgs, chatSessionId);
       }
       case 'ApiLayoutBuilderController_createLayout': {
         const typedArgs = args as unknown as CreateLayoutDto;
-        return this.layoutExecutorService.createLayout(typedArgs, sessionId);
+        return this.layoutExecutorService.createLayout(typedArgs, chatSessionId);
       }
       case 'ApiFlowController_createFlow': {
         const typedArgs = args as unknown as FlowCreateDto;
-        return this.flowExecutorService.createFlow(typedArgs, sessionId);
+        return this.flowExecutorService.createFlow(typedArgs, chatSessionId);
       }
       default: {
         throw new Error(`Unsupported function: ${String(functionName)}`);

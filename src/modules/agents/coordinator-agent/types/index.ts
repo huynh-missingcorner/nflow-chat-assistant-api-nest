@@ -8,7 +8,7 @@ export interface BaseAgentResponse extends AgentOutput {
 
 export interface CoordinatorAgentInput {
   message: string;
-  sessionId: string;
+  chatSessionId: string;
 }
 
 export interface CoordinatorAgentOutput {

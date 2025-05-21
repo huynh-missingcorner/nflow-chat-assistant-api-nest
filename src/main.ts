@@ -6,6 +6,7 @@ import validationConfig from './config/validation/validation.config';
 import { Request, Response } from 'express';
 import session from 'express-session';
 import { RedisSessionService } from './shared/services/redis-session.service';
+import { SessionIoAdapter, SessionMiddleware } from './shared/socket/session-io.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,10 +23,13 @@ async function bootstrap() {
 
   // Get the RedisSessionService from the app context
   const redisSessionService = app.get(RedisSessionService);
+  const sessionMiddleware = session(redisSessionService.getSessionConfig());
 
-  app.use(session(redisSessionService.getSessionConfig()));
+  app.use(sessionMiddleware);
 
   app.useGlobalPipes(new ValidationPipe(validationConfig()));
+
+  app.useWebSocketAdapter(new SessionIoAdapter(app, sessionMiddleware as SessionMiddleware));
 
   // Set up Swagger documentation (only in non-production)
   if (process.env.NODE_ENV !== 'production') {

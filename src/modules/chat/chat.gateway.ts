@@ -9,7 +9,7 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { ChatWebsocketService } from './services/chat-websocket.service';
 import { ChatMessageService } from './services/chat-message.service';
 import { MessageRole } from './dto/chat-message.dto';
@@ -21,12 +21,10 @@ import {
   WebSocketErrorDto,
   WebSocketSessionTitleUpdatedDto,
 } from './dto/websocket.dto';
+import { WsKeycloakAuthGuard } from '../auth/guards/ws-keycloak-auth.guard';
 
-@WebSocketGateway({
-  cors: {
-    origin: '*', // TODO: Update this to match your frontend origin in production
-  },
-})
+@WebSocketGateway({ cors: true })
+@UseGuards(WsKeycloakAuthGuard)
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ChatGateway.name);
 

@@ -13,13 +13,3 @@ export interface UserInfo {
   email?: string;
   roles?: string[];
 }
-
-declare module 'express-session' {
-  interface SessionData {
-    accessToken?: string;
-    refreshToken?: string;
-    idToken?: string;
-    state?: string;
-    userInfo?: UserInfo;
-  }
-}

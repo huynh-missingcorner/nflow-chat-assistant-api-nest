@@ -5,6 +5,7 @@ import { AppModule } from './app.module';
 import validationConfig from './config/validation/validation.config';
 import { Request, Response } from 'express';
 import session from 'express-session';
+import { RedisSessionService } from './shared/services/redis-session.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -19,20 +20,10 @@ async function bootstrap() {
   // Set global prefix for all routes
   app.setGlobalPrefix('api');
 
-  // Configure session middleware
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || 'your-secret-key',
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        sameSite: 'lax',
-      },
-    }),
-  );
+  // Get the RedisSessionService from the app context
+  const redisSessionService = app.get(RedisSessionService);
+
+  app.use(session(redisSessionService.getSessionConfig()));
 
   app.useGlobalPipes(new ValidationPipe(validationConfig()));
 
@@ -61,6 +52,7 @@ async function bootstrap() {
   console.log(`🚀 Application is running on: http://localhost:${port}`);
   console.log(`📚 API documentation available at: http://localhost:${port}/api`);
   console.log(`🔌 WebSocket server is running on: ws://localhost:${port}`);
+  console.log(`💾 Sessions are being stored in Redis`);
 }
 
 bootstrap().catch((error) => {

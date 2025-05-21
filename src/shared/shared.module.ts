@@ -1,9 +1,10 @@
 import { Module, Global } from '@nestjs/common';
 import { ContextLoaderService } from './services/context-loader.service';
+import { RedisSessionService } from './services/redis-session.service';
 
 @Global()
 @Module({
-  providers: [ContextLoaderService],
-  exports: [ContextLoaderService],
+  providers: [ContextLoaderService, RedisSessionService],
+  exports: [ContextLoaderService, RedisSessionService],
 })
 export class SharedModule {}

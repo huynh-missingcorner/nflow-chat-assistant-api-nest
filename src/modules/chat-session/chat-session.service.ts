@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service';
 import { CreateChatSessionDto } from './dto/create-chat-session.dto';
 import { UpdateChatSessionDto } from './dto/update-chat-session.dto';
@@ -109,5 +115,31 @@ export class ChatSessionService {
       this.logger.error(`Failed to delete chat session with ID ${id}`, error);
       throw error;
     }
+  }
+
+  /**
+   * Get userId from chatSessionId with authorization check
+   * @param chatSessionId Chat session ID
+   * @param requestUserId Optional requestUserId for authorization check
+   * @returns userId associated with the chat session
+   * @throws NotFoundException if chat session not found
+   * @throws UnauthorizedException if requestUserId doesn't match session userId
+   */
+  async getUserIdFromChatSession(chatSessionId: string, requestUserId?: string): Promise<string> {
+    const chatSession = await this.prisma.chatSession.findUnique({
+      where: { id: chatSessionId },
+      select: { userId: true },
+    });
+
+    if (!chatSession) {
+      throw new NotFoundException(`Chat session not found: ${chatSessionId}`);
+    }
+
+    // If requestUserId is provided, verify it matches the session's userId
+    if (requestUserId && chatSession.userId !== requestUserId) {
+      throw new UnauthorizedException('You do not have access to this chat session');
+    }
+
+    return chatSession.userId;
   }
 }

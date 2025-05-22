@@ -6,21 +6,34 @@ import {
 } from 'src/modules/nflow/types/application.types';
 import { BuilderAppResponse } from 'src/modules/nflow/types';
 import { MemoryService } from 'src/modules/memory/memory.service';
+import { BaseExecutorService } from './base-executor.service';
+import { ChatSessionService } from '@/modules/chat-session/chat-session.service';
+import { CreatedApplication, ShortTermMemory } from 'src/modules/memory/types';
 
 @Injectable()
-export class AppExecutorService {
+export class AppExecutorService extends BaseExecutorService {
   constructor(
     private readonly applicationService: NFlowApplicationService,
-    private readonly memoryService: MemoryService,
-  ) {}
+    memoryService: MemoryService,
+    chatSessionService: ChatSessionService,
+  ) {
+    super(memoryService, chatSessionService);
+  }
 
+  /**
+   * Create an application in NFlow
+   * @param data Application data
+   * @param chatSessionId Chat session ID to track the context
+   * @returns Created application response
+   */
   async createApp(data: CreateApplicationDto, chatSessionId: string): Promise<BuilderAppResponse> {
-    const appResponse = await this.applicationService.createApp(data);
+    const userId = await this.getUserId(chatSessionId);
+    const appResponse = await this.applicationService.createApp(data, userId);
 
-    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
-    await this.memoryService.patch(shortTermMemory, {
+    await this.updateMemory<ShortTermMemory>(chatSessionId, (memory) => ({
+      ...memory,
       createdApplications: [
-        ...shortTermMemory.createdApplications,
+        ...memory.createdApplications,
         {
           id: appResponse.id,
           name: appResponse.name,
@@ -28,17 +41,24 @@ export class AppExecutorService {
           description: appResponse.description,
         },
       ],
-    });
+    }));
 
     return appResponse;
   }
 
+  /**
+   * Update an application in NFlow
+   * @param data Application data to update
+   * @param chatSessionId Chat session ID to track the context
+   * @returns Updated application response
+   */
   async updateApp(data: UpdateApplicationDto, chatSessionId: string): Promise<BuilderAppResponse> {
-    const appResponse = await this.applicationService.updateApp(data);
+    const userId = await this.getUserId(chatSessionId);
+    const appResponse = await this.applicationService.updateApp(data, userId);
 
-    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
-    await this.memoryService.patch(shortTermMemory, {
-      createdApplications: shortTermMemory.createdApplications.map((app) =>
+    await this.updateMemory<ShortTermMemory>(chatSessionId, (memory) => ({
+      ...memory,
+      createdApplications: memory.createdApplications.map((app: CreatedApplication) =>
         app.name === data.name
           ? {
               id: appResponse.id,
@@ -48,7 +68,7 @@ export class AppExecutorService {
             }
           : app,
       ),
-    });
+    }));
 
     return appResponse;
   }

@@ -4,40 +4,65 @@ import { ConfigService } from '@nestjs/config';
 import { BaseNFlowService } from './base.service';
 import { FieldDto, FieldResponse, ObjectResponse } from '../types';
 import { ObjectDto } from '../types';
+import { RedisSessionService } from 'src/shared/services/redis-session.service';
+import { KeycloakService } from 'src/modules/auth/services/keycloak.service';
 
 @Injectable()
 export class NFlowObjectService extends BaseNFlowService {
-  constructor(httpService: HttpService, configService: ConfigService) {
-    super(httpService, configService, NFlowObjectService.name);
+  constructor(
+    httpService: HttpService,
+    configService: ConfigService,
+    redisSessionService: RedisSessionService,
+    keycloakService: KeycloakService,
+  ) {
+    super(
+      httpService,
+      configService,
+      redisSessionService,
+      keycloakService,
+      NFlowObjectService.name,
+    );
   }
 
-  async getObject(name: string): Promise<ObjectResponse> {
-    return this.makeRequest('GET', `/mo/${name}`);
+  async getObject(name: string, userId: string): Promise<ObjectResponse> {
+    return this.makeRequest('GET', `/mo/${name}`, undefined, {}, userId);
   }
 
   // CUD operations for objects
-  async changeObject(data: ObjectDto): Promise<ObjectResponse> {
+  async changeObject(data: ObjectDto, userId: string): Promise<ObjectResponse> {
     if (data.action === 'delete') {
-      return this.makeRequest('POST', `/mo/remove`, {
-        names: [data.name],
-      });
+      return this.makeRequest(
+        'POST',
+        `/mo/remove`,
+        {
+          names: [data.name],
+        },
+        {},
+        userId,
+      );
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { name, ...rest } = data; // name is not used
     return this.makeRequest('POST', '/mo', rest);
   }
 
-  async getFieldsForObject(name: string): Promise<FieldResponse[]> {
-    return this.makeRequest('GET', `/mo/${name}/fields`);
+  async getFieldsForObject(name: string, userId: string): Promise<FieldResponse[]> {
+    return this.makeRequest('GET', `/mo/${name}/fields`, undefined, {}, userId);
   }
 
   // CUD operations for fields
-  async changeField(data: FieldDto): Promise<FieldResponse> {
+  async changeField(data: FieldDto, userId: string): Promise<FieldResponse> {
     if (data.action === 'delete') {
-      return this.makeRequest('POST', `/mo/${data.objName}/fields`, {
-        action: 'delete',
-        name: data.name ?? data.data.name,
-      });
+      return this.makeRequest(
+        'POST',
+        `/mo/${data.objName}/fields`,
+        {
+          action: 'delete',
+          name: data.name ?? data.data.name,
+        },
+        {},
+        userId,
+      );
     }
 
     const { objName, ...requestBody } = data;
@@ -117,6 +142,6 @@ export class NFlowObjectService extends BaseNFlowService {
       }
     }
 
-    return this.makeRequest('POST', `/mo/${objName}/fields`, requestBody);
+    return this.makeRequest('POST', `/mo/${objName}/fields`, requestBody, {}, userId);
   }
 }

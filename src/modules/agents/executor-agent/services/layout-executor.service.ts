@@ -2,21 +2,34 @@ import { Injectable } from '@nestjs/common';
 import { NFlowLayoutService } from 'src/modules/nflow/services/layout.service';
 import { CreateLayoutDto, LayoutResponse } from 'src/modules/nflow/types';
 import { MemoryService } from 'src/modules/memory/memory.service';
+import { BaseExecutorService } from './base-executor.service';
+import { ChatSessionService } from '@/modules/chat-session/chat-session.service';
+import { ShortTermMemory } from 'src/modules/memory/types';
 
 @Injectable()
-export class LayoutExecutorService {
+export class LayoutExecutorService extends BaseExecutorService {
   constructor(
     private readonly layoutService: NFlowLayoutService,
-    private readonly memoryService: MemoryService,
-  ) {}
+    memoryService: MemoryService,
+    chatSessionService: ChatSessionService,
+  ) {
+    super(memoryService, chatSessionService);
+  }
 
+  /**
+   * Create a layout in NFlow
+   * @param data Layout data
+   * @param chatSessionId Chat session ID to track context
+   * @returns Layout response from NFlow
+   */
   async createLayout(data: CreateLayoutDto, chatSessionId: string): Promise<LayoutResponse> {
-    const layoutResponse = await this.layoutService.createLayout(data);
+    const userId = await this.getUserId(chatSessionId);
+    const layoutResponse = await this.layoutService.createLayout(data, userId);
 
-    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
-    await this.memoryService.patch(shortTermMemory, {
-      createdLayouts: [...(shortTermMemory.createdLayouts || []), layoutResponse],
-    });
+    await this.updateMemory<ShortTermMemory>(chatSessionId, (memory) => ({
+      ...memory,
+      createdLayouts: [...(memory.createdLayouts || []), layoutResponse],
+    }));
 
     return layoutResponse;
   }

@@ -3,72 +3,119 @@ import { NFlowObjectService } from 'src/modules/nflow/services/object.service';
 import { MemoryService } from 'src/modules/memory/memory.service';
 import { FieldDto, FieldResponse, ObjectDto } from 'src/modules/nflow/types';
 import { ObjectResponse } from 'src/modules/nflow/types';
+import { BaseExecutorService } from './base-executor.service';
+import { ChatSessionService } from '@/modules/chat-session/chat-session.service';
+import { CreatedObject, Field, ShortTermMemory } from 'src/modules/memory/types';
 
 @Injectable()
-export class ObjectExecutorService {
+export class ObjectExecutorService extends BaseExecutorService {
   constructor(
     private readonly objectService: NFlowObjectService,
-    private readonly memoryService: MemoryService,
-  ) {}
+    memoryService: MemoryService,
+    chatSessionService: ChatSessionService,
+  ) {
+    super(memoryService, chatSessionService);
+  }
 
+  /**
+   * Create, update, or delete an object in NFlow
+   * @param data Object data with action to perform
+   * @param chatSessionId Chat session ID to track context
+   * @returns Object response from NFlow
+   */
   async changeObject(data: ObjectDto, chatSessionId: string): Promise<ObjectResponse> {
-    const objectResponse = await this.objectService.changeObject(data);
+    const userId = await this.getUserId(chatSessionId);
+    const objectResponse = await this.objectService.changeObject(data, userId);
 
-    // Update the short term memory
-    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
-    const shortTermMemoryClone = structuredClone(shortTermMemory);
-    const existingObject = shortTermMemoryClone.createdObjects.find(
-      (object) => object.name === objectResponse.name,
-    );
+    await this.updateMemory<ShortTermMemory>(chatSessionId, (memory) => {
+      const shortTermMemoryClone = structuredClone(memory);
+      const existingObject = shortTermMemoryClone.createdObjects.find(
+        (object: CreatedObject) => object.name === objectResponse.name,
+      );
 
-    if (data.action === 'delete') {
-      shortTermMemoryClone.createdObjects = shortTermMemoryClone.createdObjects.filter(
-        (object) => object.name !== data.name,
-      );
-    } else if (existingObject) {
-      shortTermMemoryClone.createdObjects = shortTermMemoryClone.createdObjects.map((object) =>
-        object.name === objectResponse.name ? { ...object, ...objectResponse } : object,
-      );
-    } else {
-      shortTermMemoryClone.createdObjects.push({
-        ...objectResponse,
-        fields: [],
-      });
-    }
-    await this.memoryService.patch(shortTermMemory, shortTermMemoryClone);
+      if (data.action === 'delete') {
+        shortTermMemoryClone.createdObjects = shortTermMemoryClone.createdObjects.filter(
+          (object: CreatedObject) => object.name !== data.name,
+        );
+      } else if (existingObject) {
+        shortTermMemoryClone.createdObjects = shortTermMemoryClone.createdObjects.map(
+          (object: CreatedObject) =>
+            object.name === objectResponse.name ? { ...object, ...objectResponse } : object,
+        );
+      } else {
+        shortTermMemoryClone.createdObjects.push({
+          ...objectResponse,
+          fields: [],
+        } as CreatedObject);
+      }
+      return shortTermMemoryClone;
+    });
 
     return objectResponse;
   }
 
+  /**
+   * Create, update, or delete a field in an object
+   * @param data Field data with action to perform
+   * @param chatSessionId Chat session ID to track context
+   * @returns Field response from NFlow
+   */
   async changeField(data: FieldDto, chatSessionId: string): Promise<FieldResponse> {
-    const fieldResponse = await this.objectService.changeField(data);
+    const userId = await this.getUserId(chatSessionId);
+    const fieldResponse = await this.objectService.changeField(data, userId);
 
-    // Update the short term memory
-    const shortTermMemory = await this.memoryService.getContext(chatSessionId);
-    const shortTermMemoryClone = structuredClone(shortTermMemory);
-    const existingObject = shortTermMemoryClone.createdObjects.find(
-      (object) => object.name === data.objName,
-    );
-    if (existingObject) {
+    await this.updateMemory<ShortTermMemory>(chatSessionId, (memory) => {
+      const shortTermMemoryClone = structuredClone(memory);
+      const existingObject = shortTermMemoryClone.createdObjects.find(
+        (object: CreatedObject) => object.name === data.objName,
+      );
+
+      if (!existingObject) {
+        throw new Error('Object not found in short term memory');
+      }
+
       if (data.action === 'delete') {
         existingObject.fields = existingObject.fields.filter(
-          (field) => field.name !== data.name && field.name !== data.data.name,
+          (field: Field) => field.name !== data.name && field.name !== data.data.name,
         );
       } else {
-        const existingField = existingObject.fields.find((field) => field.name === data.name);
+        const existingField = existingObject.fields.find(
+          (field: Field) => field.name === data.name,
+        );
         if (existingField) {
-          existingObject.fields = existingObject.fields.map((field) =>
+          existingObject.fields = existingObject.fields.map((field: Field) =>
             field.name === data.name ? { ...field, ...fieldResponse } : field,
           );
         } else {
-          existingObject.fields.push(fieldResponse);
+          existingObject.fields.push(fieldResponse as unknown as Field);
         }
       }
-    } else {
-      throw new Error('Object not found in short term memory');
-    }
-    await this.memoryService.patch(shortTermMemory, shortTermMemoryClone);
+
+      return shortTermMemoryClone;
+    });
 
     return fieldResponse;
+  }
+
+  /**
+   * Get an object from NFlow
+   * @param name Object name
+   * @param chatSessionId Chat session ID to get user context
+   * @returns Object response from NFlow
+   */
+  async getObject(name: string, chatSessionId: string): Promise<ObjectResponse> {
+    const userId = await this.getUserId(chatSessionId);
+    return this.objectService.getObject(name, userId);
+  }
+
+  /**
+   * Get fields for an object from NFlow
+   * @param name Object name
+   * @param chatSessionId Chat session ID to get user context
+   * @returns Array of field responses from NFlow
+   */
+  async getFieldsForObject(name: string, chatSessionId: string): Promise<FieldResponse[]> {
+    const userId = await this.getUserId(chatSessionId);
+    return this.objectService.getFieldsForObject(name, userId);
   }
 }

@@ -88,6 +88,17 @@ export class KeycloakController {
       session.accessToken = tokens.accessToken;
       session.refreshToken = tokens.refreshToken;
       session.idToken = tokens.idToken;
+
+      // Extract user information from the ID token
+      const userInfo = this.keycloakService.getAuthenticatedUserInfo(
+        tokens.accessToken,
+        tokens.idToken,
+      );
+
+      // Store userId (Keycloak sub) and userInfo in session
+      session.userId = userInfo.sub;
+      session.userInfo = userInfo;
+
       delete session.state;
 
       const frontendUrl = this.configService.get<string>('FRONTEND_URL');
@@ -124,9 +135,24 @@ export class KeycloakController {
       }
 
       const tokens = await this.keycloakService.refreshTokens(session.refreshToken);
+
+      // Preserve existing userId and update the session
+      const userId = session.userId;
+      const prevUserInfo = session.userInfo;
+
       session.accessToken = tokens.accessToken;
       session.refreshToken = tokens.refreshToken;
       session.idToken = tokens.idToken;
+
+      // Extract updated user information from the new ID token
+      const userInfo = this.keycloakService.getAuthenticatedUserInfo(
+        tokens.accessToken,
+        tokens.idToken,
+      );
+
+      // Preserve userId or update it from the new tokens if available
+      session.userId = userInfo.sub || userId;
+      session.userInfo = userInfo || prevUserInfo;
 
       return {
         accessToken: tokens.accessToken,
@@ -167,11 +193,15 @@ export class KeycloakController {
         session.accessToken = undefined;
         session.refreshToken = undefined;
         session.idToken = undefined;
+        session.userId = undefined;
+        session.userInfo = undefined;
         res.redirect(logoutUrl);
       } else {
         session.accessToken = undefined;
         session.refreshToken = undefined;
         session.idToken = undefined;
+        session.userId = undefined;
+        session.userInfo = undefined;
         res.redirect(redirectUri || '/');
       }
     } catch (error) {
@@ -196,7 +226,8 @@ export class KeycloakController {
       session.accessToken,
       session.idToken,
     );
+    const userId = session.userId || user?.sub;
 
-    return { authenticated, user };
+    return { authenticated, userId, user };
   }
 }

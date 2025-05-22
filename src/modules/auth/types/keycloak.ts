@@ -25,6 +25,8 @@ export interface KeycloakErrorResponse {
 }
 
 export interface KeycloakUserInfo {
+  sub?: string;
   name?: string;
   email?: string;
+  preferred_username?: string;
 }

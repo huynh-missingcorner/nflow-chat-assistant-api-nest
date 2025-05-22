@@ -16,6 +16,7 @@ datasource db {
 // Represents a chat session between a user and the AI assistant
 model ChatSession {
   id        String   @id @default(uuid())
+  userId    String   // User ID from Keycloak
   title     String
   archived  Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -26,6 +27,7 @@ model ChatSession {
   agentResults AgentResult[]
   generatedApp GeneratedApp?
 
+  @@index([userId])
   @@map("chat_sessions")
 }
 

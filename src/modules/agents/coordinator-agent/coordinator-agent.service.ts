@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { IntentAgentService } from '../intent-agent/intent-agent.service';
 import { ExecutorAgentService } from '../executor-agent/executor-agent.service';
@@ -13,6 +13,7 @@ import { IntentTask } from '../intent-agent/types/intent.types';
 import { ClassifierAgentService } from '../classifier-agent/classifier-agent.service';
 import { MessageType } from '../classifier-agent/types/classifier.types';
 import { MemoryService } from 'src/modules/memory/memory.service';
+import { PrismaService } from 'src/shared/infrastructure/prisma/prisma.service';
 
 @Injectable()
 export class CoordinatorAgentService extends BaseAgentService<
@@ -26,6 +27,7 @@ export class CoordinatorAgentService extends BaseAgentService<
     private readonly chatContextService: ChatContextService,
     private readonly classifierService: ClassifierAgentService,
     private readonly memoryService: MemoryService,
+    private readonly prisma: PrismaService,
     contextLoader: ContextLoaderService,
     openAIService: OpenAIService,
   ) {
@@ -61,7 +63,19 @@ export class CoordinatorAgentService extends BaseAgentService<
     message: string,
     chatSessionId: string,
   ): Promise<CoordinatorAgentOutput> {
-    const chatContext = await this.chatContextService.getChatContext(chatSessionId);
+    const chatSession = await this.prisma.chatSession.findUnique({
+      where: { id: chatSessionId },
+      select: { userId: true },
+    });
+
+    if (!chatSession) {
+      throw new NotFoundException(`Chat session with ID ${chatSessionId} not found`);
+    }
+
+    const chatContext = await this.chatContextService.getChatContext(
+      chatSessionId,
+      chatSession.userId,
+    );
     const shortTermMemory = await this.memoryService.getContext(chatSessionId);
 
     await this.memoryService.patch(shortTermMemory, {
@@ -149,7 +163,19 @@ export class CoordinatorAgentService extends BaseAgentService<
     hitlData: { taskId: string; remainingTasks: IntentTask[] },
   ): Promise<CoordinatorAgentOutput> {
     try {
-      const chatContext = await this.chatContextService.getChatContext(chatSessionId);
+      const chatSession = await this.prisma.chatSession.findUnique({
+        where: { id: chatSessionId },
+        select: { userId: true },
+      });
+
+      if (!chatSession) {
+        throw new NotFoundException(`Chat session with ID ${chatSessionId} not found`);
+      }
+
+      const chatContext = await this.chatContextService.getChatContext(
+        chatSessionId,
+        chatSession.userId,
+      );
       const updatedResults = await this.taskExecutorService.processHITLResponse(
         hitlData.taskId,
         userResponse,

@@ -22,6 +22,19 @@ export class WsKeycloakAuthGuard implements CanActivate {
       // Validate the token using the same validation service that's used for HTTP
       await this.tokenValidationService.validateAccessToken(session.accessToken);
 
+      // Set user data on the socket client
+      if (session.userId) {
+        client.data = {
+          ...client.data,
+          user: {
+            userId: session.userId,
+          },
+        };
+      } else {
+        this.logger.warn('No userId found in session for WebSocket connection');
+        throw new WsException('Unauthorized - No userId in session');
+      }
+
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';

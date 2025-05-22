@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { CoordinatorAgentService } from '../../agents/coordinator-agent/coordinator-agent.service';
 import { ChatRequestDto } from '../dto/chat-request.dto';
 import { ChatResponseDto } from '../dto/chat-response.dto';
@@ -18,8 +18,23 @@ export class ChatService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async processMessage(chatRequestDto: ChatRequestDto): Promise<ChatResponseDto> {
+  async processMessage(chatRequestDto: ChatRequestDto, userId: string): Promise<ChatResponseDto> {
     const { chatSessionId, message } = chatRequestDto;
+
+    // Verify chat session ownership
+    const chatSession = await this.prisma.chatSession.findUnique({
+      where: { id: chatSessionId },
+      select: { id: true, userId: true },
+    });
+
+    if (!chatSession) {
+      throw new NotFoundException(`Session with ID ${chatSessionId} not found`);
+    }
+
+    if (chatSession.userId !== userId) {
+      throw new ForbiddenException(`You don't have access to this chat session`);
+    }
+
     const result = await this.coordinatorService.run({ message, chatSessionId });
     await this.updateSessionTitle(chatSessionId, result.reply);
 

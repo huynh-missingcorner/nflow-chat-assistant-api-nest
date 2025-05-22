@@ -20,6 +20,7 @@ import {
   DeleteMessageResponseDto,
 } from '../dto/chat-message.dto';
 import { NflowAuthGuard } from '@/modules/auth/guards/nflow-auth.guard';
+import { AuthenticatedUser } from '@/shared/decorators/user.decorator';
 
 @ApiTags('Chat Messages')
 @Controller('chat-messages')
@@ -35,8 +36,16 @@ export class ChatMessageController {
     type: MessageResponseDto,
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid request parameters.' })
-  async create(@Body() createMessageDto: CreateMessageDto): Promise<MessageResponseDto> {
-    return this.chatMessageService.create(createMessageDto);
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Access to this chat session is forbidden.',
+  })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'User not authenticated.' })
+  async create(
+    @Body() createMessageDto: CreateMessageDto,
+    @AuthenticatedUser() user: { userId: string },
+  ): Promise<MessageResponseDto> {
+    return this.chatMessageService.create(createMessageDto, user.userId);
   }
 
   @Get()
@@ -51,11 +60,19 @@ export class ChatMessageController {
     required: false,
     description: 'Filter messages by chat session ID',
   })
-  async findAll(@Query('chatSessionId') chatSessionId?: string): Promise<MessageResponseDto[]> {
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Access to this chat session is forbidden.',
+  })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'User not authenticated.' })
+  async findAll(
+    @AuthenticatedUser() user: { userId: string },
+    @Query('chatSessionId') chatSessionId?: string,
+  ): Promise<MessageResponseDto[]> {
     if (chatSessionId) {
-      return this.chatMessageService.findAllBySessionId(chatSessionId);
+      return this.chatMessageService.findAllBySessionId(chatSessionId, user.userId);
     }
-    return this.chatMessageService.findAll();
+    return this.chatMessageService.findAll(user.userId);
   }
 
   @Get(':id')
@@ -70,8 +87,16 @@ export class ChatMessageController {
     type: MessageResponseDto,
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Chat message not found.' })
-  async findOne(@Param('id') id: string): Promise<MessageResponseDto> {
-    return this.chatMessageService.findOne(id);
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Access to this message is forbidden.',
+  })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'User not authenticated.' })
+  async findOne(
+    @Param('id') id: string,
+    @AuthenticatedUser() user: { userId: string },
+  ): Promise<MessageResponseDto> {
+    return this.chatMessageService.findOne(id, user.userId);
   }
 
   @Patch(':id')
@@ -87,11 +112,17 @@ export class ChatMessageController {
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Chat message not found.' })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid request parameters.' })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Access to this message is forbidden.',
+  })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'User not authenticated.' })
   async update(
     @Param('id') id: string,
     @Body() updateMessageDto: UpdateMessageDto,
+    @AuthenticatedUser() user: { userId: string },
   ): Promise<MessageResponseDto> {
-    return this.chatMessageService.update(id, updateMessageDto);
+    return this.chatMessageService.update(id, updateMessageDto, user.userId);
   }
 
   @Delete(':id')
@@ -107,8 +138,16 @@ export class ChatMessageController {
     type: DeleteMessageResponseDto,
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Chat message not found.' })
-  async remove(@Param('id') id: string): Promise<DeleteMessageResponseDto> {
-    const success = await this.chatMessageService.remove(id);
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Access to this message is forbidden.',
+  })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'User not authenticated.' })
+  async remove(
+    @Param('id') id: string,
+    @AuthenticatedUser() user: { userId: string },
+  ): Promise<DeleteMessageResponseDto> {
+    const success = await this.chatMessageService.remove(id, user.userId);
     return {
       success,
       message: 'Message deleted successfully',
@@ -126,10 +165,20 @@ export class ChatMessageController {
     status: HttpStatus.OK,
     description: 'The chat messages have been successfully deleted.',
   })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Chat session not found.' })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description: 'Access to this chat session is forbidden.',
+  })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'User not authenticated.' })
   async removeAllBySession(
     @Param('chatSessionId') chatSessionId: string,
+    @AuthenticatedUser() user: { userId: string },
   ): Promise<{ deletedCount: number }> {
-    const deletedCount = await this.chatMessageService.removeAllBySessionId(chatSessionId);
+    const deletedCount = await this.chatMessageService.removeAllBySessionId(
+      chatSessionId,
+      user.userId,
+    );
     return { deletedCount };
   }
 }

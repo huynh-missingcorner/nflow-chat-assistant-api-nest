@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreatedObject, ShortTermMemory } from './types';
 import { ChatContextService } from '../agents/coordinator-agent/services/chat-context.service';
 import { ExecutionResult } from '../agents/executor-agent/types/executor.types';
 import { RedisService } from '../../shared/infrastructure/redis/redis.service';
+import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service';
 
 @Injectable()
 export class MemoryService {
@@ -13,6 +14,7 @@ export class MemoryService {
   constructor(
     private readonly chatContextService: ChatContextService,
     private readonly redisService: RedisService,
+    private readonly prisma: PrismaService,
   ) {}
 
   public async getContext(chatSessionId: string): Promise<ShortTermMemory> {
@@ -20,7 +22,19 @@ export class MemoryService {
     let context = await this.redisService.get<ShortTermMemory>(redisKey);
 
     if (!context) {
-      const chatHistory = await this.chatContextService.getChatContext(chatSessionId);
+      const chatSession = await this.prisma.chatSession.findUnique({
+        where: { id: chatSessionId },
+        select: { userId: true },
+      });
+
+      if (!chatSession) {
+        throw new NotFoundException(`Chat session with ID ${chatSessionId} not found`);
+      }
+
+      const chatHistory = await this.chatContextService.getChatContext(
+        chatSessionId,
+        chatSession.userId,
+      );
 
       context = {
         chatSessionId,

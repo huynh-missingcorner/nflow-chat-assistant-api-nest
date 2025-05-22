@@ -8,7 +8,7 @@ export class ChatWebsocketService {
 
   constructor(private readonly chatService: ChatService) {}
 
-  async processMessage(chatSessionId: string, message: string): Promise<string> {
+  async processMessage(chatSessionId: string, message: string, userId: string): Promise<string> {
     this.logger.log(`Processing WebSocket message for session ${chatSessionId}: ${message}`);
 
     try {
@@ -17,7 +17,7 @@ export class ChatWebsocketService {
         message,
       };
 
-      const response = await this.chatService.processMessage(chatRequest);
+      const response = await this.chatService.processMessage(chatRequest, userId);
 
       // If there's an app URL, include it in the response
       if (response.appUrl) {

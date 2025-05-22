@@ -33,16 +33,16 @@
   - [V] **Task 1.13**: Update all `ChatSessionController` methods to extract `userId` from `@Session() session: SessionData` and pass it to the service methods. Implement `UnauthorizedException` if `userId` is missing.
     - _Files_: `src/modules/chat-session/controllers/chat-session.controller.ts`
 
-## Phase 2: Securing Access to Related Data (0/3 completed - 0%)
+## Phase 2: Securing Access to Related Data (3/3 completed - 100%)
 
 - **Message Access Control**
-  - [ ] **Task 2.1**: Modify `MessageService` methods (e.g., `create`, `findAllInSession`) to verify that the parent `ChatSession` belongs to the authenticated `userId` before proceeding. This might involve fetching the chat session first or joining tables in Prisma queries if possible.
-    - _Files_: `src/modules/chat/services/message.service.ts` (assuming, path might vary)
-  - [ ] **Task 2.2**: Update `MessageController` methods to pass `userId` (obtained from session) to service methods for authorization checks.
-    - _Files_: `src/modules/chat/controllers/message.controller.ts` (assuming, path might vary)
+  - [V] **Task 2.1**: Modify `MessageService` methods (e.g., `create`, `findAllInSession`) to verify that the parent `ChatSession` belongs to the authenticated `userId` before proceeding. This might involve fetching the chat session first or joining tables in Prisma queries if possible.
+    - _Files_: `src/modules/chat/services/chat-message.service.ts` (assuming, path might vary)
+  - [V] **Task 2.2**: Update `MessageController` methods to pass `userId` (obtained from session) to service methods for authorization checks.
+    - _Files_: `src/modules/chat/controllers/chat-message.controller.ts` (assuming, path might vary)
 - **Other Related Data (Agent Results, Generated Apps)**
-  - [ ] **Task 2.3**: Review and update services and controllers for `AgentResult` and `GeneratedApp` to ensure access is restricted based on the ownership of the parent `ChatSession` (similar to messages). This requires identifying the relevant service/controller files and applying ownership checks using `userId`.
-    - _Files_: (To be identified: services/controllers for AgentResult and GeneratedApp)
+  - [V] **Task 2.3**: Review and update services and controllers for `AgentResult` and `GeneratedApp` to ensure access is restricted based on the ownership of the parent `ChatSession` (similar to messages). This requires identifying the relevant service/controller files and applying ownership checks using `userId`.
+    - _Files_: `src/modules/chat/services/chat.service.ts`, `src/modules/chat/controllers/chat.controller.ts`
 
 ## Phase 3: Testing (0/4 completed - 0%)
 
@@ -77,4 +77,4 @@
 
 ---
 
-**Total Progress: 14/22 tasks completed (64%)**
+**Total Progress: 17/22 tasks completed (77%)**

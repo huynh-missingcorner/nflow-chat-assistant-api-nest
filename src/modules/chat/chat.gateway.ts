@@ -23,6 +23,15 @@ import {
 } from './dto/websocket.dto';
 import { WsKeycloakAuthGuard } from '../auth/guards/ws-keycloak-auth.guard';
 
+// Define interface for socket data with user info
+interface SocketWithAuth extends Socket {
+  data: {
+    user: {
+      userId: string;
+    };
+  };
+}
+
 @WebSocketGateway({ cors: true })
 @UseGuards(WsKeycloakAuthGuard)
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
@@ -76,7 +85,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage('sendMessage')
   async handleMessage(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: SocketWithAuth,
     @MessageBody() payload: WebSocketChatMessageDto,
   ): Promise<void> {
     this.logger.debug(`Received message from ${client.id}: ${JSON.stringify(payload)}`);
@@ -89,25 +98,40 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       };
       client.emit('messageReceived', ack);
 
+      console.log('client.data', client.data);
+
+      // Get userId from socket data
+      if (!client.data?.user?.userId) {
+        throw new Error('User not authenticated');
+      }
+      const userId = client.data.user.userId;
+
       // Save the user message to history
-      await this.chatMessageService.create({
-        chatSessionId: payload.chatSessionId,
-        content: payload.message,
-        role: MessageRole.USER,
-      });
+      await this.chatMessageService.create(
+        {
+          chatSessionId: payload.chatSessionId,
+          content: payload.message,
+          role: MessageRole.USER,
+        },
+        userId,
+      );
 
       // Process the message
       const response = await this.chatWebsocketService.processMessage(
         payload.chatSessionId,
         payload.message,
+        userId,
       );
 
       // Save the assistant response to history
-      const responseMessage = await this.chatMessageService.create({
-        chatSessionId: payload.chatSessionId,
-        content: response,
-        role: MessageRole.ASSISTANT,
-      });
+      const responseMessage = await this.chatMessageService.create(
+        {
+          chatSessionId: payload.chatSessionId,
+          content: response,
+          role: MessageRole.ASSISTANT,
+        },
+        userId,
+      );
 
       client.emit('messageResponse', responseMessage);
     } catch (error: unknown) {
@@ -131,11 +155,20 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage('getSessionMessages')
   async handleGetSessionMessages(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: SocketWithAuth,
     @MessageBody() payload: { chatSessionId: string },
   ): Promise<void> {
     try {
-      const messages = await this.chatMessageService.findAllBySessionId(payload.chatSessionId);
+      // Get userId from socket data
+      if (!client.data?.user?.userId) {
+        throw new Error('User not authenticated');
+      }
+      const userId = client.data.user.userId;
+
+      const messages = await this.chatMessageService.findAllBySessionId(
+        payload.chatSessionId,
+        userId,
+      );
       client.emit('sessionMessages', {
         chatSessionId: payload.chatSessionId,
         messages,
@@ -162,7 +195,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage('joinSession')
   async handleJoinSession(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: SocketWithAuth,
     @MessageBody() payload: { chatSessionId: string },
   ): Promise<void> {
     await client.join(payload.chatSessionId);
@@ -177,7 +210,16 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     // Send existing messages for this session
     try {
-      const messages = await this.chatMessageService.findAllBySessionId(payload.chatSessionId);
+      // Get userId from socket data
+      if (!client.data?.user?.userId) {
+        throw new Error('User not authenticated');
+      }
+      const userId = client.data.user.userId;
+
+      const messages = await this.chatMessageService.findAllBySessionId(
+        payload.chatSessionId,
+        userId,
+      );
       client.emit('sessionMessages', {
         chatSessionId: payload.chatSessionId,
         messages,

@@ -4,6 +4,7 @@ import { ChatService } from '../services/chat.service';
 import { ChatRequestDto } from '../dto/chat-request.dto';
 import { ChatResponseDto } from '../dto/chat-response.dto';
 import { NflowAuthGuard } from '@/modules/auth/guards/nflow-auth.guard';
+import { AuthenticatedUser } from '@/shared/decorators/user.decorator';
 
 @ApiTags('Chat')
 @Controller('chat')
@@ -19,8 +20,13 @@ export class ChatController {
     type: ChatResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Invalid request parameters' })
+  @ApiResponse({ status: 403, description: 'Access to this chat session is forbidden' })
+  @ApiResponse({ status: 401, description: 'User not authenticated' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async processMessage(@Body() chatRequestDto: ChatRequestDto): Promise<ChatResponseDto> {
-    return this.chatService.processMessage(chatRequestDto);
+  async processMessage(
+    @Body() chatRequestDto: ChatRequestDto,
+    @AuthenticatedUser() user: { userId: string },
+  ): Promise<ChatResponseDto> {
+    return this.chatService.processMessage(chatRequestDto, user.userId);
   }
 }

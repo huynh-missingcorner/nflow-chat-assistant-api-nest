@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../../shared/infrastructure/prisma/prisma.service';
 import {
   CreateMessageDto,
@@ -14,16 +14,21 @@ export class ChatMessageService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createMessageDto: CreateMessageDto): Promise<MessageResponseDto> {
+  async create(createMessageDto: CreateMessageDto, userId: string): Promise<MessageResponseDto> {
     try {
       const { chatSessionId, content, role } = createMessageDto;
 
       const chatSession = await this.prisma.chatSession.findUnique({
         where: { id: chatSessionId },
+        select: { id: true, userId: true },
       });
 
       if (!chatSession) {
         throw new NotFoundException(`Session with ID ${chatSessionId} not found`);
+      }
+
+      if (chatSession.userId !== userId) {
+        throw new ForbiddenException(`You don't have access to this chat session`);
       }
 
       const message = await this.prisma.message.create({
@@ -52,9 +57,14 @@ export class ChatMessageService {
     }
   }
 
-  async findAll(): Promise<MessageResponseDto[]> {
+  async findAll(userId: string): Promise<MessageResponseDto[]> {
     try {
       const messages = await this.prisma.message.findMany({
+        where: {
+          chatSession: {
+            userId,
+          },
+        },
         orderBy: { createdAt: 'asc' },
       });
 
@@ -72,8 +82,22 @@ export class ChatMessageService {
     }
   }
 
-  async findAllBySessionId(chatSessionId: string): Promise<MessageResponseDto[]> {
+  async findAllBySessionId(chatSessionId: string, userId: string): Promise<MessageResponseDto[]> {
     try {
+      // First verify chat session ownership
+      const chatSession = await this.prisma.chatSession.findUnique({
+        where: { id: chatSessionId },
+        select: { id: true, userId: true },
+      });
+
+      if (!chatSession) {
+        throw new NotFoundException(`Chat session with ID ${chatSessionId} not found`);
+      }
+
+      if (chatSession.userId !== userId) {
+        throw new ForbiddenException(`You don't have access to this chat session`);
+      }
+
       const messages = await this.prisma.message.findMany({
         where: { chatSessionId },
         orderBy: { createdAt: 'asc' },
@@ -93,14 +117,23 @@ export class ChatMessageService {
     }
   }
 
-  async findOne(id: string): Promise<MessageResponseDto> {
+  async findOne(id: string, userId: string): Promise<MessageResponseDto> {
     try {
       const message = await this.prisma.message.findUnique({
         where: { id },
+        include: {
+          chatSession: {
+            select: { userId: true },
+          },
+        },
       });
 
       if (!message) {
         throw new NotFoundException(`Message with ID ${id} not found`);
+      }
+
+      if (message.chatSession.userId !== userId) {
+        throw new ForbiddenException(`You don't have access to this message`);
       }
 
       return {
@@ -117,8 +150,30 @@ export class ChatMessageService {
     }
   }
 
-  async update(id: string, updateMessageDto: UpdateMessageDto): Promise<MessageResponseDto> {
+  async update(
+    id: string,
+    updateMessageDto: UpdateMessageDto,
+    userId: string,
+  ): Promise<MessageResponseDto> {
     try {
+      // First verify message ownership via chat session
+      const existingMessage = await this.prisma.message.findUnique({
+        where: { id },
+        include: {
+          chatSession: {
+            select: { userId: true },
+          },
+        },
+      });
+
+      if (!existingMessage) {
+        throw new NotFoundException(`Message with ID ${id} not found`);
+      }
+
+      if (existingMessage.chatSession.userId !== userId) {
+        throw new ForbiddenException(`You don't have access to this message`);
+      }
+
       const message = await this.prisma.message.update({
         where: { id },
         data: updateMessageDto,
@@ -138,8 +193,26 @@ export class ChatMessageService {
     }
   }
 
-  async remove(id: string): Promise<boolean> {
+  async remove(id: string, userId: string): Promise<boolean> {
     try {
+      // First verify message ownership via chat session
+      const existingMessage = await this.prisma.message.findUnique({
+        where: { id },
+        include: {
+          chatSession: {
+            select: { userId: true },
+          },
+        },
+      });
+
+      if (!existingMessage) {
+        throw new NotFoundException(`Message with ID ${id} not found`);
+      }
+
+      if (existingMessage.chatSession.userId !== userId) {
+        throw new ForbiddenException(`You don't have access to this message`);
+      }
+
       await this.prisma.message.delete({
         where: { id },
       });
@@ -152,8 +225,22 @@ export class ChatMessageService {
     }
   }
 
-  async removeAllBySessionId(chatSessionId: string): Promise<number> {
+  async removeAllBySessionId(chatSessionId: string, userId: string): Promise<number> {
     try {
+      // First verify chat session ownership
+      const chatSession = await this.prisma.chatSession.findUnique({
+        where: { id: chatSessionId },
+        select: { id: true, userId: true },
+      });
+
+      if (!chatSession) {
+        throw new NotFoundException(`Chat session with ID ${chatSessionId} not found`);
+      }
+
+      if (chatSession.userId !== userId) {
+        throw new ForbiddenException(`You don't have access to this chat session`);
+      }
+
       const result = await this.prisma.message.deleteMany({
         where: { chatSessionId },
       });

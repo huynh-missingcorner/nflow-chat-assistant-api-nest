@@ -43,7 +43,7 @@ export class NFlowObjectService extends BaseNFlowService {
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { name, ...rest } = data; // name is not used
-    return this.makeRequest('POST', '/mo', rest);
+    return this.makeRequest('POST', '/mo', rest, {}, userId);
   }
 
   async getFieldsForObject(name: string, userId: string): Promise<FieldResponse[]> {

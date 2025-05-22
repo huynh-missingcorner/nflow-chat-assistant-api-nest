@@ -18,6 +18,7 @@ import { AuthStatusResponseDto, TokenResponseDto } from '../dto/auth-response.dt
 import { ConfigService } from '@nestjs/config';
 import { EnvConfig } from '@/config/env/env.config';
 import { KeycloakUserInfo } from '../types/keycloak';
+import { RedisSessionService } from 'src/shared/services/redis-session.service';
 
 @ApiTags('Authentication')
 @Controller('auth/keycloak')
@@ -27,6 +28,7 @@ export class KeycloakController {
   constructor(
     private readonly keycloakService: KeycloakService,
     private readonly configService: ConfigService<EnvConfig>,
+    private readonly redisSessionService: RedisSessionService,
   ) {}
 
   @Get('login')
@@ -99,6 +101,16 @@ export class KeycloakController {
       session.userId = userInfo.sub;
       session.userInfo = userInfo;
 
+      // Map userId to sessionId in Redis for later retrieval
+      if (session.userId && session.id) {
+        await this.redisSessionService.mapUserToSession(session.userId, session.id);
+        this.logger.debug(`Mapped user ${session.userId} to session ${session.id}`);
+      } else {
+        this.logger.warn(
+          `Unable to map user to session - userId: ${session.userId}, sessionId: ${session.id}`,
+        );
+      }
+
       delete session.state;
 
       const frontendUrl = this.configService.get<string>('FRONTEND_URL');
@@ -154,6 +166,12 @@ export class KeycloakController {
       session.userId = userInfo.sub || userId;
       session.userInfo = userInfo || prevUserInfo;
 
+      // Ensure userId to sessionId mapping is still valid
+      if (session.userId && session.id) {
+        await this.redisSessionService.mapUserToSession(session.userId, session.id);
+        this.logger.debug(`Updated user-session mapping for user ${session.userId}`);
+      }
+
       return {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
@@ -190,6 +208,18 @@ export class KeycloakController {
     try {
       if (session.idToken) {
         const logoutUrl = this.keycloakService.getLogoutUrl(session.idToken, redirectUri);
+
+        // Remove userId to sessionId mapping on logout
+        if (session.userId) {
+          // No need to await since we don't want to block the logout
+          this.redisSessionService.mapUserToSession(session.userId, '').catch((error) => {
+            this.logger.error(
+              `Failed to remove user-session mapping for user ${session.userId}`,
+              error,
+            );
+          });
+        }
+
         session.accessToken = undefined;
         session.refreshToken = undefined;
         session.idToken = undefined;
@@ -197,6 +227,17 @@ export class KeycloakController {
         session.userInfo = undefined;
         res.redirect(logoutUrl);
       } else {
+        // Remove userId to sessionId mapping on logout
+        if (session.userId) {
+          // No need to await since we don't want to block the logout
+          this.redisSessionService.mapUserToSession(session.userId, '').catch((error) => {
+            this.logger.error(
+              `Failed to remove user-session mapping for user ${session.userId}`,
+              error,
+            );
+          });
+        }
+
         session.accessToken = undefined;
         session.refreshToken = undefined;
         session.idToken = undefined;

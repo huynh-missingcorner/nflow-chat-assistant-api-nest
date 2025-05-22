@@ -8,6 +8,7 @@ export interface SessionData extends Session {
   state?: string;
   userId?: string;
   userInfo?: KeycloakUserInfo;
+  id: string; // Session ID used for storage and retrieval
 }
 
 export interface UserInfo {

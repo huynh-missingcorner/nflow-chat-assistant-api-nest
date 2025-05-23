@@ -35,7 +35,7 @@ export class RedisSessionService {
       cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        maxAge: 0.5 * 60 * 60 * 1000, // 30 minutes
+        maxAge: 0.5 * 60 * 60 * 1000, // 30 minutes in milliseconds
         sameSite: 'lax',
       },
     };
@@ -69,7 +69,11 @@ export class RedisSessionService {
    */
   public async mapUserToSession(userId: string, sessionId: string): Promise<void> {
     try {
-      await this.redisService.set(`${this.USER_SESSION_MAP_PREFIX}${userId}`, sessionId);
+      await this.redisService.set(
+        `${this.USER_SESSION_MAP_PREFIX}${userId}`,
+        sessionId,
+        0.5 * 60 * 60, // 30 minutes in seconds
+      );
       this.logger.debug(`Mapped user ${userId} to session ${sessionId}`);
     } catch (error: unknown) {
       this.logger.error(`Failed to map user ${userId} to session ${sessionId}`, error);

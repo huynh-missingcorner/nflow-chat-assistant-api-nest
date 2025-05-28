@@ -36,6 +36,12 @@
     "lint-staged": "lint-staged"
   },
   "dependencies": {
+    "@langchain/community": "^0.3.44",
+    "@langchain/core": "^0.3.57",
+    "@langchain/langgraph": "^0.2.73",
+    "@langchain/langgraph-supervisor": "^0.0.12",
+    "@langchain/langgraph-swarm": "^0.0.3",
+    "@langchain/openai": "^0.5.11",
     "@nestjs/axios": "^4.0.0",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.12",
@@ -61,6 +67,7 @@
     "connect-redis": "^8.1.0",
     "express-session": "^1.18.1",
     "ioredis": "^5.6.1",
+    "langchain": "^0.3.27",
     "openai": "^4.91.1",
     "openapi-to-functions": "^0.0.11",
     "openid-client": "^6.5.0",

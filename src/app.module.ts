@@ -1,3 +1,4 @@
+import { LangchainModule } from './shared/infrastructure/langchain/langchain.module';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { InfrastructureModule } from './shared/infrastructure/infrastructure.module';
@@ -13,6 +14,7 @@ import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
+    LangchainModule,
     ConfigModule,
     EventEmitterModule.forRoot(),
     InfrastructureModule,

@@ -1,20 +1,22 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { IntentAgentService } from '../intent-agent/intent-agent.service';
-import { ExecutorAgentService } from '../executor-agent/executor-agent.service';
-import prompts from './consts/prompts';
-import { CoordinatorAgentInput, CoordinatorAgentOutput } from './types';
-import { BaseAgentService } from '../base-agent.service';
-import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { TaskExecutorService } from './services/task-executor.service';
-import { ChatContextService } from './services/chat-context.service';
-import { IntentTask } from '../intent-agent/types/intent.types';
-import { ClassifierAgentService } from '../classifier-agent/classifier-agent.service';
-import { MessageType } from '../classifier-agent/types/classifier.types';
+import { ContextLoaderService } from 'src/shared/services/context-loader.service';
+
 import { MEMORY_SERVICE } from '@/modules/memory/const';
 import { IMemoryService } from '@/modules/memory/interfaces';
-import { PrismaService } from '@/shared/infrastructure/prisma/prisma.service';
 import { OpenAIService } from '@/shared/infrastructure/openai/openai.service';
+import { PrismaService } from '@/shared/infrastructure/prisma/prisma.service';
+
+import { BaseAgentService } from '../base-agent.service';
+import { ClassifierAgentService } from '../classifier-agent/classifier-agent.service';
+import { MessageType } from '../classifier-agent/types/classifier.types';
+import { ExecutorAgentService } from '../executor-agent/executor-agent.service';
+import { IntentAgentService } from '../intent-agent/intent-agent.service';
+import { IntentTask } from '../intent-agent/types/intent.types';
+import prompts from './consts/prompts';
+import { ChatContextService } from './services/chat-context.service';
+import { TaskExecutorService } from './services/task-executor.service';
+import { CoordinatorAgentInput, CoordinatorAgentOutput } from './types';
 
 @Injectable()
 export class CoordinatorAgentService extends BaseAgentService<

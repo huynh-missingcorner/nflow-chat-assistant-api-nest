@@ -1,5 +1,4 @@
-import { Agent } from '../../types';
-import { AGENT_LIST } from '../../types';
+import { Agent, AGENT_LIST } from '../../types';
 
 export type ActiveAgent = (typeof AGENT_LIST)[number];
 

@@ -1,15 +1,14 @@
-import { ChatMessage, ToolCall } from 'src/modules/agents/types';
 import { ExecutionResult } from 'src/modules/agents/executor-agent/types/executor.types';
-import { HITLRequest } from 'src/modules/agents/types';
 import { IntentPlan } from 'src/modules/agents/intent-agent/types/intent.types';
+import { ChatMessage, HITLRequest, ToolCall } from 'src/modules/agents/types';
 import {
   BasicProfileResponse,
   DataTypeResponse,
   FieldAttributes,
   NameDisplayName,
+  ObjectRecordName,
   TagResponse,
 } from 'src/modules/nflow/types';
-import { ObjectRecordName } from 'src/modules/nflow/types';
 
 export interface ShortTermMemory {
   chatSessionId: string;

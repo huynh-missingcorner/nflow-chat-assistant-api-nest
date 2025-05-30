@@ -1,13 +1,14 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { ChatService } from './services/chat.service';
-import { ChatGateway } from './chat.gateway';
-import { ChatMessageService } from './services/chat-message.service';
-import { CoordinatorAgentModule } from '../agents/coordinator-agent/coordinator-agent.module';
-import { ChatMessageController } from './controllers/chat-message.controller';
-import { ChatController } from './controllers/chat.controller';
-import { ChatWebsocketService } from './services/chat-websocket.service';
+import { forwardRef, Module } from '@nestjs/common';
 import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
+
+import { CoordinatorAgentModule } from '../agents/coordinator-agent/coordinator-agent.module';
 import { AuthModule } from '../auth/auth.module';
+import { ChatGateway } from './chat.gateway';
+import { ChatController } from './controllers/chat.controller';
+import { ChatMessageController } from './controllers/chat-message.controller';
+import { ChatService } from './services/chat.service';
+import { ChatMessageService } from './services/chat-message.service';
+import { ChatWebsocketService } from './services/chat-websocket.service';
 
 @Module({
   imports: [forwardRef(() => CoordinatorAgentModule), OpenAIModule, AuthModule],

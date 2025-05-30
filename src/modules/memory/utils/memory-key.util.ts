@@ -1,4 +1,4 @@
-import { ShortTermMemory, CreatedObject, Field } from '../types';
+import { CreatedObject, Field, ShortTermMemory } from '../types';
 
 export const REDIS_PREFIX = 'memory:chat-session:';
 export const SESSION_TTL = 60 * 60 * 24 * 7; // 1 week in seconds

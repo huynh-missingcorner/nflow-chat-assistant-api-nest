@@ -1,12 +1,13 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Role } from '@prisma/client';
+
 import { PrismaService } from '../../../shared/infrastructure/prisma/prisma.service';
 import {
   CreateMessageDto,
   MessageResponseDto,
-  UpdateMessageDto,
   MessageRole,
+  UpdateMessageDto,
 } from '../dto/chat-message.dto';
-import { Role } from '@prisma/client';
 
 @Injectable()
 export class ChatMessageService {

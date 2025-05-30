@@ -1,9 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-custom';
 import { Request } from 'express';
-import { SessionData } from '../types/session';
+import { Strategy } from 'passport-custom';
+
 import { TokenValidationService } from '../services/token-validation.service';
+import { SessionData } from '../types/session';
 
 @Injectable()
 export class KeycloakStrategy extends PassportStrategy(Strategy, 'keycloak') {

@@ -1,21 +1,23 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
+  Post,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+
+import { NflowAuthGuard } from '@/modules/auth/guards/nflow-auth.guard';
+import { AuthenticatedUser } from '@/shared/decorators/user.decorator';
+
 import { ChatSessionService } from './chat-session.service';
 import { CreateChatSessionDto } from './dto/create-chat-session.dto';
 import { UpdateChatSessionDto } from './dto/update-chat-session.dto';
-import { NflowAuthGuard } from '@/modules/auth/guards/nflow-auth.guard';
-import { AuthenticatedUser } from '@/shared/decorators/user.decorator';
 
 @ApiTags('Chat Sessions')
 @Controller('chat-sessions')

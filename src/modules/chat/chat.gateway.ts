@@ -1,27 +1,28 @@
+import { Logger, UseGuards } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import {
-  WebSocketGateway,
-  WebSocketServer,
-  SubscribeMessage,
+  ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
   OnGatewayInit,
-  ConnectedSocket,
-  MessageBody,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger, UseGuards } from '@nestjs/common';
-import { ChatWebsocketService } from './services/chat-websocket.service';
-import { ChatMessageService } from './services/chat-message.service';
+
+import { WsKeycloakAuthGuard } from '../auth/guards/ws-keycloak-auth.guard';
 import { MessageRole } from './dto/chat-message.dto';
-import { OnEvent } from '@nestjs/event-emitter';
 import {
   WebSocketChatMessageDto,
+  WebSocketErrorDto,
   WebSocketMessageAckDto,
   WebSocketSessionJoinDto,
-  WebSocketErrorDto,
   WebSocketSessionTitleUpdatedDto,
 } from './dto/websocket.dto';
-import { WsKeycloakAuthGuard } from '../auth/guards/ws-keycloak-auth.guard';
+import { ChatMessageService } from './services/chat-message.service';
+import { ChatWebsocketService } from './services/chat-websocket.service';
 
 // Define interface for socket data with user info
 interface SocketWithAuth extends Socket {

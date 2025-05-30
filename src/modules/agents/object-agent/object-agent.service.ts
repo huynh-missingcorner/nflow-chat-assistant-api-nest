@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
+import { ShortTermMemory } from 'src/modules/memory/types';
+import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
-import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { ObjectAgentInput, ObjectSchema } from './types/object.types';
-import { ObjectErrors, ObjectPrompts } from './constants/object.constants';
-import { changeFieldTool, changeObjectTool, schemaDesignerTool } from './tools/object-tools';
-import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
+
 import { BaseAgentService } from '../base-agent.service';
 import { AgentInput, AgentOutput, ChatMessage, ToolCall } from '../types';
-import { ShortTermMemory } from 'src/modules/memory/types';
+import { ObjectErrors, ObjectPrompts } from './constants/object.constants';
+import { changeFieldTool, changeObjectTool, schemaDesignerTool } from './tools/object-tools';
+import { ObjectAgentInput, ObjectSchema } from './types/object.types';
 
 @Injectable()
 export class ObjectAgentService extends BaseAgentService<

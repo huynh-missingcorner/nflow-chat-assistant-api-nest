@@ -1,24 +1,26 @@
 import {
   Controller,
   Get,
+  HttpStatus,
+  Logger,
   Post,
   Query,
-  Session,
   Res,
+  Session,
   UnauthorizedException,
-  Logger,
-  HttpStatus,
 } from '@nestjs/common';
-import { Response } from 'express';
-import { randomBytes } from 'crypto';
-import { KeycloakService } from '../services/keycloak.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { SessionData } from '../types/session';
-import { AuthStatusResponseDto, TokenResponseDto } from '../dto/auth-response.dto';
 import { ConfigService } from '@nestjs/config';
-import { EnvConfig } from '@/config/env/env.config';
-import { KeycloakUserInfo } from '../types/keycloak';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { randomBytes } from 'crypto';
+import { Response } from 'express';
 import { RedisSessionService } from 'src/shared/services/redis-session.service';
+
+import { EnvConfig } from '@/config/env/env.config';
+
+import { AuthStatusResponseDto, TokenResponseDto } from '../dto/auth-response.dto';
+import { KeycloakService } from '../services/keycloak.service';
+import { KeycloakUserInfo } from '../types/keycloak';
+import { SessionData } from '../types/session';
 
 @ApiTags('Authentication')
 @Controller('auth/keycloak')

@@ -1,14 +1,15 @@
+import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
+import { firstValueFrom } from 'rxjs';
+
 import { EnvConfig } from '../../../config/env/env.config';
 import {
-  KeycloakTokenResponse,
-  TokenInfo,
   KeycloakErrorResponse,
+  KeycloakTokenResponse,
   KeycloakUserInfo,
+  TokenInfo,
 } from '../types/keycloak';
 
 @Injectable()

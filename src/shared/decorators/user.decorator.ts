@@ -1,6 +1,7 @@
 import { createParamDecorator, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { SessionData } from '@/modules/auth/types/session';
 import { Request } from 'express';
+
+import { SessionData } from '@/modules/auth/types/session';
 
 export const AuthenticatedUser = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
   const request = ctx.switchToHttp().getRequest<Request>();

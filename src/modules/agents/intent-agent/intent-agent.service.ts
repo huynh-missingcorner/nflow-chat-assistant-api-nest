@@ -1,15 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import { IntentAgentInput, IntentPlan, IntentToolResponse } from './types/intent.types';
-import { IntentErrors } from './constants/intent.constants';
-import { ContextLoaderService } from 'src/shared/services/context-loader.service';
-import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { tools as intentTools } from './tools/intent-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
-import { BaseAgentService } from '../base-agent.service';
 import { ShortTermMemory } from 'src/modules/memory/types';
+import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
+import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
+import { ContextLoaderService } from 'src/shared/services/context-loader.service';
+
 import { MEMORY_SERVICE } from '@/modules/memory/const';
 import { IMemoryService } from '@/modules/memory/interfaces';
+
+import { BaseAgentService } from '../base-agent.service';
+import { IntentErrors } from './constants/intent.constants';
+import { tools as intentTools } from './tools/intent-tools';
+import { IntentAgentInput, IntentPlan, IntentToolResponse } from './types/intent.types';
 
 @Injectable()
 export class IntentAgentService extends BaseAgentService<IntentAgentInput, IntentPlan> {

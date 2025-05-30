@@ -1,10 +1,11 @@
-import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AppModule } from './app.module';
-import validationConfig from './config/validation/validation.config';
 import { Request, Response } from 'express';
 import session from 'express-session';
+
+import { AppModule } from './app.module';
+import validationConfig from './config/validation/validation.config';
 import { RedisSessionService } from './shared/services/redis-session.service';
 import { SessionIoAdapter, SessionMiddleware } from './shared/socket/session-io.adapter';
 

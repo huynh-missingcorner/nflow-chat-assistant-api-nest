@@ -1,6 +1,7 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { AmqpConnectionManager, ChannelWrapper, connect } from 'amqp-connection-manager';
 import * as amqp from 'amqplib';
-import { connect, AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
+
 import { RABBITMQ_EXCHANGES, RABBITMQ_QUEUES, ROUTING_KEYS } from './rabbitmq.config';
 
 @Injectable()

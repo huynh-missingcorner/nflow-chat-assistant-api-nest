@@ -1,20 +1,22 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ApplicationAgentService } from '../../application-agent/application-agent.service';
-import { ObjectAgentService } from '../../object-agent/object-agent.service';
-import { LayoutAgentService } from '../../layout-agent/layout-agent.service';
-import { FlowAgentService } from '../../flow-agent/flow-agent.service';
-import { IntentTask } from '../../intent-agent/types/intent.types';
-import { ApplicationAgentInput } from '../../application-agent/types/application.types';
-import { ObjectAgentInput } from '../../object-agent/types/object.types';
-import { LayoutAgentInput } from '../../layout-agent/types/layout.types';
-import { FlowAgentInput } from '../../flow-agent/types/flow.types';
-import { BaseAgentResponse } from '../types';
-import { ActiveAgent, AgentStatus, DEFAULT_AGENT_STATUS } from '../consts';
-import { ProcessedTasks } from '../../executor-agent/types/executor.types';
+
 import { MEMORY_SERVICE } from '@/modules/memory/const';
-import { Agent, AgentOutput, HITLRequest } from '../../types';
-import { ShortTermMemory } from '@/modules/memory/types';
 import { IMemoryService } from '@/modules/memory/interfaces';
+import { ShortTermMemory } from '@/modules/memory/types';
+
+import { ApplicationAgentService } from '../../application-agent/application-agent.service';
+import { ApplicationAgentInput } from '../../application-agent/types/application.types';
+import { ProcessedTasks } from '../../executor-agent/types/executor.types';
+import { FlowAgentService } from '../../flow-agent/flow-agent.service';
+import { FlowAgentInput } from '../../flow-agent/types/flow.types';
+import { IntentTask } from '../../intent-agent/types/intent.types';
+import { LayoutAgentService } from '../../layout-agent/layout-agent.service';
+import { LayoutAgentInput } from '../../layout-agent/types/layout.types';
+import { ObjectAgentService } from '../../object-agent/object-agent.service';
+import { ObjectAgentInput } from '../../object-agent/types/object.types';
+import { Agent, AgentOutput, HITLRequest } from '../../types';
+import { ActiveAgent, AgentStatus, DEFAULT_AGENT_STATUS } from '../consts';
+import { BaseAgentResponse } from '../types';
 
 @Injectable()
 export class TaskExecutorService {

@@ -1,7 +1,7 @@
+import { Request } from 'express';
 import { IncomingMessage } from 'http';
 import { Socket } from 'socket.io';
 import { SessionData } from 'src/modules/auth/types/session';
-import { Request } from 'express';
 
 /**
  * Extends the HTTP IncomingMessage with session data

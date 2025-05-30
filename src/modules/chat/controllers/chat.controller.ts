@@ -1,10 +1,12 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ChatService } from '../services/chat.service';
-import { ChatRequestDto } from '../dto/chat-request.dto';
-import { ChatResponseDto } from '../dto/chat-response.dto';
+
 import { NflowAuthGuard } from '@/modules/auth/guards/nflow-auth.guard';
 import { AuthenticatedUser } from '@/shared/decorators/user.decorator';
+
+import { ChatRequestDto } from '../dto/chat-request.dto';
+import { ChatResponseDto } from '../dto/chat-response.dto';
+import { ChatService } from '../services/chat.service';
 
 @ApiTags('Chat')
 @Controller('chat')

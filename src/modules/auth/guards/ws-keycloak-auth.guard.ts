@@ -1,7 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
-import { TokenValidationService } from '../services/token-validation.service';
 import { SessionSocket } from 'src/shared/socket/types';
+
+import { TokenValidationService } from '../services/token-validation.service';
 
 @Injectable()
 export class WsKeycloakAuthGuard implements CanActivate {

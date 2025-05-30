@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import { classifyMessageTool } from './tools/classifier-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
+import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
+
 import { ChatMessage } from '../types';
 import { CLASSIFIER_ERRORS, CLASSIFIER_PROMPTS } from './constants/classifier.constants';
+import { classifyMessageTool } from './tools/classifier-tools';
 import { ClassificationResult, MessageType } from './types/classifier.types';
 
 @Injectable()

@@ -1,4 +1,5 @@
 import 'express-session';
+
 import { UserInfo } from '../modules/auth/types/session';
 
 declare module 'express-session' {

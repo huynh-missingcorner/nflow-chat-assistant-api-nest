@@ -1,3 +1,7 @@
 {
-  "cSpell.words": ["HITL", "Nflow"]
+  "cSpell.words": ["HITL", "Nflow"],
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true,
+    "source.fixAll.eslint": true
+  }
 }

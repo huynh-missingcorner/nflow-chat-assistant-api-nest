@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
-import { envSchema } from './env/env.config';
-import env from './env/env.config';
-import database from './database/database.config';
-import validation from './validation/validation.config';
 import { ZodError } from 'zod';
+
+import database from './database/database.config';
+import env, { envSchema } from './env/env.config';
+import validation from './validation/validation.config';
 
 @Module({
   imports: [

@@ -1,11 +1,12 @@
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
-  UnauthorizedException,
+  Injectable,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
+
 import { SessionData } from '../types/session';
 
 @Injectable()

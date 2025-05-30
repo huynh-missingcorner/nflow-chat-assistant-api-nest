@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
+import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
-import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { LayoutAgentInput } from './types/layout.types';
-import { LayoutErrors } from './constants/layout.constants';
-import { tools as layoutTools } from './tools/layout-tools';
-import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
+
 import { BaseAgentService } from '../base-agent.service';
 import { AgentInput, AgentOutput, ToolCall } from '../types';
+import { LayoutErrors } from './constants/layout.constants';
+import { tools as layoutTools } from './tools/layout-tools';
+import { LayoutAgentInput } from './types/layout.types';
 
 @Injectable()
 export class LayoutAgentService extends BaseAgentService<

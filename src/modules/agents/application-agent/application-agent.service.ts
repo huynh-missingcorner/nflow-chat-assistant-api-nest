@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
+import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
-import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { ApplicationAgentInput } from './types/application.types';
-import { ApplicationErrors } from './constants/application.constants';
-import { createNewApplicationTool, updateApplicationTool } from './tools/application-tools';
-import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
+
 import { BaseAgentService } from '../base-agent.service';
 import { AgentInput, AgentOutput, ToolCall } from '../types';
+import { ApplicationErrors } from './constants/application.constants';
+import { createNewApplicationTool, updateApplicationTool } from './tools/application-tools';
+import { ApplicationAgentInput } from './types/application.types';
 
 @Injectable()
 export class ApplicationAgentService extends BaseAgentService<

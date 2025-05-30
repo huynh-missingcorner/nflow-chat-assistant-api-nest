@@ -1,17 +1,18 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { CreatedObject, Field, ShortTermMemory } from './types';
+import merge from 'lodash.merge';
+
+import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service';
+import { RedisService } from '../../shared/infrastructure/redis/redis.service';
 import { ChatContextService } from '../agents/coordinator-agent/services/chat-context.service';
 import { ExecutionResult } from '../agents/executor-agent/types/executor.types';
-import { RedisService } from '../../shared/infrastructure/redis/redis.service';
-import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service';
-import merge from 'lodash.merge';
 import { IMemoryService } from './interfaces';
+import { CreatedObject, Field, ShortTermMemory } from './types';
 import {
-  getRedisKey,
-  findObjectByName,
-  findFieldByName,
-  getCreatedApplications,
   createInitialContext,
+  findFieldByName,
+  findObjectByName,
+  getCreatedApplications,
+  getRedisKey,
   SESSION_TTL,
 } from './utils';
 

@@ -1,5 +1,6 @@
-import { ShortTermMemory, CreatedObject, Field } from '../types';
 import { ExecutionResult } from '@/modules/agents/executor-agent/types/executor.types';
+
+import { CreatedObject, Field, ShortTermMemory } from '../types';
 
 export interface IMemoryService {
   // Context Management

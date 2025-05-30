@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BaseNFlowService } from './base.service';
-import { FieldDto, FieldResponse, ObjectResponse } from '../types';
-import { ObjectDto } from '../types';
-import { RedisSessionService } from 'src/shared/services/redis-session.service';
 import { KeycloakService } from 'src/modules/auth/services/keycloak.service';
+import { RedisSessionService } from 'src/shared/services/redis-session.service';
+
+import { FieldDto, FieldResponse, ObjectDto, ObjectResponse } from '../types';
+import { BaseNFlowService } from './base.service';
 
 @Injectable()
 export class NFlowObjectService extends BaseNFlowService {

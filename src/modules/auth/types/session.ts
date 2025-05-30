@@ -1,4 +1,5 @@
 import { Session } from 'express-session';
+
 import { KeycloakUserInfo } from './keycloak';
 
 export interface SessionData extends Session {

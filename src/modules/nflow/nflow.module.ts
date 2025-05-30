@@ -1,12 +1,13 @@
-import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { NFlowObjectService } from './services/object.service';
+import { AuthModule } from 'src/modules/auth/auth.module';
+import { SharedModule } from 'src/shared/shared.module';
+
 import { NFlowApplicationService } from './services/application.service';
 import { NFlowFlowService } from './services/flow.service';
 import { NFlowLayoutService } from './services/layout.service';
-import { SharedModule } from 'src/shared/shared.module';
-import { AuthModule } from 'src/modules/auth/auth.module';
+import { NFlowObjectService } from './services/object.service';
 
 @Module({
   imports: [

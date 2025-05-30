@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+
 import { KeycloakUserInfo } from '../types/keycloak';
 
 export class TokenResponseDto {

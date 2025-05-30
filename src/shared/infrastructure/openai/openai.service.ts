@@ -1,16 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import OpenAI from 'openai';
-import { OpenAIConfig, createOpenAIConfig } from './openai.config';
-import {
-  OpenAIError,
-  ChatCompletionResponse,
-  ChatCompletionError,
-  ResponseCreateOptions,
-  ChatMessage,
-  OpenAIResponseWithRequestId,
-  FunctionCallInputs,
-  ToolCallContent,
-} from './openai.types';
 import {
   ResponseCreateParamsNonStreaming,
   ResponseOutputMessage,
@@ -19,6 +8,18 @@ import {
   ToolChoiceOptions,
   ToolChoiceTypes,
 } from 'openai/resources/responses/responses.mjs';
+
+import { createOpenAIConfig, OpenAIConfig } from './openai.config';
+import {
+  ChatCompletionError,
+  ChatCompletionResponse,
+  ChatMessage,
+  FunctionCallInputs,
+  OpenAIError,
+  OpenAIResponseWithRequestId,
+  ResponseCreateOptions,
+  ToolCallContent,
+} from './openai.types';
 
 @Injectable()
 export class OpenAIService implements OnModuleInit {

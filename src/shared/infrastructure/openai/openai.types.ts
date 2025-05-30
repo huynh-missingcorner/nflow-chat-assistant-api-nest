@@ -1,9 +1,9 @@
 import {
+  Response as OpenAIResponse,
   ResponseCreateParams,
   ResponseFunctionToolCall,
   ResponseInputItem,
 } from 'openai/resources/responses/responses.mjs';
-import { Response as OpenAIResponse } from 'openai/resources/responses/responses.mjs';
 
 export interface OpenAIError extends Error {
   response?: {

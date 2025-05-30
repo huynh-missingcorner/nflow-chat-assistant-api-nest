@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
+import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { ContextLoaderService } from 'src/shared/services/context-loader.service';
-import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { FlowAgentInput } from './types/flow.types';
-import { FlowErrors } from './constants/flow.constants';
-import { createFlowTool } from './tools/flow-tools';
-import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
+
 import { BaseAgentService } from '../base-agent.service';
 import { AgentInput, AgentOutput, ToolCall } from '../types';
+import { FlowErrors } from './constants/flow.constants';
+import { createFlowTool } from './tools/flow-tools';
+import { FlowAgentInput } from './types/flow.types';
 
 @Injectable()
 export class FlowAgentService extends BaseAgentService<AgentInput<FlowAgentInput>, AgentOutput> {

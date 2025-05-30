@@ -1,17 +1,18 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { CoordinatorAgentService } from './coordinator-agent.service';
-import { IntentAgentModule } from '../intent-agent/intent-agent.module';
-import { ApplicationAgentModule } from '../application-agent/application-agent.module';
-import { ObjectAgentModule } from '../object-agent/object-agent.module';
-import { LayoutAgentModule } from '../layout-agent/layout-agent.module';
-import { FlowAgentModule } from '../flow-agent/flow-agent.module';
-import { ExecutorAgentModule } from '../executor-agent/executor-agent.module';
 import { ChatModule } from 'src/modules/chat/chat.module';
-import { TaskExecutorService } from './services/task-executor.service';
-import { ChatContextService } from './services/chat-context.service';
 import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
+
 import { MemoryModule } from '../../memory/memory.module';
+import { ApplicationAgentModule } from '../application-agent/application-agent.module';
 import { ClassifierAgentModule } from '../classifier-agent/classifier-agent.module';
+import { ExecutorAgentModule } from '../executor-agent/executor-agent.module';
+import { FlowAgentModule } from '../flow-agent/flow-agent.module';
+import { IntentAgentModule } from '../intent-agent/intent-agent.module';
+import { LayoutAgentModule } from '../layout-agent/layout-agent.module';
+import { ObjectAgentModule } from '../object-agent/object-agent.module';
+import { CoordinatorAgentService } from './coordinator-agent.service';
+import { ChatContextService } from './services/chat-context.service';
+import { TaskExecutorService } from './services/task-executor.service';
 
 @Module({
   imports: [

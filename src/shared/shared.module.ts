@@ -1,4 +1,5 @@
-import { Module, Global } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
+
 import { ContextLoaderService } from './services/context-loader.service';
 import { RedisSessionService } from './services/redis-session.service';
 

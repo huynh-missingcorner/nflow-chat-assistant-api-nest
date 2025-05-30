@@ -1,5 +1,4 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { IntentAgentService } from '../intent-agent/intent-agent.service';
 import { ExecutorAgentService } from '../executor-agent/executor-agent.service';
 import prompts from './consts/prompts';
@@ -15,6 +14,7 @@ import { MessageType } from '../classifier-agent/types/classifier.types';
 import { MEMORY_SERVICE } from '@/modules/memory/const';
 import { IMemoryService } from '@/modules/memory/interfaces';
 import { PrismaService } from '@/shared/infrastructure/prisma/prisma.service';
+import { OpenAIService } from '@/shared/infrastructure/openai/openai.service';
 
 @Injectable()
 export class CoordinatorAgentService extends BaseAgentService<

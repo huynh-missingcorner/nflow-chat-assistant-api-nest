@@ -13,7 +13,7 @@ import {
   getCreatedApplications,
   createInitialContext,
   SESSION_TTL,
-} from './utils/memory-key.util';
+} from './utils';
 
 @Injectable()
 export class MemoryService implements IMemoryService {

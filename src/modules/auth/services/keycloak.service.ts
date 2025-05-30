@@ -4,7 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
 
-import { EnvConfig } from '../../../config/env/env.config';
+import { EnvConfig } from '@/config/env/env.config';
+
 import {
   KeycloakErrorResponse,
   KeycloakTokenResponse,

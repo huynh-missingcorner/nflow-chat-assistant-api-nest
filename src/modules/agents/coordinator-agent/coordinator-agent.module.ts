@@ -1,8 +1,9 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { ChatModule } from 'src/modules/chat/chat.module';
-import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
 
-import { MemoryModule } from '../../memory/memory.module';
+import { ChatModule } from '@/modules/chat/chat.module';
+import { MemoryModule } from '@/modules/memory/memory.module';
+import { OpenAIModule } from '@/shared/infrastructure/openai/openai.module';
+
 import { ApplicationAgentModule } from '../application-agent/application-agent.module';
 import { ClassifierAgentModule } from '../classifier-agent/classifier-agent.module';
 import { ExecutorAgentModule } from '../executor-agent/executor-agent.module';

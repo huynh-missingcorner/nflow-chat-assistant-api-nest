@@ -1,4 +1,4 @@
-import { AgentOutput, HITLRequest } from '../../types';
+import { AgentOutput, HITLRequest } from '@/modules/agents/types';
 
 export interface ExecutionResult {
   id: string;

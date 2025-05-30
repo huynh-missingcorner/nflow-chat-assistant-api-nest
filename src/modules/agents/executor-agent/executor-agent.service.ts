@@ -8,7 +8,8 @@ import {
   FlowCreateDto,
   ObjectDto,
   UpdateApplicationDto,
-} from '../../nflow/types';
+} from '@/modules/nflow/types';
+
 import { AgentOutput } from '../types';
 import { AppExecutorService } from './services/app-executor.service';
 import { FlowExecutorService } from './services/flow-executor.service';

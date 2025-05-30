@@ -1,7 +1,8 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 
-import { PrismaService } from '../../../shared/infrastructure/prisma/prisma.service';
+import { PrismaService } from '@/shared/infrastructure/prisma/prisma.service';
+
 import {
   CreateMessageDto,
   MessageResponseDto,

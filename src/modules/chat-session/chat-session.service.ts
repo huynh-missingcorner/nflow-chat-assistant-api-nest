@@ -6,7 +6,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 
-import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service';
+import { PrismaService } from '@/shared/infrastructure/prisma/prisma.service';
+
 import { CreateChatSessionDto } from './dto/create-chat-session.dto';
 import { UpdateChatSessionDto } from './dto/update-chat-session.dto';
 

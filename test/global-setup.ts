@@ -1,4 +1,5 @@
 import { execSync } from 'child_process';
+
 import { Client } from 'pg';
 
 const TEST_DB_URL = 'postgresql://testuser:testpass@localhost:5433/testdb?schema=public';

@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MessageRole } from 'src/modules/chat/dto/chat-message.dto';
-import { ChatMessageService } from 'src/modules/chat/services/chat-message.service';
 
-import { ChatMessage } from '../../types';
+import { ChatMessage } from '@/modules/agents/types';
+import { MessageRole } from '@/modules/chat/dto/chat-message.dto';
+import { ChatMessageService } from '@/modules/chat/services/chat-message.service';
 
 @Injectable()
 export class ChatContextService {

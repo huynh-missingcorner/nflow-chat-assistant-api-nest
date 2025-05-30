@@ -1,9 +1,10 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import { PrismaService } from 'src/shared/infrastructure/prisma/prisma.service';
 
-import { CoordinatorAgentService } from '../../agents/coordinator-agent/coordinator-agent.service';
+import { CoordinatorAgentService } from '@/modules/agents/coordinator-agent/coordinator-agent.service';
+import { OpenAIService } from '@/shared/infrastructure/openai/openai.service';
+import { PrismaService } from '@/shared/infrastructure/prisma/prisma.service';
+
 import { ChatRequestDto } from '../dto/chat-request.dto';
 import { ChatResponseDto } from '../dto/chat-response.dto';
 

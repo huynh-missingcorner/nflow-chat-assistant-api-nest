@@ -1,3 +1,5 @@
+import { randomBytes } from 'crypto';
+
 import {
   Controller,
   Get,
@@ -11,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { randomBytes } from 'crypto';
 import { Response } from 'express';
 import { RedisSessionService } from 'src/shared/services/redis-session.service';
 

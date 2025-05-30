@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
-import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import { ContextFile, ContextLoaderService } from 'src/shared/services/context-loader.service';
+
+import { OpenAIService } from '@/shared/infrastructure/openai/openai.service';
+import { ContextFile, ContextLoaderService } from '@/shared/services/context-loader.service';
 
 import { IntentErrors } from './intent-agent/constants/intent.constants';
 

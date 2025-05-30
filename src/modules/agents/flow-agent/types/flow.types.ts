@@ -1,4 +1,4 @@
-import { AgentAction, AgentType } from '../../types';
+import { AgentAction, AgentType } from '@/modules/agents/types';
 
 export interface FlowAgentInput {
   action: AgentAction;

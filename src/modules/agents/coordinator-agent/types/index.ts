@@ -1,4 +1,4 @@
-import { AgentOutput, HITLRequest, ToolCall } from '../../types';
+import { AgentOutput, HITLRequest, ToolCall } from '@/modules/agents/types';
 
 export interface BaseAgentResponse extends AgentOutput {
   toolCalls: ToolCall[];

@@ -1,20 +1,20 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { ApplicationAgentService } from '@/modules/agents/application-agent/application-agent.service';
+import { ApplicationAgentInput } from '@/modules/agents/application-agent/types/application.types';
+import { ProcessedTasks } from '@/modules/agents/executor-agent/types/executor.types';
+import { FlowAgentService } from '@/modules/agents/flow-agent/flow-agent.service';
+import { FlowAgentInput } from '@/modules/agents/flow-agent/types/flow.types';
+import { IntentTask } from '@/modules/agents/intent-agent/types/intent.types';
+import { LayoutAgentService } from '@/modules/agents/layout-agent/layout-agent.service';
+import { LayoutAgentInput } from '@/modules/agents/layout-agent/types/layout.types';
+import { ObjectAgentService } from '@/modules/agents/object-agent/object-agent.service';
+import { ObjectAgentInput } from '@/modules/agents/object-agent/types/object.types';
+import { Agent, AgentOutput, HITLRequest } from '@/modules/agents/types';
 import { MEMORY_SERVICE } from '@/modules/memory/const';
 import { IMemoryService } from '@/modules/memory/interfaces';
 import { ShortTermMemory } from '@/modules/memory/types';
 
-import { ApplicationAgentService } from '../../application-agent/application-agent.service';
-import { ApplicationAgentInput } from '../../application-agent/types/application.types';
-import { ProcessedTasks } from '../../executor-agent/types/executor.types';
-import { FlowAgentService } from '../../flow-agent/flow-agent.service';
-import { FlowAgentInput } from '../../flow-agent/types/flow.types';
-import { IntentTask } from '../../intent-agent/types/intent.types';
-import { LayoutAgentService } from '../../layout-agent/layout-agent.service';
-import { LayoutAgentInput } from '../../layout-agent/types/layout.types';
-import { ObjectAgentService } from '../../object-agent/object-agent.service';
-import { ObjectAgentInput } from '../../object-agent/types/object.types';
-import { Agent, AgentOutput, HITLRequest } from '../../types';
 import { ActiveAgent, AgentStatus, DEFAULT_AGENT_STATUS } from '../consts';
 import { BaseAgentResponse } from '../types';
 

@@ -3,7 +3,7 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 
-import { EnvConfig } from '../../../config/env/env.config';
+import { EnvConfig } from '@/config/env/env.config';
 
 interface TokenIntrospectionResponse {
   active: boolean;

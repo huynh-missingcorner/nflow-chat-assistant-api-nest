@@ -1,7 +1,7 @@
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { MemorySaver } from '@langchain/langgraph';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { OPENAI_GPT_4_1 } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 

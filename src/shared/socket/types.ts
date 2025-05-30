@@ -1,5 +1,6 @@
-import { Request } from 'express';
 import { IncomingMessage } from 'http';
+
+import { Request } from 'express';
 import { Socket } from 'socket.io';
 import { SessionData } from 'src/modules/auth/types/session';
 

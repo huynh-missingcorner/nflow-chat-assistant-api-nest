@@ -1,10 +1,14 @@
 // @ts-check
 import eslint from '@eslint/js';
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
-import globals from 'globals';
-import tseslint from 'typescript-eslint';
-import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import * as importPlugin from 'eslint-plugin-import';
+import * as importAliasPlugin from 'eslint-plugin-import-alias';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import globals from 'globals';
+import { builtinModules } from 'node:module';
+import tseslint from 'typescript-eslint';
+
+const nodeBuiltinRegex = `^(${builtinModules.join('|')})(/|$)`;
 
 export default tseslint.config(
   {
@@ -31,6 +35,13 @@ export default tseslint.config(
     plugins: {
       'simple-import-sort': simpleImportSort,
       import: importPlugin,
+      'import-alias': importAliasPlugin,
+    },
+    settings: {
+      'import-alias': {
+        map: [['@', 'src']],
+        extensions: ['.ts', '.tsx', '.js', '.jsx'],
+      },
     },
     rules: {
       '@typescript-eslint/interface-name-prefix': 'off',
@@ -43,20 +54,32 @@ export default tseslint.config(
         'error',
         {
           groups: [
-            // External packages
-            ['^@?\\w'],
-            // Internal aliases (e.g. @app/xyz or @/)
-            ['^@app/', '^@/'],
-            // Side effect imports (e.g. polyfills, CSS)
+            // Node.js builtins
+            ['^node:', nodeBuiltinRegex],
+            // External packages (NestJS, lodash, etc.)
+            ['^@nestjs/', '^@?\\w'],
+            // Your alias imports (e.g., @/...)
+            ['^@/'],
+            // Side effect imports
             ['^\\u0000'],
-            // Relative imports
+            // Relative imports (./ or ../)
             ['^\\.'],
           ],
         },
       ],
       'simple-import-sort/exports': 'error',
 
-      // Optional: clean import order and spacing
+      // 🚨 Convert long relative paths to @
+      'import-alias/import-alias': [
+        'error',
+        {
+          relativeDepth: 1,
+          alias: '@',
+          matchDepth: 1,
+        },
+      ],
+
+      // 🧹 Clean import rules
       'import/first': 'error',
       'import/newline-after-import': 'error',
       'import/no-duplicates': 'error',

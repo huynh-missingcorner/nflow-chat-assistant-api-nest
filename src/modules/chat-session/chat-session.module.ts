@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
-import { PrismaModule } from '../../shared/infrastructure/prisma/prisma.module';
+import { PrismaModule } from '@/shared/infrastructure/prisma/prisma.module';
+
 import { ChatSessionController } from './chat-session.controller';
 import { ChatSessionService } from './chat-session.service';
 

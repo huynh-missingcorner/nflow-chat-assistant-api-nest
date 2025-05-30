@@ -1,12 +1,11 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { tools as applicationTools } from './tools/application-tools';
-import { ApplicationAgentInput, ApplicationAgentOutput } from './types/application.types';
-import { ApplicationErrors } from './constants/application.constants';
-import { OPENAI_GPT_4_1 } from 'src/shared/infrastructure/langchain/models/openai/openai-models';
-import { applicationSystemPrompt } from './constants/prompts';
+import { ApplicationAgentInput, ApplicationAgentOutput } from './types';
+import { ApplicationErrors, applicationSystemPrompt } from './constants';
+import { OPENAI_GPT_4_1 } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import { MemorySaver } from '@langchain/langgraph';
+import { tools } from './tools';
 
 @Injectable()
 export class ApplicationAgentService implements OnModuleInit {
@@ -17,7 +16,7 @@ export class ApplicationAgentService implements OnModuleInit {
   onModuleInit() {
     this.agent = createReactAgent({
       llm: OPENAI_GPT_4_1,
-      tools: applicationTools,
+      tools,
       checkpointer: this.agentCheckpointer,
     });
   }

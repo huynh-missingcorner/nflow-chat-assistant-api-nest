@@ -5,7 +5,7 @@ import { ExecutionResult } from '../agents/executor-agent/types/executor.types';
 import { RedisService } from '../../shared/infrastructure/redis/redis.service';
 import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service';
 import merge from 'lodash.merge';
-import { IMemoryService } from './interfaces/memory-service.interface';
+import { IMemoryService } from './interfaces';
 import {
   getRedisKey,
   findObjectByName,

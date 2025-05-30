@@ -13,7 +13,7 @@ import { IntentTask } from '../intent-agent/types/intent.types';
 import { ClassifierAgentService } from '../classifier-agent/classifier-agent.service';
 import { MessageType } from '../classifier-agent/types/classifier.types';
 import { MEMORY_SERVICE } from '@/modules/memory/const';
-import { IMemoryService } from '@/modules/memory/interfaces/memory-service.interface';
+import { IMemoryService } from '@/modules/memory/interfaces';
 import { PrismaService } from '@/shared/infrastructure/prisma/prisma.service';
 
 @Injectable()

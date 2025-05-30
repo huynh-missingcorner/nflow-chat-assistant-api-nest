@@ -14,7 +14,7 @@ import { ProcessedTasks } from '../../executor-agent/types/executor.types';
 import { MEMORY_SERVICE } from '@/modules/memory/const';
 import { Agent, AgentOutput, HITLRequest } from '../../types';
 import { ShortTermMemory } from '@/modules/memory/types';
-import { IMemoryService } from '@/modules/memory/interfaces/memory-service.interface';
+import { IMemoryService } from '@/modules/memory/interfaces';
 
 @Injectable()
 export class TaskExecutorService {

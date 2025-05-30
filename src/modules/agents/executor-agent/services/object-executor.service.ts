@@ -5,7 +5,7 @@ import { ObjectResponse } from 'src/modules/nflow/types';
 import { BaseExecutorService } from './base-executor.service';
 import { ChatSessionService } from '@/modules/chat-session/chat-session.service';
 import { CreatedObject, Field, ShortTermMemory } from 'src/modules/memory/types';
-import { IMemoryService } from '@/modules/memory/interfaces/memory-service.interface';
+import { IMemoryService } from '@/modules/memory/interfaces';
 import { MEMORY_SERVICE } from '@/modules/memory/const';
 
 @Injectable()

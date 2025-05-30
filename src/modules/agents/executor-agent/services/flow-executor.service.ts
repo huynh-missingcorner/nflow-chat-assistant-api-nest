@@ -5,7 +5,7 @@ import { BaseExecutorService } from './base-executor.service';
 import { ChatSessionService } from '@/modules/chat-session/chat-session.service';
 import { ShortTermMemory } from 'src/modules/memory/types';
 import { MEMORY_SERVICE } from '@/modules/memory/const';
-import { IMemoryService } from '@/modules/memory/interfaces/memory-service.interface';
+import { IMemoryService } from '@/modules/memory/interfaces';
 
 @Injectable()
 export class FlowExecutorService extends BaseExecutorService {

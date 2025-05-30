@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ShortTermMemory } from 'src/modules/memory/types';
 import { ChatSessionService } from '@/modules/chat-session/chat-session.service';
-import { IMemoryService } from '@/modules/memory/interfaces/memory-service.interface';
+import { IMemoryService } from '@/modules/memory/interfaces';
 import { MEMORY_SERVICE } from '@/modules/memory/const';
 
 @Injectable()

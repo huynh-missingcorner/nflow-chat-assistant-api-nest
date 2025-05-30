@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
+
+import { OpenAIModule } from '@/shared/infrastructure/openai/openai.module';
 
 import { ClassifierAgentService } from './classifier-agent.service';
 

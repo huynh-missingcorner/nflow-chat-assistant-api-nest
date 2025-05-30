@@ -1,6 +1,6 @@
-import { ExecutionResult } from 'src/modules/agents/executor-agent/types/executor.types';
-import { IntentPlan } from 'src/modules/agents/intent-agent/types/intent.types';
-import { ChatMessage, HITLRequest, ToolCall } from 'src/modules/agents/types';
+import { ExecutionResult } from '@/modules/agents/executor-agent/types/executor.types';
+import { IntentPlan } from '@/modules/agents/intent-agent/types/intent.types';
+import { ChatMessage, HITLRequest, ToolCall } from '@/modules/agents/types';
 import {
   BasicProfileResponse,
   DataTypeResponse,
@@ -8,7 +8,7 @@ import {
   NameDisplayName,
   ObjectRecordName,
   TagResponse,
-} from 'src/modules/nflow/types';
+} from '@/modules/nflow/types';
 
 export interface ShortTermMemory {
   chatSessionId: string;

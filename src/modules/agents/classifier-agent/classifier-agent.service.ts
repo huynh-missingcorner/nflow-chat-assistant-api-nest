@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
-import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
+
+import { OpenAIService } from '@/shared/infrastructure/openai/openai.service';
 
 import { ChatMessage } from '../types';
 import { CLASSIFIER_ERRORS, CLASSIFIER_PROMPTS } from './constants/classifier.constants';

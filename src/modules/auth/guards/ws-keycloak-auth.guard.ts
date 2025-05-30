@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
-import { SessionSocket } from 'src/shared/socket/types';
+
+import { SessionSocket } from '@/shared/socket/types';
 
 import { TokenValidationService } from '../services/token-validation.service';
 

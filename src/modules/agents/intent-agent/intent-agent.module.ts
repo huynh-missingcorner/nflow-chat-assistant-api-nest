@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { MemoryModule } from 'src/modules/memory/memory.module';
-import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
+
+import { MemoryModule } from '@/modules/memory/memory.module';
+import { OpenAIModule } from '@/shared/infrastructure/openai/openai.module';
 
 import { IntentAgentService } from './intent-agent.service';
 

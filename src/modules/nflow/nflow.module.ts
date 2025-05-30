@@ -1,8 +1,9 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from 'src/modules/auth/auth.module';
-import { SharedModule } from 'src/shared/shared.module';
+
+import { AuthModule } from '@/modules/auth/auth.module';
+import { SharedModule } from '@/shared/shared.module';
 
 import { NFlowApplicationService } from './services/application.service';
 import { NFlowFlowService } from './services/flow.service';

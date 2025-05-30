@@ -14,9 +14,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
-import { RedisSessionService } from 'src/shared/services/redis-session.service';
 
 import { EnvConfig } from '@/config/env/env.config';
+import { RedisSessionService } from '@/shared/services/redis-session.service';
 
 import { AuthStatusResponseDto, TokenResponseDto } from '../dto/auth-response.dto';
 import { KeycloakService } from '../services/keycloak.service';

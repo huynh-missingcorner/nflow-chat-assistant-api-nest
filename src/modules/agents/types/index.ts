@@ -1,4 +1,4 @@
-import { ShortTermMemory } from 'src/modules/memory/types';
+import { ShortTermMemory } from '@/modules/memory/types';
 
 import { ApplicationAgentInput } from '../application-agent/types/application.types';
 import { FlowAgentInput } from '../flow-agent/types/flow.types';

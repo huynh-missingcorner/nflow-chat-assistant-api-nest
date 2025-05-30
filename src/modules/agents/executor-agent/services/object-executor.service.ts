@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CreatedObject, Field, ShortTermMemory } from 'src/modules/memory/types';
-import { NFlowObjectService } from 'src/modules/nflow/services/object.service';
-import { FieldDto, FieldResponse, ObjectDto, ObjectResponse } from 'src/modules/nflow/types';
 
 import { ChatSessionService } from '@/modules/chat-session/chat-session.service';
 import { MEMORY_SERVICE } from '@/modules/memory/const';
 import { IMemoryService } from '@/modules/memory/interfaces';
+import { CreatedObject, Field, ShortTermMemory } from '@/modules/memory/types';
+import { NFlowObjectService } from '@/modules/nflow/services/object.service';
+import { FieldDto, FieldResponse, ObjectDto, ObjectResponse } from '@/modules/nflow/types';
 
 import { BaseExecutorService } from './base-executor.service';
 

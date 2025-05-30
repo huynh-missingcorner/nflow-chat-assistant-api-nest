@@ -1,11 +1,11 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { ContextLoaderService } from 'src/shared/services/context-loader.service';
 
 import { MEMORY_SERVICE } from '@/modules/memory/const';
 import { IMemoryService } from '@/modules/memory/interfaces';
+import { AGENT_PATHS } from '@/shared/constants/agent-paths.constants';
 import { OpenAIService } from '@/shared/infrastructure/openai/openai.service';
 import { PrismaService } from '@/shared/infrastructure/prisma/prisma.service';
+import { ContextLoaderService } from '@/shared/services/context-loader.service';
 
 import { BaseAgentService } from '../base-agent.service';
 import { ClassifierAgentService } from '../classifier-agent/classifier-agent.service';

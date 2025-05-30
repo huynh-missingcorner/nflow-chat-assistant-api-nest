@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ChatSessionModule } from 'src/modules/chat-session/chat-session.module';
-import { MemoryModule } from 'src/modules/memory/memory.module';
-import { NFlowModule } from 'src/modules/nflow/nflow.module';
+
+import { ChatSessionModule } from '@/modules/chat-session/chat-session.module';
+import { MemoryModule } from '@/modules/memory/memory.module';
+import { NFlowModule } from '@/modules/nflow/nflow.module';
 
 import { ExecutorAgentService } from './executor-agent.service';
 import { AppExecutorService } from './services/app-executor.service';

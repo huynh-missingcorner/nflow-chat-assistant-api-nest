@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { OpenAIModule } from 'src/shared/infrastructure/openai/openai.module';
+
+import { OpenAIModule } from '@/shared/infrastructure/openai/openai.module';
 
 import { CoordinatorAgentModule } from '../agents/coordinator-agent/coordinator-agent.module';
 import { AuthModule } from '../auth/auth.module';

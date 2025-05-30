@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
-import { ShortTermMemory } from 'src/modules/memory/types';
-import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
-import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
-import { ContextLoaderService } from 'src/shared/services/context-loader.service';
+
+import { ShortTermMemory } from '@/modules/memory/types';
+import { AGENT_PATHS } from '@/shared/constants/agent-paths.constants';
+import { OpenAIService } from '@/shared/infrastructure/openai/openai.service';
+import { ContextLoaderService } from '@/shared/services/context-loader.service';
 
 import { BaseAgentService } from '../base-agent.service';
 import { AgentInput, AgentOutput, ChatMessage, ToolCall } from '../types';

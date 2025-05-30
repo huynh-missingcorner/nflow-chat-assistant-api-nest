@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { RedisStore } from 'connect-redis';
 import { SessionOptions } from 'express-session';
-import { KeycloakUserInfo } from 'src/modules/auth/types/keycloak';
+
+import { KeycloakUserInfo } from '@/modules/auth/types/keycloak';
 
 import { RedisService } from '../infrastructure/redis/redis.service';
 

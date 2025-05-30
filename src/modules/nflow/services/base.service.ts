@@ -3,8 +3,9 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError, AxiosRequestConfig } from 'axios';
 import { firstValueFrom } from 'rxjs';
-import { KeycloakService } from 'src/modules/auth/services/keycloak.service';
-import { RedisSessionService } from 'src/shared/services/redis-session.service';
+
+import { KeycloakService } from '@/modules/auth/services/keycloak.service';
+import { RedisSessionService } from '@/shared/services/redis-session.service';
 
 interface TokenResponse {
   accessToken: string;

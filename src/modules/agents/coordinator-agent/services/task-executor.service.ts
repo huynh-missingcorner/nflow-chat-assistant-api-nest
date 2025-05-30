@@ -95,7 +95,10 @@ export class TaskExecutorService {
 
           // Update session context with any memory patches
           if ('memoryPatch' in result && result.memoryPatch) {
-            shortTermMemory = await this.memoryService.patch(shortTermMemory, result.memoryPatch);
+            shortTermMemory = await this.memoryService.updateContext(
+              shortTermMemory,
+              result.memoryPatch,
+            );
           }
 
           taskResults[task.id] = result;
@@ -178,7 +181,7 @@ export class TaskExecutorService {
 
     // Update memory if needed
     if ('memoryPatch' in result && result.memoryPatch) {
-      await this.memoryService.patch(shortTermMemory, result.memoryPatch);
+      await this.memoryService.updateContext(shortTermMemory, result.memoryPatch);
     }
 
     // Continue with the remaining tasks

@@ -31,6 +31,6 @@ export class BaseExecutorService {
   ): Promise<void> {
     const shortTermMemory = await this.memoryService.getContext(chatSessionId);
     const updatedMemory = updateFn(shortTermMemory as unknown as T);
-    await this.memoryService.patch(shortTermMemory, updatedMemory);
+    await this.memoryService.updateContext(shortTermMemory, updatedMemory);
   }
 }

@@ -78,7 +78,7 @@ export class CoordinatorAgentService extends BaseAgentService<
     );
     const shortTermMemory = await this.memoryService.getContext(chatSessionId);
 
-    await this.memoryService.patch(shortTermMemory, {
+    await this.memoryService.updateContext(shortTermMemory, {
       chatHistory: chatContext,
     });
 
@@ -252,7 +252,7 @@ export class CoordinatorAgentService extends BaseAgentService<
       chatSessionId,
     );
 
-    await this.memoryService.patch(shortTermMemory, {
+    await this.memoryService.updateContext(shortTermMemory, {
       pendingHITL: Object.values(taskResults.pendingHITL ?? {}),
     });
 

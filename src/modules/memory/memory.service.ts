@@ -1,15 +1,23 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { CreatedObject, ShortTermMemory } from './types';
+import { CreatedObject, Field, ShortTermMemory } from './types';
 import { ChatContextService } from '../agents/coordinator-agent/services/chat-context.service';
 import { ExecutionResult } from '../agents/executor-agent/types/executor.types';
 import { RedisService } from '../../shared/infrastructure/redis/redis.service';
 import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service';
+import merge from 'lodash.merge';
+import { IMemoryService } from './interfaces/memory-service.interface';
+import {
+  getRedisKey,
+  findObjectByName,
+  findFieldByName,
+  getCreatedApplications,
+  createInitialContext,
+  SESSION_TTL,
+} from './utils/memory-key.util';
 
 @Injectable()
-export class MemoryService {
+export class MemoryService implements IMemoryService {
   private readonly logger = new Logger(MemoryService.name);
-  private readonly REDIS_PREFIX = 'memory:chat-session:';
-  private readonly SESSION_TTL = 60 * 60 * 24 * 7; // 1 week in seconds
 
   constructor(
     private readonly chatContextService: ChatContextService,
@@ -18,7 +26,7 @@ export class MemoryService {
   ) {}
 
   public async getContext(chatSessionId: string): Promise<ShortTermMemory> {
-    const redisKey = this.getRedisKey(chatSessionId);
+    const redisKey = getRedisKey(chatSessionId);
     let context = await this.redisService.get<ShortTermMemory>(redisKey);
 
     if (!context) {
@@ -36,59 +44,80 @@ export class MemoryService {
         chatSession.userId,
       );
 
-      context = {
-        chatSessionId,
-        chatHistory,
-        createdApplications: [],
-        createdObjects: [],
-        createdLayouts: [],
-        createdFlows: [],
-        toolCallsLog: [],
-        taskResults: {},
-        pendingHITL: [],
-        timestamp: new Date(),
-      };
+      context = createInitialContext(chatSessionId, chatHistory);
 
-      await this.redisService.set(redisKey, context, this.SESSION_TTL);
+      await this.redisService.set(redisKey, context, SESSION_TTL);
       this.logger.debug(`Created new session context for ${chatSessionId}`);
     }
 
     return context;
   }
 
-  public async patch(
+  public async updateContext(
     context: ShortTermMemory,
     patchData: Partial<ShortTermMemory>,
   ): Promise<ShortTermMemory> {
-    const updatedContext = {
-      ...context,
-      ...patchData,
+    const updatedContext = merge({}, context, patchData, {
       timestamp: new Date(),
-    };
+    });
 
-    const redisKey = this.getRedisKey(context.chatSessionId);
-    await this.redisService.set(redisKey, updatedContext, this.SESSION_TTL);
+    const redisKey = getRedisKey(context.chatSessionId);
+    await this.redisService.set(redisKey, updatedContext, SESSION_TTL);
     this.logger.debug(`Updated session context for ${context.chatSessionId}`);
 
     return updatedContext;
   }
 
+  public async getField<T extends keyof ShortTermMemory>(
+    chatSessionId: string,
+    field: T,
+  ): Promise<ShortTermMemory[T]> {
+    const context = await this.getContext(chatSessionId);
+    return context[field];
+  }
+
+  public async setField<T extends keyof ShortTermMemory>(
+    chatSessionId: string,
+    field: T,
+    value: ShortTermMemory[T],
+  ): Promise<void> {
+    const context = await this.getContext(chatSessionId);
+    const updatedContext = { ...context, [field]: value, timestamp: new Date() };
+    const redisKey = getRedisKey(chatSessionId);
+    await this.redisService.set(redisKey, updatedContext, SESSION_TTL);
+    this.logger.debug(`Updated session context for ${chatSessionId} field ${field}`);
+  }
+
+  public async appendToFieldArray<K extends keyof ShortTermMemory>(
+    chatSessionId: string,
+    field: K,
+    item: ShortTermMemory[K] extends Array<infer U> ? U : never,
+  ): Promise<void> {
+    const context = await this.getContext(chatSessionId);
+    const currentArray = context[field];
+
+    if (!Array.isArray(currentArray)) {
+      throw new Error(`Field "${String(field)}" is not an array.`);
+    }
+
+    const updatedArray = [...currentArray, item] as ShortTermMemory[K];
+    await this.setField(chatSessionId, field, updatedArray);
+  }
+
   public async reset(chatSessionId: string): Promise<void> {
-    const redisKey = this.getRedisKey(chatSessionId);
+    const redisKey = getRedisKey(chatSessionId);
     await this.redisService.del(redisKey);
     this.logger.debug(`Reset session context for ${chatSessionId}`);
   }
 
   public findObjectByName(context: ShortTermMemory, objectName: string): CreatedObject | undefined {
-    return context.createdObjects.find(
-      (obj) => obj.name.toLowerCase() === objectName.toLowerCase(),
-    );
+    return findObjectByName(context, objectName);
   }
 
   public getLastCreatedApplication(
     context: ShortTermMemory,
   ): ShortTermMemory['createdApplications'] {
-    return context.createdApplications;
+    return getCreatedApplications(context);
   }
 
   public async updateTaskResults(chatSessionId: string, results: ExecutionResult): Promise<void> {
@@ -99,12 +128,16 @@ export class MemoryService {
       [results.id]: results,
     };
 
-    const redisKey = this.getRedisKey(chatSessionId);
-    await this.redisService.set(redisKey, context, this.SESSION_TTL);
+    const redisKey = getRedisKey(chatSessionId);
+    await this.redisService.set(redisKey, context, SESSION_TTL);
     this.logger.debug(`Updated task results for session ${chatSessionId}`);
   }
 
-  private getRedisKey(chatSessionId: string): string {
-    return `${this.REDIS_PREFIX}${chatSessionId}`;
+  public findFieldByName(
+    context: ShortTermMemory,
+    objectName: string,
+    fieldName: string,
+  ): Field | undefined {
+    return findFieldByName(context, objectName, fieldName);
   }
 }

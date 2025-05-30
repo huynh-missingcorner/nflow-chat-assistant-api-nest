@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { IntentAgentService } from '../intent-agent/intent-agent.service';
 import { ExecutorAgentService } from '../executor-agent/executor-agent.service';
@@ -12,8 +12,9 @@ import { ChatContextService } from './services/chat-context.service';
 import { IntentTask } from '../intent-agent/types/intent.types';
 import { ClassifierAgentService } from '../classifier-agent/classifier-agent.service';
 import { MessageType } from '../classifier-agent/types/classifier.types';
-import { MemoryService } from 'src/modules/memory/memory.service';
-import { PrismaService } from 'src/shared/infrastructure/prisma/prisma.service';
+import { MEMORY_SERVICE } from '@/modules/memory/const';
+import { IMemoryService } from '@/modules/memory/interfaces/memory-service.interface';
+import { PrismaService } from '@/shared/infrastructure/prisma/prisma.service';
 
 @Injectable()
 export class CoordinatorAgentService extends BaseAgentService<
@@ -26,7 +27,7 @@ export class CoordinatorAgentService extends BaseAgentService<
     private readonly taskExecutorService: TaskExecutorService,
     private readonly chatContextService: ChatContextService,
     private readonly classifierService: ClassifierAgentService,
-    private readonly memoryService: MemoryService,
+    @Inject(MEMORY_SERVICE) private readonly memoryService: IMemoryService,
     private readonly prisma: PrismaService,
     contextLoader: ContextLoaderService,
     openAIService: OpenAIService,

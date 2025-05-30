@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ApplicationAgentService } from '../../application-agent/application-agent.service';
 import { ObjectAgentService } from '../../object-agent/object-agent.service';
 import { LayoutAgentService } from '../../layout-agent/layout-agent.service';
@@ -11,9 +11,10 @@ import { FlowAgentInput } from '../../flow-agent/types/flow.types';
 import { BaseAgentResponse } from '../types';
 import { ActiveAgent, AgentStatus, DEFAULT_AGENT_STATUS } from '../consts';
 import { ProcessedTasks } from '../../executor-agent/types/executor.types';
-import { MemoryService } from 'src/modules/memory/memory.service';
+import { MEMORY_SERVICE } from '@/modules/memory/const';
 import { Agent, AgentOutput, HITLRequest } from '../../types';
-import { ShortTermMemory } from 'src/modules/memory/types';
+import { ShortTermMemory } from '@/modules/memory/types';
+import { IMemoryService } from '@/modules/memory/interfaces/memory-service.interface';
 
 @Injectable()
 export class TaskExecutorService {
@@ -25,7 +26,7 @@ export class TaskExecutorService {
     private readonly objectService: ObjectAgentService,
     private readonly layoutService: LayoutAgentService,
     private readonly flowService: FlowAgentService,
-    private readonly memoryService: MemoryService,
+    @Inject(MEMORY_SERVICE) private readonly memoryService: IMemoryService,
   ) {}
 
   /**

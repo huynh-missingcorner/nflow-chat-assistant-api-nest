@@ -1,12 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { MemoryService } from 'src/modules/memory/memory.service';
+import { Inject, Injectable } from '@nestjs/common';
 import { ShortTermMemory } from 'src/modules/memory/types';
 import { ChatSessionService } from '@/modules/chat-session/chat-session.service';
+import { IMemoryService } from '@/modules/memory/interfaces/memory-service.interface';
+import { MEMORY_SERVICE } from '@/modules/memory/const';
 
 @Injectable()
 export class BaseExecutorService {
   constructor(
-    protected readonly memoryService: MemoryService,
+    @Inject(MEMORY_SERVICE) protected readonly memoryService: IMemoryService,
     protected readonly chatSessionService: ChatSessionService,
   ) {}
 

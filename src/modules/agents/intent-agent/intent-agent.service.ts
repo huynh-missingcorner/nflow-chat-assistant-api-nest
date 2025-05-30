@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { OpenAIService } from 'src/shared/infrastructure/openai/openai.service';
 import { IntentAgentInput, IntentPlan, IntentToolResponse } from './types/intent.types';
 import { IntentErrors } from './constants/intent.constants';
@@ -7,15 +7,16 @@ import { AGENT_PATHS } from 'src/shared/constants/agent-paths.constants';
 import { tools as intentTools } from './tools/intent-tools';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 import { BaseAgentService } from '../base-agent.service';
-import { MemoryService } from 'src/modules/memory/memory.service';
 import { ShortTermMemory } from 'src/modules/memory/types';
+import { MEMORY_SERVICE } from '@/modules/memory/const';
+import { IMemoryService } from '@/modules/memory/interfaces/memory-service.interface';
 
 @Injectable()
 export class IntentAgentService extends BaseAgentService<IntentAgentInput, IntentPlan> {
   constructor(
     openAIService: OpenAIService,
     contextLoader: ContextLoaderService,
-    private readonly memoryService: MemoryService,
+    @Inject(MEMORY_SERVICE) private readonly memoryService: IMemoryService,
   ) {
     super(openAIService, contextLoader, AGENT_PATHS.INTENT);
   }

@@ -1,17 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { NFlowObjectService } from 'src/modules/nflow/services/object.service';
-import { MemoryService } from 'src/modules/memory/memory.service';
 import { FieldDto, FieldResponse, ObjectDto } from 'src/modules/nflow/types';
 import { ObjectResponse } from 'src/modules/nflow/types';
 import { BaseExecutorService } from './base-executor.service';
 import { ChatSessionService } from '@/modules/chat-session/chat-session.service';
 import { CreatedObject, Field, ShortTermMemory } from 'src/modules/memory/types';
+import { IMemoryService } from '@/modules/memory/interfaces/memory-service.interface';
+import { MEMORY_SERVICE } from '@/modules/memory/const';
 
 @Injectable()
 export class ObjectExecutorService extends BaseExecutorService {
   constructor(
     private readonly objectService: NFlowObjectService,
-    memoryService: MemoryService,
+    @Inject(MEMORY_SERVICE) protected readonly memoryService: IMemoryService,
     chatSessionService: ChatSessionService,
   ) {
     super(memoryService, chatSessionService);

@@ -9,7 +9,7 @@ export type CoordinatorAgentSuccessOutput = {
   success: true;
   message: string;
   data: {
-    classifiedIntent?: IntentClassifierOutput;
+    classifiedIntent: IntentClassifierOutput;
     originalMessage: string;
     chatSessionId: string;
   };

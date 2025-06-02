@@ -11,6 +11,7 @@ import { ClassifyIntentNode } from './nodes/classify-intent.node';
 import { HandleErrorNode } from './nodes/handle-error.node';
 import { HandleRetryNode } from './nodes/handle-retry.node';
 import { HandleSuccessNode } from './nodes/handle-success.node';
+import { ProcessNextIntentNode } from './nodes/process-next-intent.node';
 import { ValidateClassificationNode } from './nodes/validate-classification.node';
 import { EdgeRoutingStrategy } from './strategies/edge-routing.strategy';
 import { IntentCombinationValidator } from './validators/intent-combination.validator';
@@ -36,6 +37,7 @@ import { IntentCombinationValidator } from './validators/intent-combination.vali
     // Nodes
     ClassifyIntentNode,
     ValidateClassificationNode,
+    ProcessNextIntentNode,
     HandleSuccessNode,
     HandleErrorNode,
     HandleRetryNode,

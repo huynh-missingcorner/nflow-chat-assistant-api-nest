@@ -78,6 +78,8 @@ export class CoordinatorGraphService implements ICoordinatorGraphService, OnModu
       originalMessage: input.message,
       chatSessionId: input.chatSessionId,
       classifiedIntent: null,
+      currentIntentIndex: 0,
+      processedIntents: [],
       error: null,
       currentNode: GRAPH_CONFIG.INITIAL_NODE,
       retryCount: 0,

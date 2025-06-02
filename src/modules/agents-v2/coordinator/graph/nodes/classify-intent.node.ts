@@ -29,7 +29,12 @@ export class ClassifyIntentNode extends GraphNodeBase {
 
       const classifiedIntent = await this.performClassification(messages);
 
-      this.logger.debug(LOG_MESSAGES.INTENT_CLASSIFIED, classifiedIntent);
+      // Log the classified intents
+      this.logger.debug(
+        LOG_MESSAGES.INTENT_CLASSIFIED,
+        `Found ${classifiedIntent.intents.length} intents`,
+        classifiedIntent,
+      );
 
       return this.createSuccessResult({
         classifiedIntent,

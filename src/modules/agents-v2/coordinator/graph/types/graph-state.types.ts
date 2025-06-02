@@ -14,6 +14,14 @@ export const CoordinatorState = Annotation.Root({
     default: () => null,
     reducer: (x, y) => y ?? x,
   }),
+  currentIntentIndex: Annotation<number>({
+    default: () => 0,
+    reducer: (x, y) => y ?? x,
+  }),
+  processedIntents: Annotation<number[]>({
+    default: () => [],
+    reducer: (x, y) => [...new Set([...x, ...y])],
+  }),
   error: Annotation<string | null>({
     default: () => null,
     reducer: (x, y) => y ?? x,

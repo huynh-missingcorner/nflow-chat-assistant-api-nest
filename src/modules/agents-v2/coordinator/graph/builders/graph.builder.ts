@@ -6,6 +6,7 @@ import { ClassifyIntentNode } from '../nodes/classify-intent.node';
 import { HandleErrorNode } from '../nodes/handle-error.node';
 import { HandleRetryNode } from '../nodes/handle-retry.node';
 import { HandleSuccessNode } from '../nodes/handle-success.node';
+import { ProcessNextIntentNode } from '../nodes/process-next-intent.node';
 import { ValidateClassificationNode } from '../nodes/validate-classification.node';
 import { EdgeRoutingStrategy } from '../strategies/edge-routing.strategy';
 import { CoordinatorState } from '../types/graph-state.types';
@@ -19,6 +20,7 @@ export class GraphBuilder implements IGraphBuilder {
   constructor(
     private readonly classifyIntentNode: ClassifyIntentNode,
     private readonly validateClassificationNode: ValidateClassificationNode,
+    private readonly processNextIntentNode: ProcessNextIntentNode,
     private readonly handleSuccessNode: HandleSuccessNode,
     private readonly handleErrorNode: HandleErrorNode,
     private readonly handleRetryNode: HandleRetryNode,
@@ -35,6 +37,10 @@ export class GraphBuilder implements IGraphBuilder {
       .addNode(
         GRAPH_NODES.VALIDATE_CLASSIFICATION,
         this.validateClassificationNode.execute.bind(this.validateClassificationNode),
+      )
+      .addNode(
+        GRAPH_NODES.PROCESS_NEXT_INTENT,
+        this.processNextIntentNode.execute.bind(this.processNextIntentNode),
       )
       .addNode(
         GRAPH_NODES.HANDLE_SUCCESS,
@@ -56,13 +62,24 @@ export class GraphBuilder implements IGraphBuilder {
       },
     );
 
-    // After validation, either succeed or retry
+    // After validation, either process the next intent or handle error
     workflow.addConditionalEdges(
       GRAPH_NODES.VALIDATE_CLASSIFICATION,
-      this.edgeRoutingStrategy.determineRetryOrSucceedRoute.bind(this.edgeRoutingStrategy),
+      this.edgeRoutingStrategy.determineNextIntentOrErrorRoute.bind(this.edgeRoutingStrategy),
       {
-        [GRAPH_EDGES.SUCCESS]: GRAPH_NODES.HANDLE_SUCCESS,
+        [GRAPH_EDGES.NEXT_INTENT]: GRAPH_NODES.PROCESS_NEXT_INTENT,
         [GRAPH_EDGES.RETRY]: GRAPH_NODES.HANDLE_RETRY,
+        [GRAPH_EDGES.ERROR]: GRAPH_NODES.HANDLE_ERROR,
+      },
+    );
+
+    // After processing an intent, either process the next one or handle success/error
+    workflow.addConditionalEdges(
+      GRAPH_NODES.PROCESS_NEXT_INTENT,
+      this.edgeRoutingStrategy.determineNextIntentOrSuccessRoute.bind(this.edgeRoutingStrategy),
+      {
+        [GRAPH_EDGES.NEXT_INTENT]: GRAPH_NODES.PROCESS_NEXT_INTENT,
+        [GRAPH_EDGES.SUCCESS]: GRAPH_NODES.HANDLE_SUCCESS,
         [GRAPH_EDGES.ERROR]: GRAPH_NODES.HANDLE_ERROR,
       },
     );

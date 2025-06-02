@@ -1,6 +1,7 @@
 export const GRAPH_NODES = {
   CLASSIFY_INTENT: 'classifyIntent',
   VALIDATE_CLASSIFICATION: 'validateClassification',
+  PROCESS_NEXT_INTENT: 'processNextIntent',
   HANDLE_SUCCESS: 'handleSuccess',
   HANDLE_ERROR: 'handleError',
   HANDLE_RETRY: 'handleRetry',
@@ -11,6 +12,7 @@ export const GRAPH_EDGES = {
   ERROR: 'error',
   SUCCESS: 'success',
   RETRY: 'retry',
+  NEXT_INTENT: 'nextIntent',
 } as const;
 
 export const GRAPH_CONFIG = {
@@ -21,6 +23,8 @@ export const GRAPH_CONFIG = {
 
 export const VALIDATION_MESSAGES = {
   NO_CLASSIFIED_INTENT: 'No classified intent to validate',
+  NO_INTENTS_ARRAY: 'No intents array in classified intent',
+  EMPTY_INTENTS_ARRAY: 'Empty intents array in classified intent',
   MISSING_REQUIRED_FIELDS: 'Classification missing required fields: domain or intent',
   INVALID_COMBINATION: (domain: string, intent: string) =>
     `Invalid domain-intent combination: ${domain}-${intent}`,
@@ -41,9 +45,14 @@ export const LOG_MESSAGES = {
     `Retrying intent classification (attempt ${attempt})`,
   GRAPH_EXECUTION_FAILED: 'Coordinator graph execution failed',
   STATE_ERROR: 'Error getting graph state',
+  PROCESSING_INTENT: (index: number, total: number) => `Processing intent ${index + 1} of ${total}`,
+  ALL_INTENTS_PROCESSED: 'All intents processed successfully',
+  INTENT_DEPENDENCY_DETECTED: (dependent: number, dependsOn: number) =>
+    `Intent ${dependent} depends on intent ${dependsOn}`,
 } as const;
 
 export const SUCCESS_MESSAGES = {
   INTENT_CLASSIFIED: 'User intent classified successfully',
   CLASSIFICATION_FAILED: 'Failed to classify user intent',
+  MULTIPLE_INTENTS_CLASSIFIED: (count: number) => `Successfully classified ${count} user intents`,
 } as const;

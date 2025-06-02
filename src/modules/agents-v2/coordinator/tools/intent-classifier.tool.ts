@@ -25,7 +25,8 @@ export const IntentEnum = z.enum([
   'update_flow',
 ]);
 
-const IntentClassifierSchema = z.object({
+// Single intent schema
+const IntentSchema = z.object({
   domain: DomainEnum.describe('The domain of the user request, such as application or object'),
   intent: IntentEnum.describe('The specific action the user wants to perform in this domain'),
   target: z
@@ -40,8 +41,33 @@ const IntentClassifierSchema = z.object({
     .describe(
       'Details of the intent, list everything you need that will help the worker agent get the tasks done.',
     ),
+  priority: z
+    .number()
+    .min(1)
+    .optional()
+    .describe(
+      'Priority of this intent (1 is highest). If not specified, intents are processed in the order they are listed.',
+    ),
 });
 
+// Schema supporting multiple intents
+const IntentClassifierSchema = z.object({
+  intents: z.array(IntentSchema).describe('Array of intents identified in the user request'),
+  dependencies: z
+    .array(
+      z.object({
+        dependentIntentIndex: z
+          .number()
+          .describe('Index of the dependent intent in the intents array'),
+        dependsOnIntentIndex: z.number().describe('Index of the intent this intent depends on'),
+        reason: z.string().describe('Reason for the dependency'),
+      }),
+    )
+    .optional()
+    .describe('Dependencies between intents, if any exist'),
+});
+
+export type IntentSchema = z.infer<typeof IntentSchema>;
 export type IntentClassifierOutput = z.infer<typeof IntentClassifierSchema>;
 
 const intentClassifierHandler = async (
@@ -56,6 +82,6 @@ const intentClassifierHandler = async (
 export const IntentClassifierTool = tool(intentClassifierHandler, {
   name: 'IntentClassifierTool',
   description:
-    'Classifies the user intent from the natural language prompt, including domain, intent, target and details. Does not include full parameter extraction.',
+    'Classifies the user intent from the natural language prompt, identifying all intents present. Can handle multiple tasks in a single prompt, including dependencies between tasks. For each intent, identify domain, intent type, target, and details.',
   schema: IntentClassifierSchema,
 });

@@ -7,6 +7,6 @@ import { ObjectAgentService } from './object/object-agent.service';
 @Module({
   imports: [],
   providers: [ApplicationAgentService, ObjectAgentService, CoordinatorAgentService],
-  exports: [],
+  exports: [ApplicationAgentService, ObjectAgentService, CoordinatorAgentService],
 })
 export class AgentModule {}

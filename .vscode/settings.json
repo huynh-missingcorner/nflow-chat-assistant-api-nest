@@ -1,7 +1,6 @@
 {
-  "cSpell.words": ["HITL", "Nflow"],
+  "cSpell.words": ["Checkpointer", "HITL", "langchain", "langgraph", "Nflow"],
   "editor.codeActionsOnSave": {
-    "source.organizeImports": true,
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "explicit"
   }
 }

@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
-import { CoordinatorAgentService } from '@/modules/agents/coordinator-agent/coordinator-agent.service';
+import { CoordinatorAgentService } from '@/modules/agents-v2/coordinator/coordinator-agent.service';
 import { OpenAIService } from '@/shared/infrastructure/openai/openai.service';
 import { PrismaService } from '@/shared/infrastructure/prisma/prisma.service';
 
@@ -37,11 +37,11 @@ export class ChatService {
     }
 
     const result = await this.coordinatorService.run({ message, chatSessionId });
-    await this.updateSessionTitle(chatSessionId, result.reply);
+    await this.updateSessionTitle(chatSessionId, result.message);
 
     return {
       chatSessionId,
-      reply: result.reply,
+      reply: result.message,
     };
   }
 

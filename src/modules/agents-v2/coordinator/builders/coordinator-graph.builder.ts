@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { END, MemorySaver, START, StateGraph } from '@langchain/langgraph';
+import { END, START, StateGraph } from '@langchain/langgraph';
 
 import { ApplicationGraphBuilder } from '@/modules/agents-v2/application/builders/application-graph.builder';
+import { PersistenceService } from '@/shared/infrastructure/persistence';
 
 import { GRAPH_EDGES, GRAPH_NODES } from '../constants/graph-constants';
 import { ClassifyIntentNode } from '../nodes/classify-intent.node';
@@ -31,7 +32,7 @@ export class CoordinatorGraphBuilder implements IGraphBuilder {
     private readonly handleErrorNode: HandleErrorNode,
     private readonly handleRetryNode: HandleRetryNode,
     private readonly edgeRoutingStrategy: EdgeRoutingStrategy,
-    private readonly checkpointer: MemorySaver,
+    private readonly persistenceService: PersistenceService,
     private readonly applicationGraphBuilder: ApplicationGraphBuilder,
   ) {}
 
@@ -124,7 +125,7 @@ export class CoordinatorGraphBuilder implements IGraphBuilder {
     workflow.addEdge(GRAPH_NODES.HANDLE_ERROR, END);
 
     return workflow.compile({
-      checkpointer: this.checkpointer,
+      checkpointer: this.persistenceService.getCheckpointer(),
     });
   }
 }

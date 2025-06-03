@@ -10,6 +10,7 @@ import { ChatSessionModule } from './modules/chat-session/chat-session.module';
 import { MemoryModule } from './modules/memory/memory.module';
 import { InfrastructureModule } from './shared/infrastructure/infrastructure.module';
 import { LangchainModule } from './shared/infrastructure/langchain/langchain.module';
+import { PersistenceModule } from './shared/infrastructure/persistence/persistence.module';
 import { RedisModule } from './shared/infrastructure/redis/redis.module';
 import { SharedModule } from './shared/shared.module';
 
@@ -19,6 +20,7 @@ import { SharedModule } from './shared/shared.module';
     ConfigModule,
     EventEmitterModule.forRoot(),
     InfrastructureModule,
+    PersistenceModule,
     ChatModule,
     CoordinatorAgentModule,
     SharedModule,

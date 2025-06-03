@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { MemorySaver } from '@langchain/langgraph';
 
 import { ApplicationAgentService } from './application-agent.service';
 import { ApplicationGraphBuilder } from './builders/application-graph.builder';
@@ -29,12 +28,6 @@ import { ApplicationGraphEdgeRoutingStrategy } from './strategies/application-gr
 
     // Strategies
     ApplicationGraphEdgeRoutingStrategy,
-
-    // Infrastructure
-    {
-      provide: MemorySaver,
-      useFactory: () => new MemorySaver(),
-    },
   ],
   exports: [ApplicationAgentService, ApplicationGraphBuilder],
 })

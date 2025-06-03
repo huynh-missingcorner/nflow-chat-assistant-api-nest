@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { MemorySaver, StateGraph } from '@langchain/langgraph';
+import { StateGraph } from '@langchain/langgraph';
 
 import { ApplicationGraphBuilder } from './builders/application-graph.builder';
 import { ApplicationErrors } from './constants';
@@ -14,7 +14,6 @@ import { ApplicationStateType } from './types/application-graph-state.types';
 
 export interface IApplicationAgentService {
   run(input: ApplicationAgentInput): Promise<ApplicationAgentOutput>;
-  getGraphState(threadId: string): Promise<ApplicationStateType | null>;
 }
 
 @Injectable()
@@ -23,10 +22,7 @@ export class ApplicationAgentService implements IApplicationAgentService, OnModu
 
   private graph: ReturnType<typeof StateGraph.prototype.compile>;
 
-  constructor(
-    private readonly graphBuilder: ApplicationGraphBuilder,
-    private readonly checkpointer: MemorySaver,
-  ) {}
+  constructor(private readonly graphBuilder: ApplicationGraphBuilder) {}
 
   onModuleInit(): void {
     this.initializeGraph();
@@ -41,16 +37,6 @@ export class ApplicationAgentService implements IApplicationAgentService, OnModu
       return this.processGraphResult(result, input);
     } catch (error) {
       return this.handleExecutionError(error);
-    }
-  }
-
-  async getGraphState(threadId: string): Promise<ApplicationStateType | null> {
-    try {
-      const checkpoint = await this.checkpointer.get({ configurable: { thread_id: threadId } });
-      return checkpoint ? (checkpoint as unknown as ApplicationStateType) : null;
-    } catch (error) {
-      this.logger.error(APPLICATION_LOG_MESSAGES.STATE_ERROR, error);
-      return null;
     }
   }
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { END, MemorySaver, START, StateGraph } from '@langchain/langgraph';
+import { END, START, StateGraph } from '@langchain/langgraph';
 
 import {
   APPLICATION_GRAPH_EDGES,
@@ -28,7 +28,6 @@ export class ApplicationGraphBuilder implements IApplicationGraphBuilder {
     private readonly handleErrorNode: HandleErrorNode,
     private readonly handleRetryNode: HandleRetryNode,
     private readonly edgeRoutingStrategy: ApplicationGraphEdgeRoutingStrategy,
-    private readonly checkpointer: MemorySaver,
   ) {}
 
   buildGraph(): ReturnType<typeof StateGraph.prototype.compile> {
@@ -108,8 +107,6 @@ export class ApplicationGraphBuilder implements IApplicationGraphBuilder {
     workflow.addEdge(APPLICATION_GRAPH_NODES.HANDLE_SUCCESS, END);
     workflow.addEdge(APPLICATION_GRAPH_NODES.HANDLE_ERROR, END);
 
-    return workflow.compile({
-      checkpointer: this.checkpointer,
-    });
+    return workflow.compile();
   }
 }

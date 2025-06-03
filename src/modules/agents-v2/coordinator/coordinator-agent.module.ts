@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { MemorySaver } from '@langchain/langgraph';
 
 import { ApplicationAgentModule } from '@/modules/agents-v2/application/application-agent.module';
 import { loadFileContent } from '@/shared/utils';
@@ -23,7 +22,6 @@ import { IntentCombinationValidator } from './validators/intent-combination.vali
   imports: [ApplicationAgentModule],
   providers: [
     // Core components
-    MemorySaver,
     IntentCombinationValidator,
     EdgeRoutingStrategy,
     NodeFactory,

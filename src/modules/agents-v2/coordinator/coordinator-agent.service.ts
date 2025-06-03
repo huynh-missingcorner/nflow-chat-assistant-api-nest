@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { MemorySaver, StateGraph } from '@langchain/langgraph';
+import { StateGraph } from '@langchain/langgraph';
 
 import { ApplicationErrors } from '@/modules/agents-v2/application/constants';
 
@@ -19,7 +19,6 @@ import { CoordinatorStateType } from './types/graph-state.types';
 
 export interface ICoordinatorAgentService {
   run(input: CoordinatorAgentInput): Promise<CoordinatorAgentOutput>;
-  getGraphState(threadId: string): Promise<CoordinatorStateType | null>;
 }
 
 @Injectable()
@@ -28,10 +27,7 @@ export class CoordinatorAgentService implements ICoordinatorAgentService, OnModu
 
   private graph: ReturnType<typeof StateGraph.prototype.compile>;
 
-  constructor(
-    private readonly graphBuilder: CoordinatorGraphBuilder,
-    private readonly checkpointer: MemorySaver,
-  ) {}
+  constructor(private readonly graphBuilder: CoordinatorGraphBuilder) {}
 
   onModuleInit(): void {
     this.initializeGraph();
@@ -46,16 +42,6 @@ export class CoordinatorAgentService implements ICoordinatorAgentService, OnModu
       return this.processGraphResult(result, input);
     } catch (error) {
       return this.handleExecutionError(error);
-    }
-  }
-
-  async getGraphState(threadId: string): Promise<CoordinatorStateType | null> {
-    try {
-      const checkpoint = await this.checkpointer.get({ configurable: { thread_id: threadId } });
-      return checkpoint ? (checkpoint as unknown as CoordinatorStateType) : null;
-    } catch (error) {
-      this.logger.error(LOG_MESSAGES.STATE_ERROR, error);
-      return null;
     }
   }
 

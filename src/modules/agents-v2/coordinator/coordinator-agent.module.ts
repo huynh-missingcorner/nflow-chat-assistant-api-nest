@@ -5,7 +5,7 @@ import { loadFileContent } from '@/shared/utils';
 
 import { GraphBuilder } from './builders/graph.builder';
 import { COORDINATOR_SYSTEM_PROMPT } from './constants/tokens';
-import { CoordinatorGraphService } from './coordinator-graph.service';
+import { CoordinatorAgentService } from './coordinator-agent.service';
 import { NodeFactory } from './factories/node.factory';
 import { ClassifyIntentNode } from './nodes/classify-intent.node';
 import { HandleErrorNode } from './nodes/handle-error.node';
@@ -44,8 +44,8 @@ import { IntentCombinationValidator } from './validators/intent-combination.vali
 
     // Main services
     GraphBuilder,
-    CoordinatorGraphService,
+    CoordinatorAgentService,
   ],
-  exports: [CoordinatorGraphService],
+  exports: [CoordinatorAgentService],
 })
-export class CoordinatorGraphModule {}
+export class CoordinatorAgentModule {}

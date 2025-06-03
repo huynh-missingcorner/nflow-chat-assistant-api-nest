@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 
 import { ApplicationAgentModule } from './application/application-agent.module';
-import { CoordinatorGraphModule } from './coordinator/graph/coordinator-graph.module';
+import { CoordinatorAgentModule } from './coordinator/coordinator-agent.module';
 import { ObjectAgentService } from './object/object-agent.service';
 
 @Module({
-  imports: [CoordinatorGraphModule, ApplicationAgentModule],
+  imports: [CoordinatorAgentModule, ApplicationAgentModule],
   providers: [ObjectAgentService],
-  exports: [ApplicationAgentModule, ObjectAgentService, CoordinatorGraphModule],
+  exports: [ApplicationAgentModule, ObjectAgentService, CoordinatorAgentModule],
 })
 export class AgentModule {}

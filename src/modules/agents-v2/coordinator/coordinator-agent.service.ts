@@ -3,7 +3,6 @@ import { MemorySaver, StateGraph } from '@langchain/langgraph';
 
 import { ApplicationErrors } from '@/modules/agents-v2/application/constants';
 
-import { CoordinatorAgentInput, CoordinatorAgentOutput } from '../types/coordinator-agent.types';
 import { GraphBuilder } from './builders/graph.builder';
 import {
   GRAPH_CONFIG,
@@ -11,16 +10,17 @@ import {
   LOG_MESSAGES,
   SUCCESS_MESSAGES,
 } from './constants/graph-constants';
+import { CoordinatorAgentInput, CoordinatorAgentOutput } from './types/coordinator-agent.types';
 import { CoordinatorStateType } from './types/graph-state.types';
 
-export interface ICoordinatorGraphService {
+export interface ICoordinatorAgentService {
   run(input: CoordinatorAgentInput): Promise<CoordinatorAgentOutput>;
   getGraphState(threadId: string): Promise<CoordinatorStateType | null>;
 }
 
 @Injectable()
-export class CoordinatorGraphService implements ICoordinatorGraphService, OnModuleInit {
-  private readonly logger = new Logger(CoordinatorGraphService.name);
+export class CoordinatorAgentService implements ICoordinatorAgentService, OnModuleInit {
+  private readonly logger = new Logger(CoordinatorAgentService.name);
 
   private graph: ReturnType<typeof StateGraph.prototype.compile>;
 

@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
-import { CoordinatorGraphService } from '@/modules/agents-v2/coordinator/graph/coordinator-graph.service';
+import { CoordinatorAgentService } from '@/modules/agents-v2/coordinator/coordinator-agent.service';
 import { OpenAIService } from '@/shared/infrastructure/openai/openai.service';
 import { PrismaService } from '@/shared/infrastructure/prisma/prisma.service';
 
@@ -13,7 +13,7 @@ export class ChatService {
   private readonly logger = new Logger(ChatService.name);
 
   constructor(
-    private readonly coordinatorService: CoordinatorGraphService,
+    private readonly coordinatorService: CoordinatorAgentService,
     private readonly prisma: PrismaService,
     private readonly openaiService: OpenAIService,
     private readonly eventEmitter: EventEmitter2,

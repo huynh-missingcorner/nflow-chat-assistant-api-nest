@@ -1,56 +1,148 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { MemorySaver } from '@langchain/langgraph';
-import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { MemorySaver, StateGraph } from '@langchain/langgraph';
 
-import { OPENAI_GPT_4_1 } from '@/shared/infrastructure/langchain/models/openai/openai-models';
+import { ApplicationGraphBuilder } from './builders/application-graph.builder';
+import { ApplicationErrors } from './constants';
+import {
+  APPLICATION_GRAPH_CONFIG,
+  APPLICATION_GRAPH_NODES,
+  APPLICATION_LOG_MESSAGES,
+  APPLICATION_SUCCESS_MESSAGES,
+} from './constants/application-graph.constants';
+import { ApplicationAgentInput, ApplicationAgentOutput } from './types/application.types';
+import { ApplicationStateType } from './types/application-graph-state.types';
 
-import { ApplicationErrors, applicationSystemPrompt } from './constants';
-import { tools } from './tools';
-import { ApplicationAgentInput, ApplicationAgentOutput } from './types';
+export interface IApplicationAgentService {
+  run(input: ApplicationAgentInput): Promise<ApplicationAgentOutput>;
+  getGraphState(threadId: string): Promise<ApplicationStateType | null>;
+}
 
 @Injectable()
-export class ApplicationAgentService implements OnModuleInit {
+export class ApplicationAgentService implements IApplicationAgentService, OnModuleInit {
   private readonly logger = new Logger(ApplicationAgentService.name);
-  private readonly agentCheckpointer = new MemorySaver();
-  private agent: ReturnType<typeof createReactAgent>;
 
-  onModuleInit() {
-    this.agent = createReactAgent({
-      llm: OPENAI_GPT_4_1,
-      tools,
-      checkpointer: this.agentCheckpointer,
-    });
+  private graph: ReturnType<typeof StateGraph.prototype.compile>;
+
+  constructor(
+    private readonly graphBuilder: ApplicationGraphBuilder,
+    private readonly checkpointer: MemorySaver,
+  ) {}
+
+  onModuleInit(): void {
+    this.initializeGraph();
   }
 
   async run(input: ApplicationAgentInput): Promise<ApplicationAgentOutput> {
     try {
-      const messages = [
-        new SystemMessage(applicationSystemPrompt),
-        new HumanMessage(input.message),
-      ];
+      this.logger.log(APPLICATION_LOG_MESSAGES.PROCESSING_REQUEST(input.message));
 
-      const result = await this.agent.invoke(
-        {
-          messages,
-        },
-        {
-          configurable: {
-            thread_id: '123',
-          },
-        },
-      );
-      this.logger.log(result);
+      const result = await this.executeGraph(input);
 
-      // TODO: Process the result, for now the tool calls are executed right away
-      return {
-        success: true,
-        message: 'Application generated successfully',
-        data: result,
-      };
+      return this.processGraphResult(result, input);
     } catch (error) {
-      this.logger.error('Application generation failed', error);
-      throw new Error(error instanceof Error ? error.message : ApplicationErrors.GENERATION_FAILED);
+      return this.handleExecutionError(error);
     }
+  }
+
+  async getGraphState(threadId: string): Promise<ApplicationStateType | null> {
+    try {
+      const checkpoint = await this.checkpointer.get({ configurable: { thread_id: threadId } });
+      return checkpoint ? (checkpoint as unknown as ApplicationStateType) : null;
+    } catch (error) {
+      this.logger.error(APPLICATION_LOG_MESSAGES.STATE_ERROR, error);
+      return null;
+    }
+  }
+
+  private initializeGraph(): void {
+    this.graph = this.graphBuilder.buildGraph();
+    this.logger.log(APPLICATION_LOG_MESSAGES.GRAPH_COMPILED);
+  }
+
+  private async executeGraph(input: ApplicationAgentInput): Promise<ApplicationStateType> {
+    const initialState = this.createInitialState(input);
+
+    const result = await this.graph.invoke(initialState, {
+      configurable: {
+        thread_id: input.chatSessionId || APPLICATION_GRAPH_CONFIG.DEFAULT_THREAD_ID,
+      },
+    });
+
+    return result as ApplicationStateType;
+  }
+
+  private createInitialState(input: ApplicationAgentInput): Partial<ApplicationStateType> {
+    return {
+      messages: [],
+      originalMessage: input.message,
+      chatSessionId: input.chatSessionId,
+      applicationSpec: null,
+      enrichedSpec: null,
+      executionResult: null,
+      error: null,
+      currentNode: APPLICATION_GRAPH_CONFIG.INITIAL_NODE,
+      retryCount: 0,
+      isCompleted: false,
+    };
+  }
+
+  private processGraphResult(
+    result: ApplicationStateType,
+    input: ApplicationAgentInput,
+  ): ApplicationAgentOutput {
+    if (this.isSuccessfulExecution(result)) {
+      return this.createSuccessResponse(result, input);
+    } else {
+      return this.createErrorResponse(result);
+    }
+  }
+
+  private isSuccessfulExecution(result: ApplicationStateType): boolean {
+    return (
+      result.currentNode === APPLICATION_GRAPH_NODES.HANDLE_SUCCESS &&
+      !!result.executionResult &&
+      result.executionResult.status === 'success'
+    );
+  }
+
+  private createSuccessResponse(
+    result: ApplicationStateType,
+    input: ApplicationAgentInput,
+  ): ApplicationAgentOutput {
+    return {
+      success: true,
+      message: APPLICATION_SUCCESS_MESSAGES.APP_CREATED,
+      data: {
+        executionResult: result.executionResult!,
+        originalMessage: input.message,
+        chatSessionId: input.chatSessionId,
+        applicationSpec: result.applicationSpec || null,
+        enrichedSpec: result.enrichedSpec || null,
+      },
+    };
+  }
+
+  private createErrorResponse(result: ApplicationStateType): ApplicationAgentOutput {
+    return {
+      success: false,
+      message: APPLICATION_SUCCESS_MESSAGES.PROCESSING_FAILED,
+      data: {
+        error: result.error || ApplicationErrors.GENERATION_FAILED,
+        currentNode: result.currentNode,
+        retryCount: result.retryCount,
+      },
+    };
+  }
+
+  private handleExecutionError(error: unknown): ApplicationAgentOutput {
+    this.logger.error(APPLICATION_LOG_MESSAGES.GRAPH_EXECUTION_FAILED, error);
+
+    return {
+      success: false,
+      message: APPLICATION_SUCCESS_MESSAGES.PROCESSING_FAILED,
+      data: {
+        error: error instanceof Error ? error.message : ApplicationErrors.GENERATION_FAILED,
+      },
+    };
   }
 }

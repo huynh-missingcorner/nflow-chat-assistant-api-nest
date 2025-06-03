@@ -2,6 +2,9 @@ export const GRAPH_NODES = {
   CLASSIFY_INTENT: 'classifyIntent',
   VALIDATE_CLASSIFICATION: 'validateClassification',
   PROCESS_NEXT_INTENT: 'processNextIntent',
+  PREPARE_APPLICATION_SUBGRAPH: 'prepareApplicationSubgraph',
+  APPLICATION_SUBGRAPH: 'applicationSubgraph',
+  POST_APPLICATION_SUBGRAPH: 'postApplicationSubgraph',
   HANDLE_SUCCESS: 'handleSuccess',
   HANDLE_ERROR: 'handleError',
   HANDLE_RETRY: 'handleRetry',
@@ -13,6 +16,7 @@ export const GRAPH_EDGES = {
   SUCCESS: 'success',
   RETRY: 'retry',
   NEXT_INTENT: 'nextIntent',
+  APPLICATION_DOMAIN: 'applicationDomain',
 } as const;
 
 export const GRAPH_CONFIG = {

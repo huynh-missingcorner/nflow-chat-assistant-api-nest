@@ -10,7 +10,11 @@ import {
   LOG_MESSAGES,
   SUCCESS_MESSAGES,
 } from './constants/graph-constants';
-import { CoordinatorAgentInput, CoordinatorAgentOutput } from './types/coordinator-agent.types';
+import {
+  CoordinatorAgentInput,
+  CoordinatorAgentOutput,
+  CoordinatorAgentSuccessOutput,
+} from './types/coordinator-agent.types';
 import { CoordinatorStateType } from './types/graph-state.types';
 
 export interface ICoordinatorAgentService {
@@ -83,6 +87,11 @@ export class CoordinatorAgentService implements ICoordinatorAgentService, OnModu
       error: null,
       currentNode: GRAPH_CONFIG.INITIAL_NODE,
       retryCount: 0,
+      // Application state fields
+      applicationSpec: null,
+      enrichedSpec: null,
+      executionResult: null,
+      isCompleted: false,
     };
   }
 
@@ -105,7 +114,7 @@ export class CoordinatorAgentService implements ICoordinatorAgentService, OnModu
     result: CoordinatorStateType,
     input: CoordinatorAgentInput,
   ): CoordinatorAgentOutput {
-    return {
+    const baseResponse: CoordinatorAgentSuccessOutput = {
       success: true,
       message: SUCCESS_MESSAGES.INTENT_CLASSIFIED,
       data: {
@@ -114,6 +123,23 @@ export class CoordinatorAgentService implements ICoordinatorAgentService, OnModu
         chatSessionId: input.chatSessionId,
       },
     };
+
+    // Include application results if available
+    if (result.executionResult || result.applicationSpec) {
+      return {
+        success: true,
+        message: 'Intent classified and application processed successfully',
+        data: {
+          ...baseResponse.data,
+          applicationSpec: result.applicationSpec,
+          enrichedSpec: result.enrichedSpec,
+          executionResult: result.executionResult,
+          isCompleted: result.isCompleted,
+        },
+      } as CoordinatorAgentSuccessOutput;
+    }
+
+    return baseResponse;
   }
 
   private createErrorResponse(result: CoordinatorStateType): CoordinatorAgentOutput {

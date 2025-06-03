@@ -1,3 +1,9 @@
+import {
+  ApplicationExecutionResult,
+  ApplicationSpec,
+  EnrichedApplicationSpec,
+} from '@/modules/agents-v2/application/types/application-graph-state.types';
+
 import { IntentClassifierOutput } from '../tools/intent-classifier.tool';
 
 export type CoordinatorAgentInput = {
@@ -12,6 +18,11 @@ export type CoordinatorAgentSuccessOutput = {
     classifiedIntent: IntentClassifierOutput;
     originalMessage: string;
     chatSessionId: string;
+    // Optional application fields (when application subgraph is executed)
+    applicationSpec?: ApplicationSpec | null;
+    enrichedSpec?: EnrichedApplicationSpec | null;
+    executionResult?: ApplicationExecutionResult | null;
+    isCompleted?: boolean;
   };
 };
 

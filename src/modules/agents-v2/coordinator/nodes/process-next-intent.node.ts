@@ -51,16 +51,29 @@ export class ProcessNextIntentNode extends GraphNodeBase {
         : currentIntent.target || 'undefined';
 
       this.logger.debug(
-        `Processing intent ${state.currentIntentIndex}: ${currentIntent.domain}/${currentIntent.intent} for target: ${targetDisplay}`,
+        `Ready to process intent ${state.currentIntentIndex}: ${currentIntent.domain}/${currentIntent.intent} for target: ${targetDisplay}`,
       );
 
-      // Mark this intent as processed
-      const processedIntents = [...state.processedIntents, state.currentIntentIndex];
+      // For non-domain-specific intents (or domains without subgraphs),
+      // mark as processed and move to next
+      if (!this.isDomainWithSubgraph(currentIntent.domain)) {
+        this.logger.debug(
+          `No subgraph available for domain ${currentIntent.domain}, marking as processed`,
+        );
 
-      // Move to the next intent
+        // Mark this intent as processed and move to the next intent
+        const processedIntents = [...state.processedIntents, state.currentIntentIndex];
+
+        return this.createSuccessResult({
+          processedIntents,
+          currentIntentIndex: state.currentIntentIndex + 1,
+        });
+      }
+
+      // For domains with subgraphs, the routing will be handled by edge strategy
+      // This node just prepares the state for routing
       return this.createSuccessResult({
-        processedIntents,
-        currentIntentIndex: state.currentIntentIndex + 1,
+        // Don't increment index here - let the subgraph handle it
       });
     } catch (error) {
       return this.handleError(error, 'processing next intent');
@@ -69,5 +82,11 @@ export class ProcessNextIntentNode extends GraphNodeBase {
 
   protected getNodeName(): string {
     return GRAPH_NODES.PROCESS_NEXT_INTENT;
+  }
+
+  private isDomainWithSubgraph(domain: string): boolean {
+    // Currently only application domain has a subgraph
+    // Add other domains here as they get subgraphs
+    return domain === 'application';
   }
 }

@@ -36,6 +36,6 @@ import { ApplicationGraphEdgeRoutingStrategy } from './strategies/application-gr
       useFactory: () => new MemorySaver(),
     },
   ],
-  exports: [ApplicationAgentService],
+  exports: [ApplicationAgentService, ApplicationGraphBuilder],
 })
 export class ApplicationAgentModule {}

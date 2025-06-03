@@ -1,9 +1,15 @@
 import { BaseMessage } from '@langchain/core/messages';
 import { Annotation } from '@langchain/langgraph';
 
+import {
+  ApplicationExecutionResult,
+  ApplicationSpec,
+  EnrichedApplicationSpec,
+} from '@/modules/agents-v2/application/types/application-graph-state.types';
 import { IntentClassifierOutput } from '@/modules/agents-v2/coordinator/tools/intent-classifier.tool';
 
 // Define the state schema for the coordinator graph
+// This now shares keys with the application state to enable direct subgraph integration
 export const CoordinatorState = Annotation.Root({
   messages: Annotation<BaseMessage[]>({
     reducer: (x, y) => x.concat(y),
@@ -32,6 +38,23 @@ export const CoordinatorState = Annotation.Root({
   }),
   retryCount: Annotation<number>({
     default: () => 0,
+    reducer: (x, y) => y ?? x,
+  }),
+  // Shared keys with application state for direct subgraph integration
+  applicationSpec: Annotation<ApplicationSpec | null>({
+    default: () => null,
+    reducer: (x, y) => y ?? x,
+  }),
+  enrichedSpec: Annotation<EnrichedApplicationSpec | null>({
+    default: () => null,
+    reducer: (x, y) => y ?? x,
+  }),
+  executionResult: Annotation<ApplicationExecutionResult | null>({
+    default: () => null,
+    reducer: (x, y) => y ?? x,
+  }),
+  isCompleted: Annotation<boolean>({
+    default: () => false,
     reducer: (x, y) => y ?? x,
   }),
 });

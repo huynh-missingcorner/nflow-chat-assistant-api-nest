@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MemorySaver } from '@langchain/langgraph';
 
+import { ApplicationAgentModule } from '@/modules/agents-v2/application/application-agent.module';
 import { loadFileContent } from '@/shared/utils';
 
 import { CoordinatorGraphBuilder } from './builders/coordinator-graph.builder';
@@ -11,12 +12,15 @@ import { ClassifyIntentNode } from './nodes/classify-intent.node';
 import { HandleErrorNode } from './nodes/handle-error.node';
 import { HandleRetryNode } from './nodes/handle-retry.node';
 import { HandleSuccessNode } from './nodes/handle-success.node';
+import { PostApplicationSubgraphNode } from './nodes/post-application-subgraph.node';
+import { PrepareApplicationSubgraphNode } from './nodes/prepare-application-subgraph.node';
 import { ProcessNextIntentNode } from './nodes/process-next-intent.node';
 import { ValidateClassificationNode } from './nodes/validate-classification.node';
 import { EdgeRoutingStrategy } from './strategies/edge-routing.strategy';
 import { IntentCombinationValidator } from './validators/intent-combination.validator';
 
 @Module({
+  imports: [ApplicationAgentModule],
   providers: [
     // Core components
     MemorySaver,
@@ -38,6 +42,8 @@ import { IntentCombinationValidator } from './validators/intent-combination.vali
     ClassifyIntentNode,
     ValidateClassificationNode,
     ProcessNextIntentNode,
+    PrepareApplicationSubgraphNode,
+    PostApplicationSubgraphNode,
     HandleSuccessNode,
     HandleErrorNode,
     HandleRetryNode,

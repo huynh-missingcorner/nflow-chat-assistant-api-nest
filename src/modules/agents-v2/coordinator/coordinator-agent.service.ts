@@ -3,7 +3,7 @@ import { MemorySaver, StateGraph } from '@langchain/langgraph';
 
 import { ApplicationErrors } from '@/modules/agents-v2/application/constants';
 
-import { GraphBuilder } from './builders/graph.builder';
+import { CoordinatorGraphBuilder } from './builders/coordinator-graph.builder';
 import {
   GRAPH_CONFIG,
   GRAPH_NODES,
@@ -25,7 +25,7 @@ export class CoordinatorAgentService implements ICoordinatorAgentService, OnModu
   private graph: ReturnType<typeof StateGraph.prototype.compile>;
 
   constructor(
-    private readonly graphBuilder: GraphBuilder,
+    private readonly graphBuilder: CoordinatorGraphBuilder,
     private readonly checkpointer: MemorySaver,
   ) {}
 

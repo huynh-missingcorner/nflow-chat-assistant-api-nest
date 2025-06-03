@@ -16,7 +16,7 @@ export interface IGraphBuilder {
 }
 
 @Injectable()
-export class GraphBuilder implements IGraphBuilder {
+export class CoordinatorGraphBuilder implements IGraphBuilder {
   constructor(
     private readonly classifyIntentNode: ClassifyIntentNode,
     private readonly validateClassificationNode: ValidateClassificationNode,

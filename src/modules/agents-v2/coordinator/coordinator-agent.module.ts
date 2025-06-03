@@ -3,7 +3,7 @@ import { MemorySaver } from '@langchain/langgraph';
 
 import { loadFileContent } from '@/shared/utils';
 
-import { GraphBuilder } from './builders/graph.builder';
+import { CoordinatorGraphBuilder } from './builders/coordinator-graph.builder';
 import { COORDINATOR_SYSTEM_PROMPT } from './constants/tokens';
 import { CoordinatorAgentService } from './coordinator-agent.service';
 import { NodeFactory } from './factories/node.factory';
@@ -43,7 +43,7 @@ import { IntentCombinationValidator } from './validators/intent-combination.vali
     HandleRetryNode,
 
     // Main services
-    GraphBuilder,
+    CoordinatorGraphBuilder,
     CoordinatorAgentService,
   ],
   exports: [CoordinatorAgentService],

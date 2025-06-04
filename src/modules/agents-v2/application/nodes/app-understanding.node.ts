@@ -25,6 +25,9 @@ export class AppUnderstandingNode extends ApplicationGraphNodeBase {
   async execute(state: ApplicationStateType): Promise<Partial<ApplicationStateType>> {
     try {
       this.logger.log('Starting application understanding analysis');
+      this.logger.debug(
+        `Input state: originalMessage="${state.originalMessage}", operationType="${state.operationType}"`,
+      );
 
       const llm = OPENAI_GPT_4_1.bindTools([appUnderstandingTool]);
 
@@ -33,19 +36,24 @@ export class AppUnderstandingNode extends ApplicationGraphNodeBase {
         new HumanMessage(formatAppUnderstandingPrompt(state.originalMessage)),
       ];
 
+      this.logger.debug('Invoking LLM with app understanding tool...');
       const result = await llm.invoke(messages);
 
       // Extract the tool call result
       const toolCall = result.tool_calls?.[0];
       if (!toolCall) {
+        this.logger.error('No tool call found in LLM response');
+        this.logger.debug('LLM response:', JSON.stringify(result, null, 2));
         throw new Error('No tool call found in LLM response');
       }
 
+      this.logger.debug(`Tool call received: ${toolCall.name}`, toolCall.args);
       const rawSpec = toolCall.args as AppUnderstandingInput;
 
       // Validate and convert to ApplicationSpec
       const applicationSpec = this.validateAndConvertSpec(rawSpec);
 
+      this.logger.debug('Validated application spec:', applicationSpec);
       this.logger.log(APPLICATION_LOG_MESSAGES.UNDERSTANDING_COMPLETED);
 
       return this.createSuccessResult({

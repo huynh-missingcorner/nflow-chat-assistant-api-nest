@@ -58,6 +58,7 @@ export class SubgraphWrapperService {
    */
   createSubgraphWrapper(domain: SubgraphDomain) {
     return async (state: CoordinatorStateType): Promise<Partial<CoordinatorStateType>> => {
+      console.log('createSubgraphWrapper running...');
       try {
         const handler = this.subgraphHandlers.get(domain);
         if (!handler) {

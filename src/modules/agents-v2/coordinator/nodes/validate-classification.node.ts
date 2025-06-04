@@ -13,6 +13,8 @@ export class ValidateClassificationNode extends GraphNodeBase {
 
   execute(state: CoordinatorStateType): Partial<CoordinatorStateType> {
     try {
+      this.logger.debug('ValidateClassificationNode running...');
+
       this.validateClassifiedIntent(state);
       this.validateIntentsArray(state);
       this.validateAllIntents(state);

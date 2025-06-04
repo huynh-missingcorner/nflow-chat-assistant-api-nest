@@ -8,6 +8,8 @@ import { GraphNodeBase } from './graph-node.base';
 export class ProcessNextIntentNode extends GraphNodeBase {
   execute(state: CoordinatorStateType): Partial<CoordinatorStateType> {
     try {
+      this.logger.debug('ProcessNextIntentNode running...');
+
       if (!state.classifiedIntent || !state.classifiedIntent.intents.length) {
         return this.handleError(new Error('No intents to process'), 'processing next intent');
       }

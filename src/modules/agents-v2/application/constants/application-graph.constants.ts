@@ -16,6 +16,12 @@ export const APPLICATION_GRAPH_EDGES = {
   RETRY: 'retry',
 } as const;
 
+export const APPLICATION_OPERATIONS = {
+  CREATE: 'create_application',
+  UPDATE: 'update_application',
+  DELETE: 'delete_application',
+} as const;
+
 export const APPLICATION_GRAPH_CONFIG = {
   MAX_RETRY_COUNT: 3,
   DEFAULT_THREAD_ID: 'application_default',
@@ -36,6 +42,7 @@ export const APPLICATION_LOG_MESSAGES = {
 export const APPLICATION_SUCCESS_MESSAGES = {
   APP_CREATED: 'Application created successfully',
   APP_UPDATED: 'Application updated successfully',
+  APP_DELETED: 'Application deleted successfully',
   PROCESSING_FAILED: 'Application processing failed',
   UNDERSTANDING_FAILED: 'Application understanding failed',
   DESIGN_FAILED: 'Application design failed',

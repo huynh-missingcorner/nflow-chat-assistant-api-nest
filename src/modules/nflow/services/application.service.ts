@@ -39,6 +39,7 @@ export class NFlowApplicationService extends BaseNFlowService {
         ...data,
         profiles: ['admin'],
         credentials: [],
+        tagNames: [],
       },
       {},
       userId,

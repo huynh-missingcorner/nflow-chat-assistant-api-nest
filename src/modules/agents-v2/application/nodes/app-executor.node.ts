@@ -1,18 +1,31 @@
 import { Injectable } from '@nestjs/common';
 
+import { ChatSessionService } from '@/modules/chat-session/chat-session.service';
+import { NFlowApplicationService } from '@/modules/nflow/services/application.service';
+import { CreateApplicationDto, UpdateApplicationDto } from '@/modules/nflow/types';
+
 import {
   APPLICATION_ERROR_MESSAGES,
   APPLICATION_GRAPH_NODES,
   APPLICATION_LOG_MESSAGES,
+  APPLICATION_SUCCESS_MESSAGES,
 } from '../constants/application-graph.constants';
 import {
   ApplicationExecutionResult,
+  ApplicationOperationType,
   ApplicationStateType,
 } from '../types/application-graph-state.types';
 import { ApplicationGraphNodeBase } from './application-graph-node.base';
 
 @Injectable()
 export class AppExecutorNode extends ApplicationGraphNodeBase {
+  constructor(
+    private readonly nflowApplicationService: NFlowApplicationService,
+    private readonly chatSessionService: ChatSessionService,
+  ) {
+    super();
+  }
+
   protected getNodeName(): string {
     return APPLICATION_GRAPH_NODES.APP_EXECUTOR;
   }
@@ -25,8 +38,23 @@ export class AppExecutorNode extends ApplicationGraphNodeBase {
         throw new Error(APPLICATION_ERROR_MESSAGES.MISSING_REQUIRED_FIELDS + ': enrichedSpec');
       }
 
-      // Execute the application creation
-      const executionResult = await this.executeApplication(state.enrichedSpec);
+      if (!state.operationType) {
+        throw new Error(APPLICATION_ERROR_MESSAGES.MISSING_REQUIRED_FIELDS + ': operationType');
+      }
+
+      if (!state.chatSessionId) {
+        throw new Error(APPLICATION_ERROR_MESSAGES.MISSING_REQUIRED_FIELDS + ': chatSessionId');
+      }
+
+      // Get userId from chatSessionId
+      const userId = await this.getUserId(state.chatSessionId);
+
+      // Execute the application operation
+      const executionResult = await this.executeApplicationOperation(
+        state.enrichedSpec,
+        state.operationType,
+        userId,
+      );
 
       this.logger.log(APPLICATION_LOG_MESSAGES.EXECUTION_COMPLETED);
 
@@ -40,154 +68,113 @@ export class AppExecutorNode extends ApplicationGraphNodeBase {
     }
   }
 
-  private async executeApplication(
+  /**
+   * Get userId from chatSessionId
+   * @param chatSessionId Chat session ID
+   * @returns userId associated with the chat session
+   */
+  private async getUserId(chatSessionId: string): Promise<string> {
+    return this.chatSessionService.getUserIdFromChatSession(chatSessionId);
+  }
+
+  private async executeApplicationOperation(
     enrichedSpec: NonNullable<ApplicationStateType['enrichedSpec']>,
+    operationType: ApplicationOperationType,
+    userId: string,
   ): Promise<ApplicationExecutionResult> {
     try {
-      // Step 1: Create the main application
-      const appId = await this.createMainApplication(enrichedSpec);
+      let result: unknown;
 
-      // Step 2: Create objects if any
-      const objectIds = await this.createObjects(enrichedSpec, appId);
-
-      // Step 3: Create layouts if any
-      const layoutIds = await this.createLayouts(enrichedSpec, appId);
-
-      // Step 4: Create flows if any
-      const flowIds = await this.createFlows(enrichedSpec, appId);
+      switch (operationType) {
+        case 'create_application':
+          result = await this.createApplication(enrichedSpec, userId);
+          break;
+        case 'update_application':
+          result = await this.updateApplication(enrichedSpec, userId);
+          break;
+        case 'delete_application':
+          result = await this.deleteApplication(enrichedSpec, userId);
+          break;
+        default:
+          throw new Error(`Unsupported operation type: ${operationType as string}`);
+      }
 
       return {
-        appId,
-        objectIds,
-        layoutIds,
-        flowIds,
+        appId: enrichedSpec.appId || enrichedSpec.appName,
+        operationType,
         status: 'success',
+        result,
       };
     } catch (error) {
-      this.logger.error('Application execution failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown execution error';
+      this.logger.error(`Application ${operationType} failed:`, error);
 
       return {
-        appId: enrichedSpec.appId || '',
-        objectIds: [],
-        layoutIds: [],
-        flowIds: [],
+        appId: enrichedSpec.appId || enrichedSpec.appName,
+        operationType,
         status: 'failed',
-        errors: [error instanceof Error ? error.message : 'Unknown execution error'],
+        errors: [errorMessage],
       };
     }
   }
 
-  private async createMainApplication(
+  private async createApplication(
     enrichedSpec: NonNullable<ApplicationStateType['enrichedSpec']>,
-  ): Promise<string> {
-    // TODO: Implement actual Nflow API call
-    // This would call the existing CreateNewApplicationTool or make direct API calls
-
+    userId: string,
+  ): Promise<unknown> {
     this.logger.log(`Creating application: ${enrichedSpec.appName}`);
 
-    // Simulate application creation
-    await this.simulateApiCall(1000);
+    if (!enrichedSpec.apiParameters) {
+      throw new Error('Missing API parameters for application creation');
+    }
 
-    return enrichedSpec.appId || `app_${Date.now()}`;
+    const createDto = enrichedSpec.apiParameters as unknown as CreateApplicationDto;
+    const result = await this.nflowApplicationService.createApp(createDto, userId);
+
+    this.logger.log(APPLICATION_SUCCESS_MESSAGES.APP_CREATED);
+    return result;
   }
 
-  private async createObjects(
+  private async updateApplication(
     enrichedSpec: NonNullable<ApplicationStateType['enrichedSpec']>,
-    appId: string,
-  ): Promise<string[]> {
-    if (!enrichedSpec.objects || enrichedSpec.objects.length === 0) {
-      return [];
+    userId: string,
+  ): Promise<unknown> {
+    this.logger.log(`Updating application: ${enrichedSpec.appName}`);
+
+    if (!enrichedSpec.apiParameters) {
+      throw new Error('Missing API parameters for application update');
     }
 
-    this.logger.log(`Creating ${enrichedSpec.objects.length} objects for app ${appId}`);
+    const updateDto = enrichedSpec.apiParameters as unknown as UpdateApplicationDto;
+    const result = await this.nflowApplicationService.updateApp(updateDto, userId);
 
-    const objectIds: string[] = [];
-
-    for (const [index, objectName] of enrichedSpec.objects.entries()) {
-      try {
-        // TODO: Implement actual object creation via Nflow API
-        // This would integrate with the object domain agents
-
-        this.logger.log(`Creating object: ${objectName}`);
-        await this.simulateApiCall(500);
-
-        const objectId =
-          enrichedSpec.objectIds?.[index] || `obj_${objectName.toLowerCase()}_${Date.now()}`;
-        objectIds.push(objectId);
-      } catch (error) {
-        this.logger.error(`Failed to create object ${objectName}:`, error);
-        // Continue with other objects
-      }
-    }
-
-    return objectIds;
+    this.logger.log(APPLICATION_SUCCESS_MESSAGES.APP_UPDATED);
+    return result;
   }
 
-  private async createLayouts(
+  private async deleteApplication(
     enrichedSpec: NonNullable<ApplicationStateType['enrichedSpec']>,
-    appId: string,
-  ): Promise<string[]> {
-    if (!enrichedSpec.layouts || enrichedSpec.layouts.length === 0) {
-      return [];
+    userId: string,
+  ): Promise<unknown> {
+    this.logger.log(`Deleting application: ${enrichedSpec.appName}`);
+
+    if (!enrichedSpec.apiParameters) {
+      throw new Error('Missing API parameters for deletion');
     }
 
-    this.logger.log(`Creating ${enrichedSpec.layouts.length} layouts for app ${appId}`);
+    const deleteParams = enrichedSpec.apiParameters as { names?: string[] };
+    const names = deleteParams.names;
 
-    const layoutIds: string[] = [];
-
-    for (const [index, layoutName] of enrichedSpec.layouts.entries()) {
-      try {
-        // TODO: Implement actual layout creation via Nflow API
-        // This would integrate with the layout domain agents
-
-        this.logger.log(`Creating layout: ${layoutName}`);
-        await this.simulateApiCall(300);
-
-        const layoutId =
-          enrichedSpec.layoutIds?.[index] || `layout_${layoutName.toLowerCase()}_${Date.now()}`;
-        layoutIds.push(layoutId);
-      } catch (error) {
-        this.logger.error(`Failed to create layout ${layoutName}:`, error);
-        // Continue with other layouts
-      }
+    if (!names || names.length === 0) {
+      throw new Error('No application names provided for deletion');
     }
 
-    return layoutIds;
-  }
-
-  private async createFlows(
-    enrichedSpec: NonNullable<ApplicationStateType['enrichedSpec']>,
-    appId: string,
-  ): Promise<string[]> {
-    if (!enrichedSpec.flows || enrichedSpec.flows.length === 0) {
-      return [];
+    // Delete each application (the service expects one app name at a time)
+    for (const appName of names) {
+      await this.nflowApplicationService.deleteApp(appName, userId);
     }
 
-    this.logger.log(`Creating ${enrichedSpec.flows.length} flows for app ${appId}`);
-
-    const flowIds: string[] = [];
-
-    for (const [index, flowName] of enrichedSpec.flows.entries()) {
-      try {
-        // TODO: Implement actual flow creation via Nflow API
-        // This would integrate with the flow domain agents
-
-        this.logger.log(`Creating flow: ${flowName}`);
-        await this.simulateApiCall(400);
-
-        const flowId =
-          enrichedSpec.flowIds?.[index] || `flow_${flowName.toLowerCase()}_${Date.now()}`;
-        flowIds.push(flowId);
-      } catch (error) {
-        this.logger.error(`Failed to create flow ${flowName}:`, error);
-        // Continue with other flows
-      }
-    }
-
-    return flowIds;
-  }
-
-  private async simulateApiCall(delay: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, delay));
+    this.logger.log(APPLICATION_SUCCESS_MESSAGES.APP_DELETED);
+    return { success: true, message: APPLICATION_SUCCESS_MESSAGES.APP_DELETED, deletedApps: names };
   }
 }

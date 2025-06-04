@@ -97,17 +97,35 @@ export class ApplicationSubgraphHandler implements SubgraphHandler<ApplicationSt
   transformToSubgraphState(state: CoordinatorStateType): Partial<ApplicationStateType> {
     const currentIntent = state.classifiedIntent!.intents[state.currentIntentIndex];
     const applicationMessage = this.buildSubgraphMessage(currentIntent, state.originalMessage);
+    const operationType = this.mapIntentToOperationType(currentIntent.intent);
 
     return {
       originalMessage: applicationMessage,
       chatSessionId: state.chatSessionId,
       messages: state.messages,
+      operationType,
       // Clear previous application state for clean execution
       applicationSpec: null,
       enrichedSpec: null,
       executionResult: null,
       isCompleted: false,
     };
+  }
+
+  /**
+   * Maps intent string to ApplicationOperationType
+   */
+  private mapIntentToOperationType(intent: string): ApplicationStateType['operationType'] {
+    switch (intent) {
+      case 'create_application':
+        return 'create_application';
+      case 'update_application':
+        return 'update_application';
+      case 'delete_application':
+        return 'delete_application';
+      default:
+        throw new Error(`Unsupported application intent: ${intent}`);
+    }
   }
 
   /**

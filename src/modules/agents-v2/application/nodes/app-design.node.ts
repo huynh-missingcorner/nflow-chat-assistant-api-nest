@@ -10,8 +10,14 @@ import {
   APPLICATION_LOG_MESSAGES,
 } from '../constants/application-graph.constants';
 import { APP_DESIGN_SYSTEM_PROMPT, formatAppDesignPrompt } from '../context/app-design.context';
-import { AppDesignInput, appDesignTool, appValidationTool } from '../tools/app-design.tool';
 import {
+  appValidationTool,
+  createNewApplicationTool,
+  removeApplicationsTool,
+  updateApplicationTool,
+} from '../tools';
+import {
+  ApplicationOperationType,
   ApplicationStateType,
   EnrichedApplicationSpec,
 } from '../types/application-graph-state.types';
@@ -26,6 +32,7 @@ interface ValidationResult {
 
 interface ProcessedToolCalls {
   enrichedSpec: EnrichedApplicationSpec;
+  apiParameters?: Record<string, unknown>;
 }
 
 @Injectable()
@@ -42,20 +49,38 @@ export class AppDesignNode extends ApplicationGraphNodeBase {
         throw new Error(APPLICATION_ERROR_MESSAGES.MISSING_REQUIRED_FIELDS + ': applicationSpec');
       }
 
-      const llm = OPENAI_GPT_4_1.bindTools([appDesignTool, appValidationTool]);
+      if (!state.operationType) {
+        throw new Error(APPLICATION_ERROR_MESSAGES.MISSING_REQUIRED_FIELDS + ': operationType');
+      }
+
+      // For delete operations, we only need minimal spec validation
+      if (state.operationType === 'delete_application') {
+        const enrichedSpec = this.createMinimalDeleteSpec(
+          state.applicationSpec,
+          state.operationType,
+        );
+        return this.createSuccessResult({
+          enrichedSpec,
+          messages: state.messages,
+        });
+      }
+
+      // Get appropriate tools based on operation type
+      const tools = this.getToolsForOperation(state.operationType);
+      const llm = OPENAI_GPT_4_1.bindTools(tools);
 
       const messages = [
-        new SystemMessage(APP_DESIGN_SYSTEM_PROMPT),
+        new SystemMessage(this.getSystemPromptForOperation(state.operationType)),
         new HumanMessage(formatAppDesignPrompt(state.applicationSpec)),
       ];
 
       const result = await llm.invoke(messages);
 
-      // Process tool calls
-      const designResult = this.processToolCalls(result.tool_calls || []);
+      // Process tool calls to extract API parameters
+      const designResult = this.processToolCalls(result.tool_calls || [], state.operationType);
 
       // Validate the enriched specification
-      this.validateEnrichedSpec(designResult.enrichedSpec);
+      this.validateEnrichedSpec(designResult.enrichedSpec, state.operationType);
 
       this.logger.log(APPLICATION_LOG_MESSAGES.DESIGN_COMPLETED);
 
@@ -69,20 +94,88 @@ export class AppDesignNode extends ApplicationGraphNodeBase {
     }
   }
 
-  private processToolCalls(toolCalls: ToolCall[]): ProcessedToolCalls {
+  private getToolsForOperation(operationType: ApplicationOperationType) {
+    switch (operationType) {
+      case 'create_application':
+        return [createNewApplicationTool, appValidationTool];
+      case 'update_application':
+        return [updateApplicationTool, appValidationTool];
+      case 'delete_application':
+        return [removeApplicationsTool, appValidationTool];
+      default:
+        return [appValidationTool];
+    }
+  }
+
+  private getSystemPromptForOperation(operationType: ApplicationOperationType): string {
+    const basePrompt = APP_DESIGN_SYSTEM_PROMPT;
+
+    switch (operationType) {
+      case 'create_application':
+        return `${basePrompt}\n\nYou are creating a new application. Use the create_new_application tool to extract and structure the required parameters for the NFlow API.`;
+      case 'update_application':
+        return `${basePrompt}\n\nYou are updating an existing application. Use the update_application tool to extract and structure the required parameters for the NFlow API. Focus on the changes and improvements needed.`;
+      case 'delete_application':
+        return `${basePrompt}\n\nYou are preparing an application for deletion. Use the remove_applications tool to extract the application name. Only validate the application name and basic structure.`;
+      default:
+        return basePrompt;
+    }
+  }
+
+  private createMinimalDeleteSpec(
+    applicationSpec: ApplicationStateType['applicationSpec'],
+    operationType: ApplicationOperationType,
+  ): EnrichedApplicationSpec {
+    if (!applicationSpec) {
+      throw new Error('Application spec is required');
+    }
+
+    return {
+      appName: applicationSpec.appName,
+      description: applicationSpec.description,
+      operationType,
+      appId: applicationSpec.appName,
+      objects: [],
+      layouts: [],
+      flows: [],
+      objectIds: [],
+      layoutIds: [],
+      flowIds: [],
+      dependencies: [],
+      profiles: ['admin'],
+      tagNames: [],
+      credentials: [],
+      metadata: applicationSpec.metadata || {},
+      apiParameters: {
+        names: [applicationSpec.appName], // For delete operation
+      },
+    };
+  }
+
+  private processToolCalls(
+    toolCalls: ToolCall[],
+    operationType: ApplicationOperationType,
+  ): ProcessedToolCalls {
     let enrichedSpec: EnrichedApplicationSpec | null = null;
     let validationResult: ValidationResult | null = null;
+    let apiParameters: Record<string, unknown> | undefined = undefined;
 
     for (const toolCall of toolCalls) {
-      if (toolCall.name === 'app_design_enhancer') {
-        enrichedSpec = this.generateEnrichedSpec(toolCall.args as AppDesignInput);
+      if (this.isApplicationManagementTool(toolCall.name)) {
+        // Extract API parameters from tool call
+        apiParameters = toolCall.args as Record<string, unknown>;
+        // Generate enriched spec from API parameters
+        enrichedSpec = this.generateEnrichedSpecFromToolCall(
+          toolCall.args as Record<string, unknown>,
+          operationType,
+        );
       } else if (toolCall.name === 'app_validation_checker') {
         validationResult = toolCall.args as ValidationResult;
       }
     }
 
     if (!enrichedSpec) {
-      throw new Error('No design enhancement found in LLM response');
+      throw new Error('No application management tool found in LLM response');
     }
 
     if (validationResult && !validationResult.isValid) {
@@ -93,69 +186,69 @@ export class AppDesignNode extends ApplicationGraphNodeBase {
       );
     }
 
-    return { enrichedSpec };
+    return { enrichedSpec, apiParameters };
   }
 
-  private generateEnrichedSpec(designArgs: AppDesignInput): EnrichedApplicationSpec {
-    const timestamp = Date.now();
-    const appDomain = this.extractDomainFromName(designArgs.appName);
+  private isApplicationManagementTool(toolName: string): boolean {
+    return [
+      'ApiAppBuilderController_createApp',
+      'ApiAppBuilderController_updateApp',
+      'ApiAppBuilderController_removeApps',
+    ].includes(toolName);
+  }
 
-    return {
-      appName: designArgs.appName,
-      description: designArgs.description,
-      objects: Array.isArray(designArgs.objects) ? designArgs.objects : [],
-      layouts: Array.isArray(designArgs.layouts) ? designArgs.layouts : [],
-      flows: Array.isArray(designArgs.flows) ? designArgs.flows : [],
-      metadata:
-        typeof designArgs.metadata === 'object' && designArgs.metadata !== null
-          ? designArgs.metadata
-          : {},
-      appId: designArgs.appId || this.generateAppId(appDomain, timestamp),
-      objectIds: this.generateObjectIds(
-        Array.isArray(designArgs.objects) ? designArgs.objects : [],
-        appDomain,
-        timestamp,
-      ),
-      layoutIds: this.generateLayoutIds(
-        Array.isArray(designArgs.layouts) ? designArgs.layouts : [],
-        appDomain,
-        timestamp,
-      ),
-      flowIds: this.generateFlowIds(
-        Array.isArray(designArgs.flows) ? designArgs.flows : [],
-        appDomain,
-        timestamp,
-      ),
-      dependencies: Array.isArray(designArgs.dependencies) ? designArgs.dependencies : [],
+  private generateEnrichedSpecFromToolCall(
+    toolArgs: Record<string, unknown>,
+    operationType: ApplicationOperationType,
+  ): EnrichedApplicationSpec {
+    // Base spec from tool arguments
+    const baseSpec = {
+      operationType,
+      objects: [],
+      layouts: [],
+      flows: [],
+      objectIds: [],
+      layoutIds: [],
+      flowIds: [],
+      dependencies: [],
+      metadata: {},
+      apiParameters: toolArgs, // Store the extracted API parameters
     };
+
+    switch (operationType) {
+      case 'create_application':
+      case 'update_application':
+        return {
+          ...baseSpec,
+          appName: (toolArgs.displayName as string) || (toolArgs.name as string) || '',
+          description: toolArgs.description as string | undefined,
+          appId: (toolArgs.name as string) || '',
+          profiles: (toolArgs.profiles as string[]) || ['admin'],
+          tagNames: (toolArgs.tagNames as string[]) || [],
+          credentials: (toolArgs.credentials as string[]) || [],
+        };
+
+      case 'delete_application': {
+        const names = toolArgs.names as string[] | undefined;
+        return {
+          ...baseSpec,
+          appName: names?.[0] || '',
+          appId: names?.[0] || '',
+          profiles: ['admin'],
+          tagNames: [],
+          credentials: [],
+        };
+      }
+
+      default:
+        throw new Error(`Unsupported operation type: ${operationType as string}`);
+    }
   }
 
-  private extractDomainFromName(appName: string): string {
-    return appName
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '')
-      .substring(0, 10);
-  }
-
-  private generateAppId(domain: string, timestamp: number): string {
-    return `app_${domain}_${timestamp}`;
-  }
-
-  private generateObjectIds(objects: string[], domain: string, timestamp: number): string[] {
-    return objects.map((obj, index) => `obj_${obj.toLowerCase()}_${domain}_${timestamp}_${index}`);
-  }
-
-  private generateLayoutIds(layouts: string[], domain: string, timestamp: number): string[] {
-    return layouts.map(
-      (layout, index) => `layout_${layout.toLowerCase()}_${domain}_${timestamp}_${index}`,
-    );
-  }
-
-  private generateFlowIds(flows: string[], domain: string, timestamp: number): string[] {
-    return flows.map((flow, index) => `flow_${flow.toLowerCase()}_${domain}_${timestamp}_${index}`);
-  }
-
-  private validateEnrichedSpec(spec: EnrichedApplicationSpec): void {
+  private validateEnrichedSpec(
+    spec: EnrichedApplicationSpec,
+    operationType: ApplicationOperationType,
+  ): void {
     if (!spec.appId) {
       throw new Error(APPLICATION_ERROR_MESSAGES.MISSING_REQUIRED_FIELDS + ': appId');
     }
@@ -164,9 +257,14 @@ export class AppDesignNode extends ApplicationGraphNodeBase {
       throw new Error(APPLICATION_ERROR_MESSAGES.INVALID_SPEC + ': appName cannot be empty');
     }
 
-    // Validate ID format
-    if (!spec.appId.startsWith('app_')) {
-      throw new Error(APPLICATION_ERROR_MESSAGES.INVALID_SPEC + ': invalid appId format');
+    // For delete operations, we only need basic validation
+    if (operationType === 'delete_application') {
+      return;
+    }
+
+    // Validate API parameters are present
+    if (!spec.apiParameters) {
+      throw new Error(APPLICATION_ERROR_MESSAGES.MISSING_REQUIRED_FIELDS + ': apiParameters');
     }
   }
 }

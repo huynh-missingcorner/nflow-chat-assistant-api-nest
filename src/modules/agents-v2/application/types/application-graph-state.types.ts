@@ -1,6 +1,11 @@
 import { BaseMessage } from '@langchain/core/messages';
 import { Annotation } from '@langchain/langgraph';
 
+export type ApplicationOperationType =
+  | 'create_application'
+  | 'update_application'
+  | 'delete_application';
+
 export interface ApplicationSpec {
   appName: string;
   description?: string;
@@ -8,6 +13,7 @@ export interface ApplicationSpec {
   layouts?: string[];
   flows?: string[];
   metadata?: Record<string, unknown>;
+  operationType?: ApplicationOperationType;
 }
 
 export interface EnrichedApplicationSpec extends ApplicationSpec {
@@ -16,14 +22,17 @@ export interface EnrichedApplicationSpec extends ApplicationSpec {
   layoutIds?: string[];
   flowIds?: string[];
   dependencies?: string[];
+  profiles?: string[];
+  tagNames?: string[];
+  credentials?: string[];
+  apiParameters?: Record<string, unknown>;
 }
 
 export interface ApplicationExecutionResult {
   appId: string;
-  objectIds: string[];
-  layoutIds: string[];
-  flowIds: string[];
+  operationType: ApplicationOperationType;
   status: 'success' | 'partial' | 'failed';
+  result?: any;
   errors?: string[];
 }
 
@@ -34,6 +43,10 @@ export const ApplicationState = Annotation.Root({
   }),
   originalMessage: Annotation<string>(),
   chatSessionId: Annotation<string>(),
+  operationType: Annotation<ApplicationOperationType | null>({
+    default: () => null,
+    reducer: (x, y) => y ?? x,
+  }),
   applicationSpec: Annotation<ApplicationSpec | null>({
     default: () => null,
     reducer: (x, y) => y ?? x,

@@ -1,20 +1,19 @@
 import { Injectable } from '@nestjs/common';
 
-import { GRAPH_NODES, LOG_MESSAGES } from '../constants/graph-constants';
+import { GRAPH_NODES } from '../constants/graph-constants';
+import { CoordinatorHandlerNodeFactory } from '../factories/handler-node.factory';
 import { CoordinatorStateType } from '../types/graph-state.types';
 import { GraphNodeBase } from './graph-node.base';
 
 @Injectable()
 export class HandleRetryNode extends GraphNodeBase {
+  constructor(private readonly handlerFactory: CoordinatorHandlerNodeFactory) {
+    super();
+  }
+
   execute(state: CoordinatorStateType): Partial<CoordinatorStateType> {
-    const newRetryCount = state.retryCount + 1;
-
-    this.logger.warn(LOG_MESSAGES.RETRYING_CLASSIFICATION(newRetryCount));
-
-    return this.createSuccessResult({
-      retryCount: newRetryCount,
-      error: null, // Clear previous error
-    });
+    const retryNode = this.handlerFactory.createRetryNode();
+    return retryNode.execute(state);
   }
 
   protected getNodeName(): string {

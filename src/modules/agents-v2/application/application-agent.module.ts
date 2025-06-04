@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { ApplicationAgentService } from './application-agent.service';
 import { ApplicationGraphBuilder } from './builders/application-graph.builder';
+import { ApplicationHandlerNodeFactory } from './factories/handler-node.factory';
 import { AppDesignNode } from './nodes/app-design.node';
 import { AppExecutorNode } from './nodes/app-executor.node';
 import { AppUnderstandingNode } from './nodes/app-understanding.node';
@@ -17,6 +18,9 @@ import { ApplicationGraphEdgeRoutingStrategy } from './strategies/application-gr
 
     // Graph Builder
     ApplicationGraphBuilder,
+
+    // Factories
+    ApplicationHandlerNodeFactory,
 
     // Graph Nodes
     AppUnderstandingNode,

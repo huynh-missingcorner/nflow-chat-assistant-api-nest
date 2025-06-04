@@ -6,6 +6,7 @@ import { loadFileContent } from '@/shared/utils';
 import { CoordinatorGraphBuilder } from './builders/coordinator-graph.builder';
 import { COORDINATOR_SYSTEM_PROMPT } from './constants/tokens';
 import { CoordinatorAgentService } from './coordinator-agent.service';
+import { CoordinatorHandlerNodeFactory } from './factories/handler-node.factory';
 import { NodeFactory } from './factories/node.factory';
 import { ClassifyIntentNode } from './nodes/classify-intent.node';
 import { HandleErrorNode } from './nodes/handle-error.node';
@@ -26,6 +27,9 @@ import { IntentCombinationValidator } from './validators/intent-combination.vali
     EdgeRoutingStrategy,
     NodeFactory,
     SubgraphWrapperService,
+
+    // Factories
+    CoordinatorHandlerNodeFactory,
 
     // System prompt provider
     {

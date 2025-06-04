@@ -1,15 +1,19 @@
 import { Injectable } from '@nestjs/common';
 
-import { GRAPH_NODES, LOG_MESSAGES } from '../constants/graph-constants';
+import { GRAPH_NODES } from '../constants/graph-constants';
+import { CoordinatorHandlerNodeFactory } from '../factories/handler-node.factory';
 import { CoordinatorStateType } from '../types/graph-state.types';
 import { GraphNodeBase } from './graph-node.base';
 
 @Injectable()
 export class HandleSuccessNode extends GraphNodeBase {
-  execute(): Partial<CoordinatorStateType> {
-    this.logger.log(LOG_MESSAGES.WORKFLOW_COMPLETED);
+  constructor(private readonly handlerFactory: CoordinatorHandlerNodeFactory) {
+    super();
+  }
 
-    return this.createSuccessResult({});
+  execute(state: CoordinatorStateType): Partial<CoordinatorStateType> {
+    const successNode = this.handlerFactory.createSuccessNode();
+    return successNode.execute(state);
   }
 
   protected getNodeName(): string {

@@ -1,15 +1,19 @@
 import { Injectable } from '@nestjs/common';
 
-import { GRAPH_NODES, LOG_MESSAGES } from '../constants/graph-constants';
+import { GRAPH_NODES } from '../constants/graph-constants';
+import { CoordinatorHandlerNodeFactory } from '../factories/handler-node.factory';
 import { CoordinatorStateType } from '../types/graph-state.types';
 import { GraphNodeBase } from './graph-node.base';
 
 @Injectable()
 export class HandleErrorNode extends GraphNodeBase {
-  execute(state: CoordinatorStateType): Partial<CoordinatorStateType> {
-    this.logger.error(LOG_MESSAGES.WORKFLOW_FAILED(state.error || 'Unknown error'));
+  constructor(private readonly handlerFactory: CoordinatorHandlerNodeFactory) {
+    super();
+  }
 
-    return this.createSuccessResult({});
+  execute(state: CoordinatorStateType): Partial<CoordinatorStateType> {
+    const errorNode = this.handlerFactory.createErrorNode();
+    return errorNode.execute(state);
   }
 
   protected getNodeName(): string {

@@ -1,10 +1,13 @@
 export const GRAPH_NODES = {
+  // Nodes
   CLASSIFY_INTENT: 'classifyIntent',
   VALIDATE_CLASSIFICATION: 'validateClassification',
   PROCESS_NEXT_INTENT: 'processNextIntent',
-  PREPARE_APPLICATION_SUBGRAPH: 'prepareApplicationSubgraph',
+
+  // Subgraphs
   APPLICATION_SUBGRAPH: 'applicationSubgraph',
-  POST_APPLICATION_SUBGRAPH: 'postApplicationSubgraph',
+
+  // Handlers
   HANDLE_SUCCESS: 'handleSuccess',
   HANDLE_ERROR: 'handleError',
   HANDLE_RETRY: 'handleRetry',

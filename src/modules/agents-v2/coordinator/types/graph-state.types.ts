@@ -82,3 +82,53 @@ export interface NodeExecutionContext {
   state: CoordinatorStateType;
   config?: GraphConfiguration;
 }
+
+/**
+ * Interface for subgraph state transformation
+ * Defines how coordinator state is transformed to/from subgraph states
+ */
+export interface SubgraphStateTransformer<TSubgraphState> {
+  /**
+   * Transform coordinator state to subgraph input state
+   */
+  transformToSubgraphInput(coordinatorState: CoordinatorStateType): Partial<TSubgraphState>;
+
+  /**
+   * Transform subgraph output state back to coordinator state
+   */
+  transformFromSubgraphOutput(
+    subgraphState: TSubgraphState,
+    originalCoordinatorState: CoordinatorStateType,
+  ): Partial<CoordinatorStateType>;
+}
+
+/**
+ * Validation interface for subgraph execution
+ */
+export interface SubgraphExecutionValidator {
+  /**
+   * Validate state before subgraph execution
+   */
+  validatePreExecution(state: CoordinatorStateType): ValidationResult;
+
+  /**
+   * Validate state after subgraph execution
+   */
+  validatePostExecution(state: CoordinatorStateType): ValidationResult;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+/**
+ * Configuration for subgraph execution
+ */
+export interface SubgraphExecutionConfig {
+  timeout?: number;
+  retryCount?: number;
+  validateInput?: boolean;
+  validateOutput?: boolean;
+}

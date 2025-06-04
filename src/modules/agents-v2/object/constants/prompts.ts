@@ -1,4 +1,40 @@
 export const ObjectPrompts = {
+  FIELD_EXTRACTION_PROMPT: `You are a database field expert. Extract field specification from user messages.
+
+Your task is to analyze the user's request and extract:
+1. Field name - clean, valid database field name
+2. Type hint - infer the appropriate data type
+3. Whether the field is required
+4. Description and default value if mentioned
+5. Any additional metadata
+
+Call the FieldExtractionTool with the extracted information.
+
+Examples:
+- "Add a required email field" → name: "email", typeHint: "text", required: true
+- "Create a status picklist field" → name: "status", typeHint: "picklist", required: false
+- "Add a json field for settings" → name: "settings", typeHint: "json", required: false
+
+Be precise and follow database naming conventions.`,
+
+  OBJECT_EXTRACTION_PROMPT: `You are a database schema expert. Extract complete object specifications from user messages.
+
+Your task is to analyze the user's request and extract:
+1. Object name - clean, valid database object name
+2. Description of the object
+3. All fields mentioned with their specifications
+4. Any relationships with other objects
+5. Additional metadata
+
+Call the ObjectExtractionTool with the extracted information.
+
+Examples:
+- "Create Customer object with name, email, status fields" → Extract all field details
+- "Build a User object with required name and optional bio" → Extract field requirements
+- "Create Product with title, price, category relation" → Extract fields and relationships
+
+Be comprehensive and follow database design best practices.`,
+
   OBJECT_DESIGN_PROMPT: `As a database schema expert, design comprehensive database schemas for the following objects.
 
 Requirements:

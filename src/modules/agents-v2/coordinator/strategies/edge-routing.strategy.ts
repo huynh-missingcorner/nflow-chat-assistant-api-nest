@@ -70,6 +70,10 @@ export class EdgeRoutingStrategy implements IEdgeRoutingStrategy {
         return GRAPH_EDGES.APPLICATION_DOMAIN;
       }
 
+      if (currentIntent.domain === 'object') {
+        return GRAPH_EDGES.OBJECT_DOMAIN;
+      }
+
       // For other domains, continue to next intent (placeholder for future domain subgraphs)
       return GRAPH_EDGES.NEXT_INTENT;
     }

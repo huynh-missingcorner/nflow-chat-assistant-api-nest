@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { ApplicationGraphBuilder } from '@/modules/agents-v2/application/builders/application-graph.builder';
+import { ObjectGraphBuilder } from '@/modules/agents-v2/object/builders/object-graph.builder';
 
 import { CoordinatorStateType } from '../types/graph-state.types';
 import {
@@ -9,6 +10,7 @@ import {
   SubgraphHandler,
 } from '../types/subgraph-handler.types';
 import { ApplicationSubgraphHandler } from './handlers/application-subgraph.handler';
+import { ObjectSubgraphHandler } from './handlers/object-subgraph.handler';
 
 @Injectable()
 export class SubgraphWrapperService {
@@ -16,7 +18,9 @@ export class SubgraphWrapperService {
 
   constructor(
     private readonly applicationGraphBuilder: ApplicationGraphBuilder,
+    private readonly objectGraphBuilder: ObjectGraphBuilder,
     private readonly applicationSubgraphHandler: ApplicationSubgraphHandler,
+    private readonly objectSubgraphHandler: ObjectSubgraphHandler,
   ) {
     this.subgraphHandlers = new Map();
     this.registerHandlers();
@@ -27,9 +31,9 @@ export class SubgraphWrapperService {
    */
   private registerHandlers(): void {
     this.subgraphHandlers.set('application', this.applicationSubgraphHandler);
+    this.subgraphHandlers.set('object', this.objectSubgraphHandler);
     // Future handlers will be registered here:
     // this.subgraphHandlers.set('flow', this.flowSubgraphHandler);
-    // this.subgraphHandlers.set('object', this.objectSubgraphHandler);
     // this.subgraphHandlers.set('layout', this.layoutSubgraphHandler);
   }
 
@@ -40,11 +44,11 @@ export class SubgraphWrapperService {
     switch (domain) {
       case 'application':
         return this.applicationGraphBuilder.buildGraph();
+      case 'object':
+        return this.objectGraphBuilder.buildGraph();
       // Future subgraphs will be added here:
       // case 'flow':
       //   return this.flowGraphBuilder.buildGraph();
-      // case 'object':
-      //   return this.objectGraphBuilder.buildGraph();
       // case 'layout':
       //   return this.layoutGraphBuilder.buildGraph();
       default:

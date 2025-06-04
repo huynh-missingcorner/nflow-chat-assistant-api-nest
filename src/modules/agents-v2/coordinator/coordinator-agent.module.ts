@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { ApplicationAgentModule } from '@/modules/agents-v2/application/application-agent.module';
+import { ObjectModule } from '@/modules/agents-v2/object/object.module';
 import { loadFileContent } from '@/shared/utils';
 
 import { CoordinatorGraphBuilder } from './builders/coordinator-graph.builder';
@@ -15,12 +16,13 @@ import { HandleSuccessNode } from './nodes/handle-success.node';
 import { ProcessNextIntentNode } from './nodes/process-next-intent.node';
 import { ValidateClassificationNode } from './nodes/validate-classification.node';
 import { ApplicationSubgraphHandler } from './services/handlers';
+import { ObjectSubgraphHandler } from './services/handlers/object-subgraph.handler';
 import { SubgraphWrapperService } from './services/subgraph-wrapper.service';
 import { EdgeRoutingStrategy } from './strategies/edge-routing.strategy';
 import { IntentCombinationValidator } from './validators/intent-combination.validator';
 
 @Module({
-  imports: [ApplicationAgentModule],
+  imports: [ApplicationAgentModule, ObjectModule],
   providers: [
     // Core components
     IntentCombinationValidator,
@@ -55,6 +57,7 @@ import { IntentCombinationValidator } from './validators/intent-combination.vali
 
     // Subgraph handlers
     ApplicationSubgraphHandler,
+    ObjectSubgraphHandler,
   ],
   exports: [CoordinatorAgentService],
 })

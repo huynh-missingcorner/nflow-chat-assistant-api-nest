@@ -89,6 +89,8 @@ export class ProcessNextIntentNode extends GraphNodeBase {
   private isDomainWithSubgraph(domain: string): boolean {
     // Currently only application domain has a subgraph
     // Add other domains here as they get subgraphs
-    return domain === 'application';
+    return (
+      domain === 'application' || domain === 'object' || domain === 'layout' || domain === 'flow'
+    );
   }
 }

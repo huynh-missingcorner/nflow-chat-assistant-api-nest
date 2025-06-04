@@ -51,6 +51,10 @@ export class CoordinatorGraphBuilder implements IGraphBuilder {
         this.subgraphWrapperService.createSubgraphWrapper('application'),
       )
       .addNode(
+        GRAPH_NODES.OBJECT_SUBGRAPH,
+        this.subgraphWrapperService.createSubgraphWrapper('object'),
+      )
+      .addNode(
         GRAPH_NODES.HANDLE_SUCCESS,
         this.handleSuccessNode.execute.bind(this.handleSuccessNode),
       )
@@ -88,12 +92,24 @@ export class CoordinatorGraphBuilder implements IGraphBuilder {
         [GRAPH_EDGES.SUCCESS]: GRAPH_NODES.HANDLE_SUCCESS,
         [GRAPH_EDGES.ERROR]: GRAPH_NODES.HANDLE_ERROR,
         [GRAPH_EDGES.APPLICATION_DOMAIN]: GRAPH_NODES.APPLICATION_SUBGRAPH,
+        [GRAPH_EDGES.OBJECT_DOMAIN]: GRAPH_NODES.OBJECT_SUBGRAPH,
       },
     );
 
     // After application subgraph execution, return to process next intent or success
     workflow.addConditionalEdges(
       GRAPH_NODES.APPLICATION_SUBGRAPH,
+      this.edgeRoutingStrategy.determineAfterSubgraphRoute.bind(this.edgeRoutingStrategy),
+      {
+        [GRAPH_EDGES.NEXT_INTENT]: GRAPH_NODES.PROCESS_NEXT_INTENT,
+        [GRAPH_EDGES.SUCCESS]: GRAPH_NODES.HANDLE_SUCCESS,
+        [GRAPH_EDGES.ERROR]: GRAPH_NODES.HANDLE_ERROR,
+      },
+    );
+
+    // After object subgraph execution, return to process next intent or success
+    workflow.addConditionalEdges(
+      GRAPH_NODES.OBJECT_SUBGRAPH,
       this.edgeRoutingStrategy.determineAfterSubgraphRoute.bind(this.edgeRoutingStrategy),
       {
         [GRAPH_EDGES.NEXT_INTENT]: GRAPH_NODES.PROCESS_NEXT_INTENT,

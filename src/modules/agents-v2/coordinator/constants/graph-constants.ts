@@ -6,6 +6,7 @@ export const GRAPH_NODES = {
 
   // Subgraphs
   APPLICATION_SUBGRAPH: 'applicationSubgraph',
+  OBJECT_SUBGRAPH: 'objectSubgraph',
 
   // Handlers
   HANDLE_SUCCESS: 'handleSuccess',
@@ -20,6 +21,7 @@ export const GRAPH_EDGES = {
   RETRY: 'retry',
   NEXT_INTENT: 'nextIntent',
   APPLICATION_DOMAIN: 'applicationDomain',
+  OBJECT_DOMAIN: 'objectDomain',
 } as const;
 
 export const GRAPH_CONFIG = {

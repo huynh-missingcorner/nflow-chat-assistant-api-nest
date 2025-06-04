@@ -1,59 +1,147 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { MemorySaver } from '@langchain/langgraph';
-import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { StateGraph } from '@langchain/langgraph';
 
-import { OPENAI_GPT_4_1 } from '@/shared/infrastructure/langchain/models/openai/openai-models';
-
-import { ObjectErrors, ObjectPrompts } from './constants';
-import { tools } from './tools';
+import { ObjectGraphBuilder } from './builders/object-graph.builder';
+import { ObjectErrors } from './constants';
+import {
+  OBJECT_GRAPH_CONFIG,
+  OBJECT_GRAPH_NODES,
+  OBJECT_LOG_MESSAGES,
+  OBJECT_SUCCESS_MESSAGES,
+} from './constants/object-graph.constants';
 import { ObjectAgentInput, ObjectAgentOutput } from './types';
+import { ObjectStateType } from './types/object-graph-state.types';
+
+export interface IObjectAgentService {
+  run(input: ObjectAgentInput): Promise<ObjectAgentOutput>;
+}
 
 @Injectable()
-export class ObjectAgentService implements OnModuleInit {
+export class ObjectAgentService implements IObjectAgentService, OnModuleInit {
   private readonly logger = new Logger(ObjectAgentService.name);
-  private readonly agentCheckpointer = new MemorySaver();
-  private agent: ReturnType<typeof createReactAgent>;
 
-  onModuleInit() {
-    this.agent = createReactAgent({
-      llm: OPENAI_GPT_4_1,
-      tools,
-      checkpointer: this.agentCheckpointer,
-    });
+  private graph: ReturnType<typeof StateGraph.prototype.compile>;
+
+  constructor(private readonly graphBuilder: ObjectGraphBuilder) {}
+
+  onModuleInit(): void {
+    this.initializeGraph();
   }
 
   async run(input: ObjectAgentInput): Promise<ObjectAgentOutput> {
     try {
-      const messages = [
-        new SystemMessage(ObjectPrompts.OBJECT_DESIGN_PROMPT),
-        new HumanMessage(input.message),
-      ];
+      this.logger.log(OBJECT_LOG_MESSAGES.PROCESSING_REQUEST(input.message));
 
-      const result = await this.agent.invoke(
-        {
-          messages,
-        },
-        {
-          configurable: {
-            thread_id: '123',
-          },
-        },
-      );
+      const result = await this.executeGraph(input);
 
-      // Extract the content from the last message
-      const allMessages = result.messages as BaseMessage[];
-      const lastMessage = allMessages[allMessages.length - 1];
-      const responseMessage = typeof lastMessage.content === 'string' ? lastMessage.content : '';
-
-      return {
-        success: true,
-        message: responseMessage,
-        data: result,
-      };
+      return this.processGraphResult(result, input);
     } catch (error) {
-      this.logger.error('Application generation failed', error);
-      throw new Error(error instanceof Error ? error.message : ObjectErrors.GENERATION_FAILED);
+      return this.handleExecutionError(error);
     }
+  }
+
+  private initializeGraph(): void {
+    this.graph = this.graphBuilder.buildGraph();
+    this.logger.log(OBJECT_LOG_MESSAGES.GRAPH_COMPILED);
+  }
+
+  private async executeGraph(input: ObjectAgentInput): Promise<ObjectStateType> {
+    const initialState = this.createInitialState(input);
+
+    const result = await this.graph.invoke(initialState, {
+      configurable: {
+        thread_id: input.chatSessionId || OBJECT_GRAPH_CONFIG.DEFAULT_THREAD_ID,
+      },
+    });
+
+    return result as ObjectStateType;
+  }
+
+  private createInitialState(input: ObjectAgentInput): Partial<ObjectStateType> {
+    return {
+      messages: [],
+      originalMessage: input.message,
+      chatSessionId: input.chatSessionId,
+      fieldSpec: null,
+      objectSpec: null,
+      dbDesignResult: null,
+      typeMappingResult: null,
+      enrichedSpec: null,
+      executionResult: null,
+      error: null,
+      currentNode: OBJECT_GRAPH_CONFIG.INITIAL_NODE,
+      retryCount: 0,
+      isCompleted: false,
+    };
+  }
+
+  private processGraphResult(result: ObjectStateType, input: ObjectAgentInput): ObjectAgentOutput {
+    if (this.isSuccessfulExecution(result)) {
+      return this.createSuccessResponse(result, input);
+    } else {
+      return this.createErrorResponse(result);
+    }
+  }
+
+  private isSuccessfulExecution(result: ObjectStateType): boolean {
+    return (
+      result.currentNode === OBJECT_GRAPH_NODES.HANDLE_SUCCESS &&
+      !!result.executionResult &&
+      result.executionResult.status === 'success'
+    );
+  }
+
+  private createSuccessResponse(
+    result: ObjectStateType,
+    input: ObjectAgentInput,
+  ): ObjectAgentOutput {
+    const message = this.buildSuccessMessage(result);
+
+    return {
+      success: true,
+      message,
+      data: {
+        executionResult: result.executionResult!,
+        originalMessage: input.message,
+        chatSessionId: input.chatSessionId,
+        fieldSpec: result.fieldSpec || null,
+        objectSpec: result.objectSpec || null,
+        dbDesignResult: result.dbDesignResult || null,
+        typeMappingResult: result.typeMappingResult || null,
+      },
+    };
+  }
+
+  private buildSuccessMessage(result: ObjectStateType): string {
+    if (result.objectSpec) {
+      return OBJECT_SUCCESS_MESSAGES.OBJECT_CREATED;
+    } else if (result.fieldSpec) {
+      return OBJECT_SUCCESS_MESSAGES.FIELD_ADDED;
+    }
+    return 'Object operation completed successfully';
+  }
+
+  private createErrorResponse(result: ObjectStateType): ObjectAgentOutput {
+    return {
+      success: false,
+      message: OBJECT_SUCCESS_MESSAGES.PROCESSING_FAILED,
+      data: {
+        error: result.error || ObjectErrors.GENERATION_FAILED,
+        currentNode: result.currentNode,
+        retryCount: result.retryCount,
+      },
+    };
+  }
+
+  private handleExecutionError(error: unknown): ObjectAgentOutput {
+    this.logger.error(OBJECT_LOG_MESSAGES.GRAPH_EXECUTION_FAILED, error);
+
+    return {
+      success: false,
+      message: OBJECT_SUCCESS_MESSAGES.PROCESSING_FAILED,
+      data: {
+        error: error instanceof Error ? error.message : ObjectErrors.GENERATION_FAILED,
+      },
+    };
   }
 }

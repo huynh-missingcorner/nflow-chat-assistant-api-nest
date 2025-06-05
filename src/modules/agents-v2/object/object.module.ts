@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { ObjectGraphBuilder } from './builders/object-graph.builder';
+import { ObjectHandlerNodeFactory } from './factories/handler-node.factory';
 import { DBDesignNode } from './nodes/db-design.node';
 import { FieldUnderstandingNode } from './nodes/field-understanding.node';
 import { HandleErrorNode } from './nodes/handle-error.node';
@@ -22,6 +23,9 @@ import { ObjectGraphEdgeRoutingStrategy } from './strategies/object-graph-edge-r
 
     // Edge routing strategy
     ObjectGraphEdgeRoutingStrategy,
+
+    // Factories
+    ObjectHandlerNodeFactory,
 
     // Nodes
     FieldUnderstandingNode,

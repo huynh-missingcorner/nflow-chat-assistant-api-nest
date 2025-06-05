@@ -1,21 +1,22 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { SystemMessage } from '@langchain/core/messages';
+import { Injectable } from '@nestjs/common';
 
-import { OBJECT_LOG_MESSAGES } from '../constants/object-graph.constants';
+import { OBJECT_GRAPH_NODES } from '../constants/object-graph.constants';
+import { ObjectHandlerNodeFactory } from '../factories/handler-node.factory';
 import { ObjectStateType } from '../types/object-graph-state.types';
+import { ObjectGraphNodeBase } from './object-graph-node.base';
 
 @Injectable()
-export class HandleErrorNode {
-  private readonly logger = new Logger(HandleErrorNode.name);
+export class HandleErrorNode extends ObjectGraphNodeBase {
+  constructor(private readonly handlerFactory: ObjectHandlerNodeFactory) {
+    super();
+  }
+
+  protected getNodeName(): string {
+    return OBJECT_GRAPH_NODES.HANDLE_ERROR;
+  }
 
   execute(state: ObjectStateType): Partial<ObjectStateType> {
-    const errorMessage = state.error || 'An unknown error occurred during object processing';
-
-    this.logger.error(OBJECT_LOG_MESSAGES.WORKFLOW_FAILED(errorMessage));
-
-    return {
-      isCompleted: true,
-      messages: [...state.messages, new SystemMessage(`Object workflow failed: ${errorMessage}`)],
-    };
+    const errorNode = this.handlerFactory.createErrorNode();
+    return errorNode.execute(state);
   }
 }

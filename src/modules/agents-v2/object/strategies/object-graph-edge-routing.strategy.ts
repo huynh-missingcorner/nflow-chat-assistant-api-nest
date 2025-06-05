@@ -8,26 +8,39 @@ export class ObjectGraphEdgeRoutingStrategy {
   private readonly logger = new Logger(ObjectGraphEdgeRoutingStrategy.name);
 
   determineInitialRoute(state: ObjectStateType): string {
-    // Determine if we're dealing with a single field or complete object
-    // This logic could be enhanced with more sophisticated intent detection
-    const message = state.originalMessage?.toLowerCase() || '';
-
-    if (
-      message.includes('add field') ||
-      message.includes('create field') ||
-      message.includes('field')
-    ) {
-      return OBJECT_GRAPH_EDGES.UNDERSTAND; // Field understanding
-    } else if (
-      message.includes('create object') ||
-      message.includes('new object') ||
-      message.includes('object')
-    ) {
-      return OBJECT_GRAPH_EDGES.DESIGN; // Object understanding
+    if (!state.intent) {
+      this.logger.warn('No intent found in state, defaulting to field understanding');
+      return OBJECT_GRAPH_EDGES.ERROR;
     }
 
-    // Default to field understanding
-    return OBJECT_GRAPH_EDGES.UNDERSTAND;
+    const intent = state.intent;
+    const intentAction = intent.intent;
+
+    switch (intentAction) {
+      case 'create_object':
+        return OBJECT_GRAPH_EDGES.UNDERSTAND;
+      case 'update_object_metadata':
+      case 'design_data_schema':
+        return OBJECT_GRAPH_EDGES.DESIGN;
+
+      case 'manipulate_object_fields': {
+        const details: unknown = intent.details;
+        const detailsStr = typeof details === 'string' ? details : '';
+        if (detailsStr && (detailsStr.includes('add') || detailsStr.includes('create'))) {
+          return OBJECT_GRAPH_EDGES.UNDERSTAND;
+        }
+        return OBJECT_GRAPH_EDGES.DESIGN;
+      }
+
+      case 'delete_object':
+        return OBJECT_GRAPH_EDGES.EXECUTE;
+
+      default:
+        this.logger.warn(
+          `Unknown intent action: ${intentAction}, defaulting to field understanding`,
+        );
+        return OBJECT_GRAPH_EDGES.UNDERSTAND;
+    }
   }
 
   determineAfterUnderstandingRoute(state: ObjectStateType): string {

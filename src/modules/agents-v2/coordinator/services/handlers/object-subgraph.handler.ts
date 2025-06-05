@@ -94,6 +94,7 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
       messages: [],
       originalMessage: subgraphMessage,
       chatSessionId: state.chatSessionId,
+      intent: currentIntent,
       fieldSpec: null,
       objectSpec: null,
       dbDesignResult: null,

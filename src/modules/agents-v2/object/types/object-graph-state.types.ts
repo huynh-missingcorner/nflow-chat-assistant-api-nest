@@ -1,6 +1,8 @@
 import { BaseMessage } from '@langchain/core/messages';
 import { Annotation } from '@langchain/langgraph';
 
+import type { IntentDetails } from '@/modules/agents-v2/coordinator/types/subgraph-handler.types';
+
 export interface FieldSpec {
   name: string;
   typeHint: string;
@@ -71,6 +73,10 @@ export const ObjectState = Annotation.Root({
   }),
   originalMessage: Annotation<string>(),
   chatSessionId: Annotation<string>(),
+  intent: Annotation<IntentDetails | null>({
+    default: () => null,
+    reducer: (x, y) => y ?? x,
+  }),
   // Understanding phase
   fieldSpec: Annotation<FieldSpec | null>({
     default: () => null,

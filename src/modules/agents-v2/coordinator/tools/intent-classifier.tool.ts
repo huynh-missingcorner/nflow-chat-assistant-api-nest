@@ -27,6 +27,7 @@ export const IntentEnum = z.enum([
 
 // Single intent schema
 const IntentSchema = z.object({
+  id: z.string().optional().describe('Unique identifier for this intent (auto-generated)'),
   domain: DomainEnum.describe('The domain of the user request, such as application or object'),
   intent: IntentEnum.describe('The specific action the user wants to perform in this domain'),
   target: z

@@ -15,6 +15,46 @@ import {
   TypeMappingResult,
 } from '@/modules/agents-v2/object/types/object-graph-state.types';
 
+// Interface for intent-specific errors
+export interface IntentError {
+  intentId: string;
+  errorMessage: string;
+  timestamp: string;
+  retryCount: number;
+}
+
+// Interface for storing execution results with intent context
+export interface IntentExecutionResult<T = any> {
+  intentId: string;
+  intentIndex: number;
+  timestamp: string;
+  result: T;
+  status: 'success' | 'partial' | 'failed';
+  domain: string;
+}
+
+// Application execution result with intent context
+export interface ApplicationIntentResult
+  extends IntentExecutionResult<{
+    applicationSpec: ApplicationSpec | null;
+    enrichedSpec: EnrichedApplicationSpec | null;
+    executionResult: ApplicationExecutionResult | null;
+  }> {
+  domain: 'application';
+}
+
+// Object execution result with intent context
+export interface ObjectIntentResult
+  extends IntentExecutionResult<{
+    fieldSpec: FieldSpec | null;
+    objectSpec: ObjectSpec | null;
+    dbDesignResult: DBDesignResult | null;
+    typeMappingResult: TypeMappingResult | null;
+    executionResult: ObjectExecutionResult | null;
+  }> {
+  domain: 'object';
+}
+
 // Define the state schema for the coordinator graph
 // This now shares keys with both application and object states to enable direct subgraph integration
 export const CoordinatorState = Annotation.Root({
@@ -35,9 +75,9 @@ export const CoordinatorState = Annotation.Root({
     default: () => [],
     reducer: (x, y) => [...new Set([...x, ...y])],
   }),
-  error: Annotation<string | null>({
-    default: () => null,
-    reducer: (x, y) => y ?? x,
+  errors: Annotation<IntentError[]>({
+    default: () => [],
+    reducer: (x, y) => [...x, ...y],
   }),
   currentNode: Annotation<string>({
     default: () => 'start',
@@ -47,39 +87,14 @@ export const CoordinatorState = Annotation.Root({
     default: () => 0,
     reducer: (x, y) => y ?? x,
   }),
-  // Shared keys with application state for direct subgraph integration
-  applicationSpec: Annotation<ApplicationSpec | null>({
-    default: () => null,
-    reducer: (x, y) => y ?? x,
+  // Store execution results from all intents with context
+  applicationResults: Annotation<ApplicationIntentResult[]>({
+    default: () => [],
+    reducer: (x, y) => [...x, ...y],
   }),
-  enrichedSpec: Annotation<EnrichedApplicationSpec | null>({
-    default: () => null,
-    reducer: (x, y) => y ?? x,
-  }),
-  executionResult: Annotation<ApplicationExecutionResult | null>({
-    default: () => null,
-    reducer: (x, y) => y ?? x,
-  }),
-  // Shared keys with object state for direct subgraph integration
-  fieldSpec: Annotation<FieldSpec | null>({
-    default: () => null,
-    reducer: (x, y) => y ?? x,
-  }),
-  objectSpec: Annotation<ObjectSpec | null>({
-    default: () => null,
-    reducer: (x, y) => y ?? x,
-  }),
-  dbDesignResult: Annotation<DBDesignResult | null>({
-    default: () => null,
-    reducer: (x, y) => y ?? x,
-  }),
-  typeMappingResult: Annotation<TypeMappingResult | null>({
-    default: () => null,
-    reducer: (x, y) => y ?? x,
-  }),
-  objectExecutionResult: Annotation<ObjectExecutionResult | null>({
-    default: () => null,
-    reducer: (x, y) => y ?? x,
+  objectResults: Annotation<ObjectIntentResult[]>({
+    default: () => [],
+    reducer: (x, y) => [...x, ...y],
   }),
   isCompleted: Annotation<boolean>({
     default: () => false,
@@ -88,6 +103,67 @@ export const CoordinatorState = Annotation.Root({
 });
 
 export type CoordinatorStateType = typeof CoordinatorState.State;
+
+// Helper functions to access the latest results (for backwards compatibility)
+export class CoordinatorStateHelper {
+  /**
+   * Get the latest application execution result
+   */
+  static getLatestApplicationResult(
+    state: CoordinatorStateType,
+  ): ApplicationIntentResult['result'] | null {
+    const results = state.applicationResults || [];
+    const latestResult = results[results.length - 1];
+    return latestResult?.result || null;
+  }
+
+  /**
+   * Get the latest object execution result
+   */
+  static getLatestObjectResult(state: CoordinatorStateType): ObjectIntentResult['result'] | null {
+    const results = state.objectResults || [];
+    const latestResult = results[results.length - 1];
+    return latestResult?.result || null;
+  }
+
+  /**
+   * Get application result for a specific intent
+   */
+  static getApplicationResultForIntent(
+    state: CoordinatorStateType,
+    intentId: string,
+  ): ApplicationIntentResult | null {
+    const results = state.applicationResults || [];
+    return results.find((result) => result.intentId === intentId) || null;
+  }
+
+  /**
+   * Get object result for a specific intent
+   */
+  static getObjectResultForIntent(
+    state: CoordinatorStateType,
+    intentId: string,
+  ): ObjectIntentResult | null {
+    const results = state.objectResults || [];
+    return results.find((result) => result.intentId === intentId) || null;
+  }
+
+  /**
+   * Get all successful application results
+   */
+  static getSuccessfulApplicationResults(state: CoordinatorStateType): ApplicationIntentResult[] {
+    const results = state.applicationResults || [];
+    return results.filter((result) => result.status === 'success');
+  }
+
+  /**
+   * Get all successful object results
+   */
+  static getSuccessfulObjectResults(state: CoordinatorStateType): ObjectIntentResult[] {
+    const results = state.objectResults || [];
+    return results.filter((result) => result.status === 'success');
+  }
+}
 
 export interface GraphNodeResult {
   success: boolean;

@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 
 import { ApplicationGraphBuilder } from '@/modules/agents-v2/application/builders/application-graph.builder';
 import { ObjectGraphBuilder } from '@/modules/agents-v2/object/builders/object-graph.builder';
 
-import { CoordinatorStateType } from '../types/graph-state.types';
+import { CoordinatorStateType, IntentError } from '../types/graph-state.types';
 import {
   SubgraphDomain,
   SubgraphExecutionResult,
@@ -57,6 +58,27 @@ export class SubgraphWrapperService {
   }
 
   /**
+   * Creates an intent error for the current intent or a general error
+   */
+  private createIntentError(
+    state: CoordinatorStateType,
+    errorMessage: string,
+    retryCount: number = 0,
+  ): IntentError[] {
+    const currentIntent = state.classifiedIntent?.intents[state.currentIntentIndex];
+    const intentId = currentIntent?.id || `general-error-${uuidv4()}`;
+
+    return [
+      {
+        intentId,
+        errorMessage,
+        timestamp: new Date().toISOString(),
+        retryCount,
+      },
+    ];
+  }
+
+  /**
    * Creates a wrapper function for any subgraph domain that handles
    * preparation, execution, and post-processing in a single step
    */
@@ -66,16 +88,31 @@ export class SubgraphWrapperService {
       try {
         const handler = this.subgraphHandlers.get(domain);
         if (!handler) {
+          // Create error and increment intent index to prevent loop
           return {
-            error: `No handler found for domain: ${domain}`,
+            errors: [
+              ...(state.errors || []),
+              ...this.createIntentError(state, `No handler found for domain: ${domain}`),
+            ],
+            processedIntents: [...(state.processedIntents || []), state.currentIntentIndex],
+            currentIntentIndex: state.currentIntentIndex + 1,
           };
         }
 
         // === PREPARATION PHASE ===
         const validationResult = handler.validateContext(state);
         if (!validationResult.isValid) {
+          // Create error and increment intent index to prevent loop
           return {
-            error: `${domain} preparation failed: ${validationResult.errors.join(', ')}`,
+            errors: [
+              ...(state.errors || []),
+              ...this.createIntentError(
+                state,
+                `${domain} preparation failed: ${validationResult.errors.join(', ')}`,
+              ),
+            ],
+            processedIntents: [...(state.processedIntents || []), state.currentIntentIndex],
+            currentIntentIndex: state.currentIntentIndex + 1,
           };
         }
 
@@ -87,8 +124,17 @@ export class SubgraphWrapperService {
         // === POST-PROCESSING PHASE ===
         const postValidationResult = handler.validateSubgraphResults(subgraphOutput);
         if (!postValidationResult.isValid) {
+          // Create error and increment intent index to prevent loop
           return {
-            error: `${domain} execution validation failed: ${postValidationResult.errors.join(', ')}`,
+            errors: [
+              ...(state.errors || []),
+              ...this.createIntentError(
+                state,
+                `${domain} execution validation failed: ${postValidationResult.errors.join(', ')}`,
+              ),
+            ],
+            processedIntents: [...(state.processedIntents || []), state.currentIntentIndex],
+            currentIntentIndex: state.currentIntentIndex + 1,
           };
         }
 
@@ -96,8 +142,17 @@ export class SubgraphWrapperService {
         return handler.transformToCoordinatorState(subgraphOutput, state);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        // Create error and increment intent index to prevent loop
         return {
-          error: `${domain} subgraph execution failed: ${errorMessage}`,
+          errors: [
+            ...(state.errors || []),
+            ...this.createIntentError(
+              state,
+              `${domain} subgraph execution failed: ${errorMessage}`,
+            ),
+          ],
+          processedIntents: [...(state.processedIntents || []), state.currentIntentIndex],
+          currentIntentIndex: state.currentIntentIndex + 1,
         };
       }
     };
@@ -114,10 +169,10 @@ export class SubgraphWrapperService {
       const wrapper = this.createSubgraphWrapper(domain);
       const result = await wrapper(state);
 
-      if (result.error) {
+      if (result.errors && result.errors.length > 0) {
         return {
           success: false,
-          error: result.error,
+          error: result.errors.map((e) => e.errorMessage).join('; '),
         };
       }
 

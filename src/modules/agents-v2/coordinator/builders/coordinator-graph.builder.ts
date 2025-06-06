@@ -65,7 +65,7 @@ export class CoordinatorGraphBuilder implements IGraphBuilder {
 
     workflow.addConditionalEdges(
       GRAPH_NODES.CLASSIFY_INTENT,
-      this.edgeRoutingStrategy.determineValidationRoute.bind(this.edgeRoutingStrategy),
+      () => this.edgeRoutingStrategy.determineValidationRoute(),
       {
         [GRAPH_EDGES.VALIDATE]: GRAPH_NODES.VALIDATE_CLASSIFICATION,
         [GRAPH_EDGES.ERROR]: GRAPH_NODES.HANDLE_ERROR,

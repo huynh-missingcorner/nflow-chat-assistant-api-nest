@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   IntentClassifierOutput,
@@ -60,6 +61,17 @@ export class ClassifyIntentNode extends GraphNodeBase {
     }
 
     const toolCall = response.tool_calls[0];
-    return toolCall.args as IntentClassifierOutput;
+    const classifiedIntents = toolCall.args as IntentClassifierOutput;
+
+    // Generate unique IDs for each intent
+    const intentsWithIds = classifiedIntents.intents.map((intent) => ({
+      ...intent,
+      id: uuidv4(),
+    }));
+
+    return {
+      ...classifiedIntents,
+      intents: intentsWithIds,
+    };
   }
 }

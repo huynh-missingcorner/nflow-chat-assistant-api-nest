@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
-import type { CoordinatorStateType } from '@/modules/agents-v2/coordinator/types/graph-state.types';
+import type {
+  CoordinatorStateType,
+  IntentError,
+  ObjectIntentResult,
+} from '@/modules/agents-v2/coordinator/types/graph-state.types';
+import { CoordinatorStateHelper } from '@/modules/agents-v2/coordinator/types/graph-state.types';
 import type {
   IntentDetails,
   SubgraphHandler,
@@ -21,9 +26,8 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
       errors.push('Classified intent is required for object domain');
     }
 
-    if (!state.currentIntentIndex) {
-      // Default to 0 if not provided
-      state.currentIntentIndex = 0;
+    if (typeof state.currentIntentIndex !== 'number' || state.currentIntentIndex < 0) {
+      errors.push('Valid current intent index is required for object domain');
     }
 
     const currentIntent = state.classifiedIntent?.intents[state.currentIntentIndex];
@@ -108,18 +112,20 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
 
     const subgraphMessage = this.buildSubgraphMessage(currentIntent, state.originalMessage);
 
+    // Get the latest object result for potential context
+    const latestObjectResult = CoordinatorStateHelper.getLatestObjectResult(state);
+
     return {
       messages: state.messages || [],
       originalMessage: subgraphMessage,
       chatSessionId: state.chatSessionId,
       intent: currentIntent,
-      // Inherit any existing object state from coordinator
-      fieldSpec: state.fieldSpec || null,
-      objectSpec: state.objectSpec || null,
-      dbDesignResult: state.dbDesignResult || null,
-      typeMappingResult: state.typeMappingResult || null,
-      executionResult: state.objectExecutionResult || null,
-      error: null,
+      // Inherit any existing object state from previous executions
+      fieldSpec: latestObjectResult?.fieldSpec || null,
+      objectSpec: latestObjectResult?.objectSpec || null,
+      dbDesignResult: latestObjectResult?.dbDesignResult || null,
+      typeMappingResult: latestObjectResult?.typeMappingResult || null,
+      executionResult: latestObjectResult?.executionResult || null,
       currentNode: 'start',
       retryCount: 0,
       isCompleted: false,
@@ -130,7 +136,7 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
     subgraphOutput: ObjectStateType,
     coordinatorState: CoordinatorStateType,
   ): Partial<CoordinatorStateType> {
-    // Update processed intents and move to next
+    // Always update processed intents and move to next intent
     const processedIntents = [
       ...coordinatorState.processedIntents,
       coordinatorState.currentIntentIndex,
@@ -142,27 +148,59 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
     const hasPartialSuccess = subgraphOutput.executionResult?.status === 'partial';
     const hasFailed = subgraphOutput.error || subgraphOutput.executionResult?.status === 'failed';
 
-    // Prepare the coordinator state update
+    // Create intent error if there was a failure
+    const currentIntent =
+      coordinatorState.classifiedIntent?.intents[coordinatorState.currentIntentIndex];
+    const newIntentErrors: IntentError[] = [];
+
+    if (hasFailed && currentIntent && currentIntent.id) {
+      const existingErrorsForIntent = coordinatorState.errors.filter(
+        (err) => err.intentId === currentIntent.id,
+      );
+      const retryCount = existingErrorsForIntent.length;
+
+      newIntentErrors.push({
+        intentId: currentIntent.id,
+        errorMessage: subgraphOutput.error || 'Object execution failed',
+        timestamp: new Date().toISOString(),
+        retryCount,
+      });
+    }
+
+    // Create object result for this intent
+    const objectResult: ObjectIntentResult = {
+      intentId: `intent_${coordinatorState.currentIntentIndex}`,
+      intentIndex: coordinatorState.currentIntentIndex,
+      timestamp: new Date().toISOString(),
+      domain: 'object',
+      status: isObjectCompleted
+        ? 'success'
+        : hasPartialSuccess
+          ? 'partial'
+          : hasFailed
+            ? 'failed'
+            : 'failed',
+      result: {
+        fieldSpec: subgraphOutput.fieldSpec,
+        objectSpec: subgraphOutput.objectSpec,
+        dbDesignResult: subgraphOutput.dbDesignResult,
+        typeMappingResult: subgraphOutput.typeMappingResult,
+        executionResult: subgraphOutput.executionResult,
+      },
+    };
+
+    // Always return the state update with incremented intent index
     const coordinatorUpdate: Partial<CoordinatorStateType> = {
       messages: [...coordinatorState.messages, ...(subgraphOutput.messages || [])],
       isCompleted: isObjectCompleted || hasPartialSuccess,
       processedIntents,
       currentIntentIndex: nextIntentIndex,
-      error: subgraphOutput.error,
-
-      // Copy object state back to coordinator for potential future use
-      fieldSpec: subgraphOutput.fieldSpec,
-      objectSpec: subgraphOutput.objectSpec,
-      dbDesignResult: subgraphOutput.dbDesignResult,
-      typeMappingResult: subgraphOutput.typeMappingResult,
-      objectExecutionResult: subgraphOutput.executionResult,
+      errors: [...coordinatorState.errors, ...newIntentErrors],
+      objectResults: [objectResult],
     };
 
-    // If there was a failure, don't mark as completed
-    if (hasFailed) {
-      coordinatorUpdate.isCompleted = false;
-    }
-
+    // Note: We always increment the intent index, even on failure
+    // This prevents infinite loops and allows processing of remaining intents
     return coordinatorUpdate;
   }
 
@@ -214,8 +252,22 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
       state: {
         ...state,
         messages: subgraphOutput.messages || [],
-        fieldSpec: subgraphOutput.fieldSpec,
-        objectSpec: subgraphOutput.objectSpec,
+        objectResults: [
+          {
+            intentId: 'unknown',
+            intentIndex: 0, // This should be passed from the actual context
+            timestamp: new Date().toISOString(),
+            domain: 'object',
+            status: subgraphOutput.isCompleted && !subgraphOutput.error ? 'success' : 'failed',
+            result: {
+              fieldSpec: subgraphOutput.fieldSpec,
+              objectSpec: subgraphOutput.objectSpec,
+              dbDesignResult: subgraphOutput.dbDesignResult,
+              typeMappingResult: subgraphOutput.typeMappingResult,
+              executionResult: subgraphOutput.executionResult,
+            },
+          },
+        ],
       },
       error: subgraphOutput.error || null,
     };

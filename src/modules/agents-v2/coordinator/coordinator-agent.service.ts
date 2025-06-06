@@ -15,7 +15,7 @@ import {
   CoordinatorAgentOutput,
   CoordinatorAgentSuccessOutput,
 } from './types/coordinator-agent.types';
-import { CoordinatorStateType } from './types/graph-state.types';
+import { CoordinatorStateHelper, CoordinatorStateType } from './types/graph-state.types';
 
 export interface ICoordinatorAgentService {
   run(input: CoordinatorAgentInput): Promise<CoordinatorAgentOutput>;
@@ -70,13 +70,11 @@ export class CoordinatorAgentService implements ICoordinatorAgentService, OnModu
       classifiedIntent: null,
       currentIntentIndex: 0,
       processedIntents: [],
-      error: null,
+      errors: [],
       currentNode: GRAPH_CONFIG.INITIAL_NODE,
       retryCount: 0,
-      // Application state fields
-      applicationSpec: null,
-      enrichedSpec: null,
-      executionResult: null,
+      applicationResults: [],
+      objectResults: [],
       isCompleted: false,
     };
   }
@@ -111,15 +109,16 @@ export class CoordinatorAgentService implements ICoordinatorAgentService, OnModu
     };
 
     // Include application results if available
-    if (result.executionResult || result.applicationSpec) {
+    const latestApplicationResult = CoordinatorStateHelper.getLatestApplicationResult(result);
+    if (latestApplicationResult) {
       return {
         success: true,
         message: 'Intent classified and application processed successfully',
         data: {
           ...baseResponse.data,
-          applicationSpec: result.applicationSpec,
-          enrichedSpec: result.enrichedSpec,
-          executionResult: result.executionResult,
+          applicationSpec: latestApplicationResult.applicationSpec,
+          enrichedSpec: latestApplicationResult.enrichedSpec,
+          executionResult: latestApplicationResult.executionResult,
           isCompleted: result.isCompleted,
         },
       } as CoordinatorAgentSuccessOutput;
@@ -129,11 +128,16 @@ export class CoordinatorAgentService implements ICoordinatorAgentService, OnModu
   }
 
   private createErrorResponse(result: CoordinatorStateType): CoordinatorAgentOutput {
+    const errorMessage =
+      result.errors.length > 0
+        ? result.errors.map((e) => e.errorMessage).join('; ')
+        : ApplicationErrors.GENERATION_FAILED;
+
     return {
       success: false,
       message: SUCCESS_MESSAGES.CLASSIFICATION_FAILED,
       data: {
-        error: result.error || ApplicationErrors.GENERATION_FAILED,
+        error: errorMessage,
       },
     };
   }

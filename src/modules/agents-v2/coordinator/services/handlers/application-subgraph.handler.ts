@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
 import { ApplicationStateType } from '@/modules/agents-v2/application/types/application-graph-state.types';
-import { CoordinatorStateType } from '@/modules/agents-v2/coordinator/types/graph-state.types';
+import {
+  ApplicationIntentResult,
+  CoordinatorStateHelper,
+  CoordinatorStateType,
+  IntentError,
+} from '@/modules/agents-v2/coordinator/types/graph-state.types';
 import {
   IntentDetails,
   SubgraphHandler,
@@ -20,8 +25,14 @@ export class ApplicationSubgraphHandler implements SubgraphHandler<ApplicationSt
       errors.push('No intents to process');
     }
 
+    // Check if currentIntentIndex is a valid number
+    if (typeof state.currentIntentIndex !== 'number' || state.currentIntentIndex < 0) {
+      errors.push('Valid current intent index is required');
+    }
+
     if (
       state.classifiedIntent &&
+      typeof state.currentIntentIndex === 'number' &&
       state.currentIntentIndex >= state.classifiedIntent.intents.length
     ) {
       errors.push('Invalid intent index');
@@ -99,14 +110,17 @@ export class ApplicationSubgraphHandler implements SubgraphHandler<ApplicationSt
     const applicationMessage = this.buildSubgraphMessage(currentIntent, state.originalMessage);
     const operationType = this.mapIntentToOperationType(currentIntent.intent);
 
+    // Get the latest application result for potential context (optional)
+    const latestApplicationResult = CoordinatorStateHelper.getLatestApplicationResult(state);
+
     return {
       originalMessage: applicationMessage,
       chatSessionId: state.chatSessionId,
       messages: state.messages,
       operationType,
-      // Clear previous application state for clean execution
-      applicationSpec: null,
-      enrichedSpec: null,
+      // Start with clean state for this execution
+      applicationSpec: latestApplicationResult?.applicationSpec || null,
+      enrichedSpec: latestApplicationResult?.enrichedSpec || null,
       executionResult: null,
       isCompleted: false,
     };
@@ -135,7 +149,7 @@ export class ApplicationSubgraphHandler implements SubgraphHandler<ApplicationSt
     applicationOutput: ApplicationStateType,
     coordinatorState: CoordinatorStateType,
   ): Partial<CoordinatorStateType> {
-    // Update processed intents and move to next
+    // Always update processed intents and move to next intent
     const processedIntents = [
       ...coordinatorState.processedIntents,
       coordinatorState.currentIntentIndex,
@@ -145,15 +159,55 @@ export class ApplicationSubgraphHandler implements SubgraphHandler<ApplicationSt
     // Determine completion status
     const isApplicationCompleted = applicationOutput.executionResult?.status === 'success';
     const hasPartialSuccess = applicationOutput.executionResult?.status === 'partial';
+    const hasFailed =
+      applicationOutput.error || applicationOutput.executionResult?.status === 'failed';
 
+    // Create intent error if there was a failure
+    const currentIntent =
+      coordinatorState.classifiedIntent?.intents[coordinatorState.currentIntentIndex];
+    const newIntentErrors: IntentError[] = [];
+
+    if (hasFailed && currentIntent && currentIntent.id) {
+      const existingErrorsForIntent = coordinatorState.errors.filter(
+        (err) => err.intentId === currentIntent.id,
+      );
+      const retryCount = existingErrorsForIntent.length;
+
+      newIntentErrors.push({
+        intentId: currentIntent.id,
+        errorMessage: applicationOutput.error || 'Application execution failed',
+        timestamp: new Date().toISOString(),
+        retryCount,
+      });
+    }
+
+    // Create application result for this intent
+    const applicationResult: ApplicationIntentResult = {
+      intentId: currentIntent?.id || `intent_${coordinatorState.currentIntentIndex}`,
+      intentIndex: coordinatorState.currentIntentIndex,
+      timestamp: new Date().toISOString(),
+      domain: 'application',
+      status: isApplicationCompleted
+        ? 'success'
+        : hasPartialSuccess
+          ? 'partial'
+          : hasFailed
+            ? 'failed'
+            : 'failed',
+      result: {
+        applicationSpec: applicationOutput.applicationSpec,
+        enrichedSpec: applicationOutput.enrichedSpec,
+        executionResult: applicationOutput.executionResult,
+      },
+    };
+
+    // Always return the state update with incremented intent index
     return {
-      applicationSpec: applicationOutput.applicationSpec,
-      enrichedSpec: applicationOutput.enrichedSpec,
-      executionResult: applicationOutput.executionResult,
       isCompleted: isApplicationCompleted || hasPartialSuccess,
       processedIntents,
       currentIntentIndex: nextIntentIndex,
-      error: applicationOutput.error,
+      errors: [...coordinatorState.errors, ...newIntentErrors],
+      applicationResults: [applicationResult],
     };
   }
 }

@@ -1,2 +1,2 @@
-export * from './object.constants';
-export * from './prompts';
+export * from './object-graph.constants';
+export * from './system-prompts';

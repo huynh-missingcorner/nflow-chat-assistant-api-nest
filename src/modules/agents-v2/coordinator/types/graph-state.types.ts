@@ -7,9 +7,16 @@ import {
   EnrichedApplicationSpec,
 } from '@/modules/agents-v2/application/types/application-graph-state.types';
 import { IntentClassifierOutput } from '@/modules/agents-v2/coordinator/tools/intent-classifier.tool';
+import {
+  DBDesignResult,
+  FieldSpec,
+  ObjectExecutionResult,
+  ObjectSpec,
+  TypeMappingResult,
+} from '@/modules/agents-v2/object/types/object-graph-state.types';
 
 // Define the state schema for the coordinator graph
-// This now shares keys with the application state to enable direct subgraph integration
+// This now shares keys with both application and object states to enable direct subgraph integration
 export const CoordinatorState = Annotation.Root({
   messages: Annotation<BaseMessage[]>({
     reducer: (x, y) => x.concat(y),
@@ -50,6 +57,27 @@ export const CoordinatorState = Annotation.Root({
     reducer: (x, y) => y ?? x,
   }),
   executionResult: Annotation<ApplicationExecutionResult | null>({
+    default: () => null,
+    reducer: (x, y) => y ?? x,
+  }),
+  // Shared keys with object state for direct subgraph integration
+  fieldSpec: Annotation<FieldSpec | null>({
+    default: () => null,
+    reducer: (x, y) => y ?? x,
+  }),
+  objectSpec: Annotation<ObjectSpec | null>({
+    default: () => null,
+    reducer: (x, y) => y ?? x,
+  }),
+  dbDesignResult: Annotation<DBDesignResult | null>({
+    default: () => null,
+    reducer: (x, y) => y ?? x,
+  }),
+  typeMappingResult: Annotation<TypeMappingResult | null>({
+    default: () => null,
+    reducer: (x, y) => y ?? x,
+  }),
+  objectExecutionResult: Annotation<ObjectExecutionResult | null>({
     default: () => null,
     reducer: (x, y) => y ?? x,
   }),

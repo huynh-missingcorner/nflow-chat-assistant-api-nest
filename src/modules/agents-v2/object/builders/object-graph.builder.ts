@@ -63,13 +63,13 @@ export class ObjectGraphBuilder implements IObjectGraphBuilder {
         this.handleRetryNode.execute.bind(this.handleRetryNode),
       );
 
-    // Define the workflow edges
     workflow.addConditionalEdges(
       START,
       this.edgeRoutingStrategy.determineInitialRoute.bind(this.edgeRoutingStrategy),
       {
         [OBJECT_GRAPH_EDGES.UNDERSTAND]: OBJECT_GRAPH_NODES.FIELD_UNDERSTANDING,
         [OBJECT_GRAPH_EDGES.DESIGN]: OBJECT_GRAPH_NODES.OBJECT_UNDERSTANDING,
+        [OBJECT_GRAPH_EDGES.ERROR]: OBJECT_GRAPH_NODES.HANDLE_ERROR,
       },
     );
 
@@ -128,12 +128,12 @@ export class ObjectGraphBuilder implements IObjectGraphBuilder {
       },
     );
 
-    // Retry node goes back to the beginning
     workflow.addConditionalEdges(
       OBJECT_GRAPH_NODES.HANDLE_RETRY,
       this.edgeRoutingStrategy.determineRetryRoute.bind(this.edgeRoutingStrategy),
       {
         [OBJECT_GRAPH_EDGES.RETRY]: OBJECT_GRAPH_NODES.FIELD_UNDERSTANDING,
+        [OBJECT_GRAPH_EDGES.EXECUTE]: OBJECT_GRAPH_NODES.OBJECT_EXECUTOR,
         [OBJECT_GRAPH_EDGES.ERROR]: OBJECT_GRAPH_NODES.HANDLE_ERROR,
       },
     );

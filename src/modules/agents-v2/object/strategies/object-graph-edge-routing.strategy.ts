@@ -9,7 +9,7 @@ export class ObjectGraphEdgeRoutingStrategy {
 
   determineInitialRoute(state: ObjectStateType): string {
     if (!state.intent) {
-      this.logger.warn('No intent found in state, defaulting to field understanding');
+      this.logger.warn('No intent found in state, defaulting to error');
       return OBJECT_GRAPH_EDGES.ERROR;
     }
 
@@ -18,7 +18,7 @@ export class ObjectGraphEdgeRoutingStrategy {
 
     switch (intentAction) {
       case 'create_object':
-        return OBJECT_GRAPH_EDGES.UNDERSTAND;
+        return OBJECT_GRAPH_EDGES.DESIGN;
       case 'update_object_metadata':
       case 'design_data_schema':
         return OBJECT_GRAPH_EDGES.DESIGN;
@@ -111,12 +111,23 @@ export class ObjectGraphEdgeRoutingStrategy {
     }
 
     if (state.executionResult.status === 'failed') {
-      this.logger.warn('Execution failed, routing to error');
-      return OBJECT_GRAPH_EDGES.ERROR;
+      // Check if any steps were completed successfully
+      const hasCompletedSteps =
+        state.executionResult.completedSteps && state.executionResult.completedSteps.length > 0;
+
+      if (hasCompletedSteps) {
+        this.logger.warn(
+          'Execution failed but has completed steps, routing to retry for remaining steps',
+        );
+        return OBJECT_GRAPH_EDGES.RETRY;
+      } else {
+        this.logger.warn('Execution failed with no completed steps, routing to error');
+        return OBJECT_GRAPH_EDGES.ERROR;
+      }
     }
 
     if (state.executionResult.status === 'partial') {
-      this.logger.warn('Partial execution, routing to retry');
+      this.logger.warn('Partial execution, routing to retry for remaining steps');
       return OBJECT_GRAPH_EDGES.RETRY;
     }
 
@@ -129,6 +140,18 @@ export class ObjectGraphEdgeRoutingStrategy {
       return OBJECT_GRAPH_EDGES.ERROR;
     }
 
+    // If we have partial execution results with completed steps,
+    // go directly back to execution to continue from where we left off
+    if (
+      state.executionResult &&
+      state.executionResult.completedSteps &&
+      state.executionResult.completedSteps.length > 0
+    ) {
+      this.logger.log('Retrying with completed steps, going directly to execution');
+      return OBJECT_GRAPH_EDGES.EXECUTE;
+    }
+
+    // Otherwise, restart from the beginning
     return OBJECT_GRAPH_EDGES.RETRY;
   }
 }

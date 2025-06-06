@@ -4,22 +4,9 @@ import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { OPENAI_GPT_4_1 } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 
 import { OBJECT_GRAPH_NODES, OBJECT_LOG_MESSAGES } from '../constants/object-graph.constants';
-import { fieldExistenceTool } from '../tools/field-existence.tool';
-import { objectLookupTool } from '../tools/object-lookup.tool';
+import { SYSTEM_PROMPTS } from '../constants/system-prompts';
+import { NflowSchemaDesignInput, nflowSchemaDesignTool } from '../tools/nflow-schema-design.tool';
 import { DBDesignResult, ObjectStateType } from '../types/object-graph-state.types';
-
-type ObjectLookupResult = {
-  exists: boolean;
-  objectId?: string;
-  error?: string;
-};
-
-type FieldExistenceResult = {
-  exists: boolean;
-  fieldId?: string;
-  fieldType?: string;
-  error?: string;
-};
 
 @Injectable()
 export class DBDesignNode {
@@ -29,172 +16,219 @@ export class DBDesignNode {
     try {
       this.logger.log(OBJECT_LOG_MESSAGES.DB_DESIGN_COMPLETED);
 
-      const dbDesignResult = await this.performDBDesign(state);
+      const dbDesignResult = await this.designNflowSchema(state);
 
       if (!dbDesignResult.valid) {
-        return {
-          error: `DB design validation failed: ${dbDesignResult.conflicts?.join(', ')}`,
-          currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
+        return this.createErrorResult(
+          dbDesignResult.conflicts?.join(', ') || 'Schema design validation failed',
           dbDesignResult,
-        };
+        );
       }
 
-      return {
-        dbDesignResult,
-        currentNode: OBJECT_GRAPH_NODES.TYPE_MAPPER,
-        messages: [
-          ...state.messages,
-          new SystemMessage(`DB design completed: ${JSON.stringify(dbDesignResult)}`),
-        ],
-      };
+      return this.createSuccessResult(dbDesignResult, state);
     } catch (error) {
-      this.logger.error('DB design failed', error);
-      return {
-        error: error instanceof Error ? error.message : 'DB design failed',
-        currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
-      };
+      this.logger.error('Schema design failed', error);
+      return this.createErrorResult(
+        error instanceof Error ? error.message : 'Schema design failed',
+      );
     }
   }
 
-  private async performDBDesign(state: ObjectStateType): Promise<DBDesignResult> {
-    const result: DBDesignResult = {
-      valid: true,
-      conflicts: [],
+  private async designNflowSchema(state: ObjectStateType): Promise<DBDesignResult> {
+    try {
+      const schema = await this.extractNflowSchema(state);
+
+      if (!schema) {
+        return this.createFailedResult(['Failed to design Nflow schema from requirements']);
+      }
+
+      const validationResult = this.validateSchemaDesign(schema);
+
+      return {
+        valid: validationResult.isValid,
+        conflicts: validationResult.errors,
+        recommendations: schema.recommendations || [],
+        nflowSchema: schema,
+      };
+    } catch (error) {
+      this.logger.error('Error during Nflow schema design', error);
+      return this.createFailedResult([
+        `Schema design failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      ]);
+    }
+  }
+
+  private async extractNflowSchema(state: ObjectStateType): Promise<NflowSchemaDesignInput | null> {
+    try {
+      const llm = OPENAI_GPT_4_1.bindTools([nflowSchemaDesignTool]);
+
+      const designPrompt = this.buildDesignPrompt(state);
+
+      const messages = [
+        new SystemMessage(SYSTEM_PROMPTS.NFLOW_SCHEMA_DESIGN_SYSTEM_PROMPT),
+        new HumanMessage(designPrompt),
+      ];
+
+      const response = await llm.invoke(messages);
+
+      if (!response.tool_calls || response.tool_calls.length === 0) {
+        this.logger.error('No tool calls found in Nflow schema design response');
+        return null;
+      }
+
+      const toolCall = response.tool_calls[0];
+      const schema = toolCall.args as NflowSchemaDesignInput;
+
+      this.logger.debug(`Designed Nflow schema: ${JSON.stringify(schema, null, 2)}`);
+      return schema;
+    } catch (error) {
+      this.logger.error('Error extracting Nflow schema', error);
+      return null;
+    }
+  }
+
+  private buildDesignPrompt(state: ObjectStateType): string {
+    const objectSpec = state.objectSpec;
+    const intent = state.intent;
+
+    if (!objectSpec) {
+      return `Design Nflow object schema based on: ${state.originalMessage}`;
+    }
+
+    let prompt = `Design Nflow schema for: ${objectSpec.objectName}`;
+
+    if (objectSpec.description) {
+      prompt += `\nDescription: ${objectSpec.description}`;
+    }
+
+    if (objectSpec.fields && objectSpec.fields.length > 0) {
+      prompt += '\nRequired fields:';
+      for (const field of objectSpec.fields) {
+        prompt += `\n- ${field.name} (${field.typeHint})${field.required ? ' - REQUIRED' : ''}`;
+        if (field.description) {
+          prompt += ` - ${field.description}`;
+        }
+      }
+    }
+
+    if (intent?.details) {
+      prompt += `\nAdditional context: ${JSON.stringify(intent.details)}`;
+    }
+
+    prompt += `\nDesign a complete Nflow object schema with appropriate data types, subtypes, and field configurations.`;
+    prompt += `\nNote: Create a unique object name (primary key) and user-friendly display name. If similar objects might exist, use a distinctive name.`;
+
+    return prompt;
+  }
+
+  private validateSchemaDesign(schema: NflowSchemaDesignInput): {
+    isValid: boolean;
+    errors: string[];
+  } {
+    const errors: string[] = [];
+
+    // Validate schema structure
+    if (!schema.objectName?.trim()) {
+      errors.push('Object name is required');
+    }
+
+    if (!schema.fields || schema.fields.length === 0) {
+      errors.push('Schema must contain at least one field');
+    }
+
+    for (const field of schema.fields) {
+      const fieldErrors = this.validateField(field);
+      errors.push(...fieldErrors);
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+
+  private validateField(field: NflowSchemaDesignInput['fields'][0]): string[] {
+    const errors: string[] = [];
+
+    if (!field.name?.trim()) {
+      errors.push('Field name is required');
+    }
+
+    if (!field.typeName) {
+      errors.push(`Field '${field.name}' must have a typeName`);
+    }
+
+    // Validate subType for specific types
+    if (
+      field.typeName === 'text' &&
+      field.subType &&
+      !['short', 'long', 'rich'].includes(field.subType)
+    ) {
+      errors.push(`Invalid subType '${field.subType}' for text field '${field.name}'`);
+    }
+
+    if (
+      field.typeName === 'numeric' &&
+      field.subType &&
+      !['integer', 'float'].includes(field.subType)
+    ) {
+      errors.push(`Invalid subType '${field.subType}' for numeric field '${field.name}'`);
+    }
+
+    if (
+      field.typeName === 'dateTime' &&
+      field.subType &&
+      !['date-time', 'date', 'time'].includes(field.subType)
+    ) {
+      errors.push(`Invalid subType '${field.subType}' for dateTime field '${field.name}'`);
+    }
+
+    if (
+      field.typeName === 'pickList' &&
+      field.subType &&
+      !['single', 'multiple'].includes(field.subType)
+    ) {
+      errors.push(`Invalid subType '${field.subType}' for pickList field '${field.name}'`);
+    }
+
+    // Validate relation fields
+    if (field.typeName === 'relation' && !field.targetObject) {
+      errors.push(`Relation field '${field.name}' must specify a target object`);
+    }
+
+    return errors;
+  }
+
+  private createFailedResult(errors: string[]): DBDesignResult {
+    return {
+      valid: false,
+      conflicts: errors,
       recommendations: [],
     };
-
-    try {
-      // Check for object operations
-      if (state.objectSpec) {
-        const objectLookupResult = await this.lookupObject(state.objectSpec.objectName);
-
-        if (objectLookupResult.error) {
-          result.valid = false;
-          result.conflicts?.push(`Object lookup failed: ${objectLookupResult.error}`);
-          return result;
-        }
-
-        result.objectId = objectLookupResult.objectId;
-        result.objectExists = objectLookupResult.exists;
-
-        if (objectLookupResult.exists && objectLookupResult.objectId && state.objectSpec.fields) {
-          // Check for field conflicts
-          for (const field of state.objectSpec.fields) {
-            const fieldExistsResult = await this.checkFieldExistence({
-              objectId: objectLookupResult.objectId,
-              fieldName: field.name,
-            });
-
-            if (fieldExistsResult.error) {
-              result.valid = false;
-              result.conflicts?.push(`Field existence check failed: ${fieldExistsResult.error}`);
-              continue;
-            }
-
-            if (fieldExistsResult.exists) {
-              result.conflicts?.push(
-                `Field '${field.name}' already exists in object '${state.objectSpec.objectName}'`,
-              );
-              result.valid = false;
-            }
-          }
-        }
-      }
-
-      // Check for single field operations
-      if (state.fieldSpec && !state.objectSpec) {
-        // Need to determine target object from context or prompt
-        result.recommendations?.push('Object target needs to be specified for field operation');
-      }
-
-      // Add recommendations for best practices
-      if (state.objectSpec?.fields) {
-        const fieldNames = state.objectSpec.fields.map((f) => f.name);
-        const duplicateFields = fieldNames.filter(
-          (name, index) => fieldNames.indexOf(name) !== index,
-        );
-
-        if (duplicateFields.length > 0) {
-          result.conflicts?.push(`Duplicate field names: ${duplicateFields.join(', ')}`);
-          result.valid = false;
-        }
-      }
-
-      return result;
-    } catch (error) {
-      this.logger.error('Error during DB design analysis', error);
-      return {
-        valid: false,
-        conflicts: [
-          `DB design analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        ],
-      };
-    }
   }
 
-  private async lookupObject(objectName: string): Promise<ObjectLookupResult> {
-    try {
-      const llmWithTools = OPENAI_GPT_4_1.bindTools([objectLookupTool]);
-      const messages = [
-        new SystemMessage('Use the ObjectLookupTool to check if the object exists.'),
-        new HumanMessage(`Look up object: ${objectName}`),
-      ];
-
-      const response = await llmWithTools.invoke(messages);
-
-      if (!response.tool_calls || response.tool_calls.length === 0) {
-        return { exists: false, error: 'No tool calls found in object lookup response' };
-      }
-
-      // Simulate the lookup for now
-      const mockExists = ['user', 'customer', 'order', 'product', 'account'].includes(
-        objectName.toLowerCase(),
-      );
-
-      return {
-        exists: mockExists,
-        objectId: mockExists ? `obj_${objectName.toLowerCase()}_123` : undefined,
-      };
-    } catch (error) {
-      return {
-        exists: false,
-        error: error instanceof Error ? error.message : 'Object lookup failed',
-      };
-    }
+  private createErrorResult(
+    errorMessage: string,
+    dbDesignResult?: DBDesignResult,
+  ): Partial<ObjectStateType> {
+    return {
+      error: `Schema design validation failed: ${errorMessage}`,
+      currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
+      dbDesignResult,
+    };
   }
 
-  private async checkFieldExistence(input: {
-    objectId: string;
-    fieldName: string;
-  }): Promise<FieldExistenceResult> {
-    try {
-      const llmWithTools = OPENAI_GPT_4_1.bindTools([fieldExistenceTool]);
-      const messages = [
-        new SystemMessage('Use the FieldExistenceTool to check if the field exists in the object.'),
-        new HumanMessage(
-          `Check if field "${input.fieldName}" exists in object "${input.objectId}"`,
-        ),
-      ];
-
-      const response = await llmWithTools.invoke(messages);
-
-      if (!response.tool_calls || response.tool_calls.length === 0) {
-        return { exists: false, error: 'No tool calls found in field existence check response' };
-      }
-
-      // Simulate field existence check for now
-      const mockFieldExists = false; // Default to field not existing
-
-      return {
-        exists: mockFieldExists,
-        fieldId: mockFieldExists ? `field_${input.fieldName}_001` : undefined,
-        fieldType: mockFieldExists ? 'Text' : undefined,
-      };
-    } catch (error) {
-      return {
-        exists: false,
-        error: error instanceof Error ? error.message : 'Field existence check failed',
-      };
-    }
+  private createSuccessResult(
+    dbDesignResult: DBDesignResult,
+    state: ObjectStateType,
+  ): Partial<ObjectStateType> {
+    return {
+      dbDesignResult,
+      currentNode: OBJECT_GRAPH_NODES.TYPE_MAPPER,
+      messages: [
+        ...state.messages,
+        new SystemMessage(`Schema design completed: ${JSON.stringify(dbDesignResult)}`),
+      ],
+    };
   }
 }

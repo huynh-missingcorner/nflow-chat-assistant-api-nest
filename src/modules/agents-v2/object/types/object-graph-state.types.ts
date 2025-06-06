@@ -3,6 +3,8 @@ import { Annotation } from '@langchain/langgraph';
 
 import type { IntentDetails } from '@/modules/agents-v2/coordinator/types/subgraph-handler.types';
 
+import type { ApiFormatParserInput } from '../tools/api-format-parser.tool';
+
 export interface FieldSpec {
   name: string;
   typeHint: string;
@@ -38,24 +40,16 @@ export interface ObjectRelationship {
 export interface DBDesignResult {
   valid: boolean;
   objectId?: string;
-  objectExists?: boolean;
-  fieldExists?: boolean;
   conflicts?: string[];
   recommendations?: string[];
+  nflowSchema?: unknown;
 }
 
 export interface TypeMappingResult {
   mappedFields: ObjectField[];
   errors?: string[];
   warnings?: string[];
-}
-
-export interface EnrichedObjectSpec extends ObjectSpec {
-  objectId?: string;
-  dependencies?: string[];
-  validationRules?: string[];
-  dbDesignResult?: DBDesignResult;
-  typeMappingResult?: TypeMappingResult;
+  apiFormat?: ApiFormatParserInput;
 }
 
 export interface ObjectExecutionResult {
@@ -63,7 +57,13 @@ export interface ObjectExecutionResult {
   fieldIds?: string[];
   status: 'success' | 'partial' | 'failed';
   errors?: string[];
-  createdEntities?: Record<string, string>;
+  createdEntities?: Record<string, string | string[]>;
+  completedSteps?: Array<{
+    type: 'create_object' | 'create_field';
+    stepIndex: number;
+    entityId: string;
+    entityName?: string;
+  }>;
 }
 
 // Define the state schema for the object graph
@@ -95,11 +95,7 @@ export const ObjectState = Annotation.Root({
     default: () => null,
     reducer: (x, y) => y ?? x,
   }),
-  // Final phases
-  enrichedSpec: Annotation<EnrichedObjectSpec | null>({
-    default: () => null,
-    reducer: (x, y) => y ?? x,
-  }),
+  // Execution phase
   executionResult: Annotation<ObjectExecutionResult | null>({
     default: () => null,
     reducer: (x, y) => y ?? x,

@@ -4,7 +4,7 @@ import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { OPENAI_GPT_4_1 } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 
 import { OBJECT_GRAPH_NODES, OBJECT_LOG_MESSAGES } from '../constants/object-graph.constants';
-import { ObjectPrompts } from '../constants/prompts';
+import { SYSTEM_PROMPTS } from '../constants/system-prompts';
 import { fieldExtractionTool } from '../tools/field-extraction.tool';
 import { FieldSpec, ObjectStateType } from '../types/object-graph-state.types';
 
@@ -47,7 +47,7 @@ export class FieldUnderstandingNode {
       const llm = OPENAI_GPT_4_1.bindTools([fieldExtractionTool]);
 
       const messages = [
-        new SystemMessage(ObjectPrompts.FIELD_EXTRACTION_PROMPT),
+        new SystemMessage(SYSTEM_PROMPTS.FIELD_EXTRACTION_SYSTEM_PROMPT),
         new HumanMessage(message),
       ];
 

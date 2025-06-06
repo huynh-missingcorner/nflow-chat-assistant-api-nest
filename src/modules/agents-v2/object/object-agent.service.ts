@@ -2,7 +2,6 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { StateGraph } from '@langchain/langgraph';
 
 import { ObjectGraphBuilder } from './builders/object-graph.builder';
-import { ObjectErrors } from './constants';
 import {
   OBJECT_GRAPH_CONFIG,
   OBJECT_GRAPH_NODES,
@@ -66,7 +65,6 @@ export class ObjectAgentService implements IObjectAgentService, OnModuleInit {
       objectSpec: null,
       dbDesignResult: null,
       typeMappingResult: null,
-      enrichedSpec: null,
       executionResult: null,
       error: null,
       currentNode: OBJECT_GRAPH_CONFIG.INITIAL_NODE,
@@ -126,7 +124,7 @@ export class ObjectAgentService implements IObjectAgentService, OnModuleInit {
       success: false,
       message: OBJECT_SUCCESS_MESSAGES.PROCESSING_FAILED,
       data: {
-        error: result.error || ObjectErrors.GENERATION_FAILED,
+        error: result.error || 'Object generation failed',
         currentNode: result.currentNode,
         retryCount: result.retryCount,
       },
@@ -140,7 +138,7 @@ export class ObjectAgentService implements IObjectAgentService, OnModuleInit {
       success: false,
       message: OBJECT_SUCCESS_MESSAGES.PROCESSING_FAILED,
       data: {
-        error: error instanceof Error ? error.message : ObjectErrors.GENERATION_FAILED,
+        error: error instanceof Error ? error.message : 'Object generation failed',
       },
     };
   }

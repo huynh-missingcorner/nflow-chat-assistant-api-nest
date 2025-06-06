@@ -1,5 +1,9 @@
 import { Module } from '@nestjs/common';
 
+import { ChatSessionModule } from '@/modules/chat-session/chat-session.module';
+import { NFlowModule } from '@/modules/nflow/nflow.module';
+import { BaseGraphHandlerService } from '@/shared/graph/handlers/base-graph-handler.service';
+
 import { ObjectGraphBuilder } from './builders/object-graph.builder';
 import { ObjectHandlerNodeFactory } from './factories/handler-node.factory';
 import { DBDesignNode } from './nodes/db-design.node';
@@ -14,6 +18,7 @@ import { ObjectAgentService } from './object-agent.service';
 import { ObjectGraphEdgeRoutingStrategy } from './strategies/object-graph-edge-routing.strategy';
 
 @Module({
+  imports: [ChatSessionModule, NFlowModule],
   providers: [
     // Main service
     ObjectAgentService,
@@ -23,6 +28,9 @@ import { ObjectGraphEdgeRoutingStrategy } from './strategies/object-graph-edge-r
 
     // Edge routing strategy
     ObjectGraphEdgeRoutingStrategy,
+
+    // Shared services
+    BaseGraphHandlerService,
 
     // Factories
     ObjectHandlerNodeFactory,

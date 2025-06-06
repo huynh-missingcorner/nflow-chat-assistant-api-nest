@@ -78,10 +78,11 @@ const apiFormatParserSchema = z.object({
 
 type ApiFormatParserInput = z.infer<typeof apiFormatParserSchema>;
 
-const apiFormatParserHandler = async (input: ApiFormatParserInput): Promise<string> => {
+const apiFormatParserHandler = async (
+  input: ApiFormatParserInput,
+): Promise<ApiFormatParserInput> => {
   return new Promise((resolve) => {
-    console.log('apiFormatParserHandler', input);
-    resolve(JSON.stringify({ success: true, data: input }));
+    resolve(input);
   });
 };
 

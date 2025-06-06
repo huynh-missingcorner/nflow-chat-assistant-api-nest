@@ -22,10 +22,9 @@ const updateObjectSchema = z.object({
 
 type UpdateObjectInput = z.infer<typeof updateObjectSchema>;
 
-const updateObjectHandler = async (input: UpdateObjectInput): Promise<string> => {
+const updateObjectHandler = async (input: UpdateObjectInput): Promise<UpdateObjectInput> => {
   return new Promise((resolve) => {
-    console.log('updateObjectHandler', input);
-    resolve(JSON.stringify({ success: true, data: input }));
+    resolve(input);
   });
 };
 

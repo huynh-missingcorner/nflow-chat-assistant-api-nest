@@ -23,10 +23,11 @@ const createNewApplicationSchema = z.object({
 
 type CreateNewApplicationInput = z.infer<typeof createNewApplicationSchema>;
 
-const createNewApplicationHandler = async (input: CreateNewApplicationInput): Promise<string> => {
+const createNewApplicationHandler = async (
+  input: CreateNewApplicationInput,
+): Promise<CreateNewApplicationInput> => {
   return new Promise((resolve) => {
-    console.log('createNewApplicationHandler', input);
-    resolve(JSON.stringify({ success: true, data: input }));
+    resolve(input);
   });
 };
 

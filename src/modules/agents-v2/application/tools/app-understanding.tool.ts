@@ -12,16 +12,10 @@ export const AppUnderstandingSchema = z.object({
 
 export type AppUnderstandingInput = z.infer<typeof AppUnderstandingSchema>;
 
-const appUnderstandingHandler = async (input: AppUnderstandingInput): Promise<string> => {
-  // This tool is used by the LLM to structure its understanding
-  // The actual logic is handled by the AppUnderstandingNode
-  return Promise.resolve(
-    JSON.stringify({
-      success: true,
-      data: input,
-      message: 'Application specification extracted successfully',
-    }),
-  );
+const appUnderstandingHandler = async (
+  input: AppUnderstandingInput,
+): Promise<AppUnderstandingInput> => {
+  return Promise.resolve(input);
 };
 
 export const appUnderstandingTool = tool(appUnderstandingHandler, {

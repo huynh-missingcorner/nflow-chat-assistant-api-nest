@@ -75,7 +75,6 @@ const intentClassifierHandler = async (
   input: IntentClassifierOutput,
 ): Promise<IntentClassifierOutput> => {
   return new Promise((resolve) => {
-    console.log('IntentClassifierTool - input', input);
     resolve(input);
   });
 };

@@ -203,7 +203,6 @@ const intentParamsExtractorHandler = async (
   input: ParamExtractorOutput,
 ): Promise<ParamExtractorOutput> => {
   return new Promise((resolve) => {
-    console.log('IntentParamsExtractorTool - input', input);
     resolve(input);
   });
 };

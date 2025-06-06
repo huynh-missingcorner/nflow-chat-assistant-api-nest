@@ -46,9 +46,9 @@ const changeFieldSchema = z.object({
 
 type ChangeFieldInput = z.infer<typeof changeFieldSchema>;
 
-const changeFieldHandler = async (input: ChangeFieldInput): Promise<string> => {
+const changeFieldHandler = async (input: ChangeFieldInput): Promise<ChangeFieldInput> => {
   return new Promise((resolve) => {
-    resolve(JSON.stringify({ success: true, data: input }));
+    resolve(input);
   });
 };
 

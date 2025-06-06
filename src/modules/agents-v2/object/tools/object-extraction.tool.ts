@@ -29,10 +29,11 @@ const objectExtractionSchema = z.object({
 
 type ObjectExtractionInput = z.infer<typeof objectExtractionSchema>;
 
-const objectExtractionHandler = async (input: ObjectExtractionInput): Promise<string> => {
+const objectExtractionHandler = async (
+  input: ObjectExtractionInput,
+): Promise<ObjectExtractionInput> => {
   return new Promise((resolve) => {
-    console.log('objectExtractionHandler', input);
-    resolve(JSON.stringify({ success: true, data: input }));
+    resolve(input);
   });
 };
 

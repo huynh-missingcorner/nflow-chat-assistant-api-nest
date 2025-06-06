@@ -55,10 +55,11 @@ const nflowSchemaDesignSchema = z.object({
 
 type NflowSchemaDesignInput = z.infer<typeof nflowSchemaDesignSchema>;
 
-const nflowSchemaDesignHandler = async (input: NflowSchemaDesignInput): Promise<string> => {
+const nflowSchemaDesignHandler = async (
+  input: NflowSchemaDesignInput,
+): Promise<NflowSchemaDesignInput> => {
   return new Promise((resolve) => {
-    console.log('nflowSchemaDesignHandler', input);
-    resolve(JSON.stringify({ success: true, data: input }));
+    resolve(input);
   });
 };
 

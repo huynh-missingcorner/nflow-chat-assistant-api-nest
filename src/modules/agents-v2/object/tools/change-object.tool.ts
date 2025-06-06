@@ -24,9 +24,9 @@ const changeObjectSchema = z.object({
 
 type ChangeObjectInput = z.infer<typeof changeObjectSchema>;
 
-const changeObjectHandler = async (input: ChangeObjectInput): Promise<string> => {
+const changeObjectHandler = async (input: ChangeObjectInput): Promise<ChangeObjectInput> => {
   return new Promise((resolve) => {
-    resolve(JSON.stringify({ success: true, data: input }));
+    resolve(input);
   });
 };
 

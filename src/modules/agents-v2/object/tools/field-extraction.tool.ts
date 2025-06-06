@@ -14,10 +14,11 @@ const fieldExtractionSchema = z.object({
 
 type FieldExtractionInput = z.infer<typeof fieldExtractionSchema>;
 
-const fieldExtractionHandler = async (input: FieldExtractionInput): Promise<string> => {
+const fieldExtractionHandler = async (
+  input: FieldExtractionInput,
+): Promise<FieldExtractionInput> => {
   return new Promise((resolve) => {
-    console.log('fieldExtractionHandler', input);
-    resolve(JSON.stringify({ success: true, data: input }));
+    resolve(input);
   });
 };
 

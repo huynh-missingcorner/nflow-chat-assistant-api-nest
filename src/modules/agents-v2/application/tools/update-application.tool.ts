@@ -16,9 +16,11 @@ const updateApplicationSchema = z.object({
 
 type UpdateApplicationInput = z.infer<typeof updateApplicationSchema>;
 
-const updateApplicationHandler = async (input: UpdateApplicationInput): Promise<string> => {
+const updateApplicationHandler = async (
+  input: UpdateApplicationInput,
+): Promise<UpdateApplicationInput> => {
   return new Promise((resolve) => {
-    resolve(JSON.stringify({ success: true, data: input }));
+    resolve(input);
   });
 };
 

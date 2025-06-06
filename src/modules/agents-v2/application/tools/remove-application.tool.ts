@@ -7,9 +7,11 @@ const removeApplicationsSchema = z.object({
 
 type RemoveApplicationsInput = z.infer<typeof removeApplicationsSchema>;
 
-const removeApplicationsHandler = async (input: RemoveApplicationsInput): Promise<string> => {
+const removeApplicationsHandler = async (
+  input: RemoveApplicationsInput,
+): Promise<RemoveApplicationsInput> => {
   return new Promise((resolve) => {
-    resolve(JSON.stringify({ success: true, data: input }));
+    resolve(input);
   });
 };
 

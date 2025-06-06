@@ -17,16 +17,8 @@ export const AppDesignSchema = z.object({
 
 export type AppDesignInput = z.infer<typeof AppDesignSchema>;
 
-const appDesignHandler = async (input: AppDesignInput): Promise<string> => {
-  // This tool is used by the LLM to structure its design decisions
-  // The actual logic is handled by the AppDesignNode
-  return Promise.resolve(
-    JSON.stringify({
-      success: true,
-      data: input,
-      message: 'Application design enhanced successfully',
-    }),
-  );
+const appDesignHandler = async (input: AppDesignInput): Promise<AppDesignInput> => {
+  return Promise.resolve(input);
 };
 
 export const appDesignTool = tool(appDesignHandler, {
@@ -53,14 +45,8 @@ const AppValidationSchema = z.object({
 
 type AppValidationInput = z.infer<typeof AppValidationSchema>;
 
-const appValidationHandler = async (input: AppValidationInput): Promise<string> => {
-  return Promise.resolve(
-    JSON.stringify({
-      success: true,
-      data: input,
-      message: 'Application validation completed',
-    }),
-  );
+const appValidationHandler = async (input: AppValidationInput): Promise<AppValidationInput> => {
+  return Promise.resolve(input);
 };
 
 export const appValidationTool = tool(appValidationHandler, {

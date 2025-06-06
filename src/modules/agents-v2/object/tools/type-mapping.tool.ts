@@ -10,10 +10,9 @@ const typeMappingSchema = z.object({
 
 type TypeMappingInput = z.infer<typeof typeMappingSchema>;
 
-const typeMappingHandler = async (input: TypeMappingInput): Promise<string> => {
+const typeMappingHandler = async (input: TypeMappingInput): Promise<TypeMappingInput> => {
   return new Promise((resolve) => {
-    console.log('typeMappingHandler', input);
-    resolve(JSON.stringify({ success: true, data: input }));
+    resolve(input);
   });
 };
 

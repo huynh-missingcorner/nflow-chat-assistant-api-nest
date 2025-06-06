@@ -8,10 +8,9 @@ const fieldExistenceSchema = z.object({
 
 type FieldExistenceInput = z.infer<typeof fieldExistenceSchema>;
 
-const fieldExistenceHandler = async (input: FieldExistenceInput): Promise<string> => {
+const fieldExistenceHandler = async (input: FieldExistenceInput): Promise<FieldExistenceInput> => {
   return new Promise((resolve) => {
-    console.log('fieldExistenceHandler', input);
-    resolve(JSON.stringify({ success: true, data: input }));
+    resolve(input);
   });
 };
 

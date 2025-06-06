@@ -10,9 +10,9 @@ type UpdateApplicationLayoutsInput = z.infer<typeof updateApplicationLayoutsSche
 
 const updateApplicationLayoutsHandler = async (
   input: UpdateApplicationLayoutsInput,
-): Promise<string> => {
+): Promise<UpdateApplicationLayoutsInput> => {
   return new Promise((resolve) => {
-    resolve(JSON.stringify({ success: true, data: input }));
+    resolve(input);
   });
 };
 

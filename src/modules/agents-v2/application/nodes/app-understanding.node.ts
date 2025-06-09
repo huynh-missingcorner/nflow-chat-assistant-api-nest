@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 
-import { OPENAI_GPT_4_1 } from '@/shared/infrastructure/langchain/models/openai/openai-models';
+import { OPENAI_GPT_4_1_FOR_TOOLS } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 
 import {
   APPLICATION_ERROR_MESSAGES,
@@ -29,7 +29,7 @@ export class AppUnderstandingNode extends ApplicationGraphNodeBase {
         `Input state: originalMessage="${state.originalMessage}", operationType="${state.operationType}"`,
       );
 
-      const llm = OPENAI_GPT_4_1.bindTools([appUnderstandingTool]);
+      const llm = OPENAI_GPT_4_1_FOR_TOOLS.bindTools([appUnderstandingTool]);
 
       const messages = [
         new SystemMessage(APP_UNDERSTANDING_SYSTEM_PROMPT),

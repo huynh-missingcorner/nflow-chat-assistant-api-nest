@@ -9,6 +9,7 @@ import { HandleErrorNode } from '../nodes/handle-error.node';
 import { HandleRetryNode } from '../nodes/handle-retry.node';
 import { HandleSuccessNode } from '../nodes/handle-success.node';
 import { ProcessNextIntentNode } from '../nodes/process-next-intent.node';
+import { SummarizeExecutionNode } from '../nodes/summarize-execution.node';
 import { ValidateClassificationNode } from '../nodes/validate-classification.node';
 import { SubgraphWrapperService } from '../services/subgraph-wrapper.service';
 import { EdgeRoutingStrategy } from '../strategies/edge-routing.strategy';
@@ -27,6 +28,7 @@ export class CoordinatorGraphBuilder implements IGraphBuilder {
     private readonly handleSuccessNode: HandleSuccessNode,
     private readonly handleErrorNode: HandleErrorNode,
     private readonly handleRetryNode: HandleRetryNode,
+    private readonly summarizeExecutionNode: SummarizeExecutionNode,
     private readonly edgeRoutingStrategy: EdgeRoutingStrategy,
     private readonly persistenceService: PersistenceService,
     private readonly subgraphWrapperService: SubgraphWrapperService,
@@ -59,7 +61,11 @@ export class CoordinatorGraphBuilder implements IGraphBuilder {
         this.handleSuccessNode.execute.bind(this.handleSuccessNode),
       )
       .addNode(GRAPH_NODES.HANDLE_ERROR, this.handleErrorNode.execute.bind(this.handleErrorNode))
-      .addNode(GRAPH_NODES.HANDLE_RETRY, this.handleRetryNode.execute.bind(this.handleRetryNode));
+      .addNode(GRAPH_NODES.HANDLE_RETRY, this.handleRetryNode.execute.bind(this.handleRetryNode))
+      .addNode(
+        GRAPH_NODES.SUMMARIZE_EXECUTION,
+        this.summarizeExecutionNode.execute.bind(this.summarizeExecutionNode),
+      );
 
     workflow.addEdge(START, GRAPH_NODES.CLASSIFY_INTENT);
 
@@ -121,9 +127,12 @@ export class CoordinatorGraphBuilder implements IGraphBuilder {
     // Retry node goes back to classification
     workflow.addEdge(GRAPH_NODES.HANDLE_RETRY, GRAPH_NODES.CLASSIFY_INTENT);
 
-    // Success and error nodes end the workflow
-    workflow.addEdge(GRAPH_NODES.HANDLE_SUCCESS, END);
-    workflow.addEdge(GRAPH_NODES.HANDLE_ERROR, END);
+    // Success and error nodes go to summarize before ending
+    workflow.addEdge(GRAPH_NODES.HANDLE_SUCCESS, GRAPH_NODES.SUMMARIZE_EXECUTION);
+    workflow.addEdge(GRAPH_NODES.HANDLE_ERROR, GRAPH_NODES.SUMMARIZE_EXECUTION);
+
+    // Summarize node ends the workflow
+    workflow.addEdge(GRAPH_NODES.SUMMARIZE_EXECUTION, END);
 
     return workflow.compile({
       checkpointer: this.persistenceService.getCheckpointer(),

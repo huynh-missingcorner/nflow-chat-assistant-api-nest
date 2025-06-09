@@ -6,7 +6,7 @@ import {
   IntentClassifierOutput,
   IntentClassifierTool,
 } from '@/modules/agents-v2/coordinator/tools/intent-classifier.tool';
-import { OPENAI_GPT_4_1 } from '@/shared/infrastructure/langchain/models/openai/openai-models';
+import { OPENAI_GPT_4_1_FOR_TOOLS } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 
 import { GRAPH_NODES, LOG_MESSAGES, VALIDATION_MESSAGES } from '../constants/graph-constants';
 import { COORDINATOR_SYSTEM_PROMPT } from '../constants/tokens';
@@ -53,7 +53,7 @@ export class ClassifyIntentNode extends GraphNodeBase {
   private async performClassification(
     messages: (HumanMessage | SystemMessage)[],
   ): Promise<IntentClassifierOutput> {
-    const llmWithTools = OPENAI_GPT_4_1.bindTools([IntentClassifierTool]);
+    const llmWithTools = OPENAI_GPT_4_1_FOR_TOOLS.bindTools([IntentClassifierTool]);
     const response = await llmWithTools.invoke(messages);
 
     if (!response.tool_calls || response.tool_calls.length === 0) {

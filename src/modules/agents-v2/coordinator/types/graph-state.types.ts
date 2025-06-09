@@ -7,13 +7,7 @@ import {
   EnrichedApplicationSpec,
 } from '@/modules/agents-v2/application/types/application-graph-state.types';
 import { IntentClassifierOutput } from '@/modules/agents-v2/coordinator/tools/intent-classifier.tool';
-import {
-  DBDesignResult,
-  FieldSpec,
-  ObjectExecutionResult,
-  ObjectSpec,
-  TypeMappingResult,
-} from '@/modules/agents-v2/object/types/object-graph-state.types';
+import { ObjectExecutionResult } from '@/modules/agents-v2/object/types/object-graph-state.types';
 
 // Interface for intent-specific errors
 export interface IntentError {
@@ -43,14 +37,17 @@ export interface ApplicationIntentResult
   domain: 'application';
 }
 
-// Object execution result with intent context
+// Object execution result with intent context - simplified to only track high-level status and execution results
 export interface ObjectIntentResult
   extends IntentExecutionResult<{
-    fieldSpec: FieldSpec | null;
-    objectSpec: ObjectSpec | null;
-    dbDesignResult: DBDesignResult | null;
-    typeMappingResult: TypeMappingResult | null;
-    executionResult: ObjectExecutionResult | null;
+    objectName?: string; // High-level identifier of what was created
+    summary?: string; // Human-readable summary of what was accomplished
+    entitiesCreated?: {
+      objectCount: number;
+      fieldCount: number;
+    };
+    // Keep only execution result for summarization - no internal design/planning state
+    executionResult?: ObjectExecutionResult;
   }> {
   domain: 'object';
 }
@@ -118,15 +115,6 @@ export class CoordinatorStateHelper {
   }
 
   /**
-   * Get the latest object execution result
-   */
-  static getLatestObjectResult(state: CoordinatorStateType): ObjectIntentResult['result'] | null {
-    const results = state.objectResults || [];
-    const latestResult = results[results.length - 1];
-    return latestResult?.result || null;
-  }
-
-  /**
    * Get application result for a specific intent
    */
   static getApplicationResultForIntent(
@@ -162,6 +150,16 @@ export class CoordinatorStateHelper {
   static getSuccessfulObjectResults(state: CoordinatorStateType): ObjectIntentResult[] {
     const results = state.objectResults || [];
     return results.filter((result) => result.status === 'success');
+  }
+
+  /**
+   * Get all object execution results for summarization
+   */
+  static getAllObjectExecutionResults(state: CoordinatorStateType): ObjectExecutionResult[] {
+    const results = state.objectResults || [];
+    return results
+      .map((result) => result.result.executionResult)
+      .filter((execResult): execResult is ObjectExecutionResult => execResult !== undefined);
   }
 }
 

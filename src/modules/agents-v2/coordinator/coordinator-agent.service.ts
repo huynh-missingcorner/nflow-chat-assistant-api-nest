@@ -4,18 +4,9 @@ import { StateGraph } from '@langchain/langgraph';
 import { ApplicationErrors } from '@/modules/agents-v2/application/constants';
 
 import { CoordinatorGraphBuilder } from './builders/coordinator-graph.builder';
-import {
-  GRAPH_CONFIG,
-  GRAPH_NODES,
-  LOG_MESSAGES,
-  SUCCESS_MESSAGES,
-} from './constants/graph-constants';
-import {
-  CoordinatorAgentInput,
-  CoordinatorAgentOutput,
-  CoordinatorAgentSuccessOutput,
-} from './types/coordinator-agent.types';
-import { CoordinatorStateHelper, CoordinatorStateType } from './types/graph-state.types';
+import { GRAPH_CONFIG, LOG_MESSAGES } from './constants/graph-constants';
+import { CoordinatorAgentInput, CoordinatorAgentOutput } from './types/coordinator-agent.types';
+import { CoordinatorStateType } from './types/graph-state.types';
 
 export interface ICoordinatorAgentService {
   run(input: CoordinatorAgentInput): Promise<CoordinatorAgentOutput>;
@@ -83,73 +74,70 @@ export class CoordinatorAgentService implements ICoordinatorAgentService, OnModu
     result: CoordinatorStateType,
     input: CoordinatorAgentInput,
   ): CoordinatorAgentOutput {
-    if (this.isSuccessfulExecution(result)) {
-      return this.createSuccessResponse(result, input);
-    } else {
-      return this.createErrorResponse(result);
-    }
-  }
+    // Get the latest message content from the state
+    const latestMessage = this.getLatestMessageContent(result);
 
-  private isSuccessfulExecution(result: CoordinatorStateType): boolean {
-    return result.currentNode === GRAPH_NODES.HANDLE_SUCCESS && !!result.classifiedIntent;
-  }
+    // Determine success based on completion status
+    const isSuccess = result.isCompleted && !!result.classifiedIntent;
 
-  private createSuccessResponse(
-    result: CoordinatorStateType,
-    input: CoordinatorAgentInput,
-  ): CoordinatorAgentOutput {
-    const baseResponse: CoordinatorAgentSuccessOutput = {
-      success: true,
-      message: SUCCESS_MESSAGES.INTENT_CLASSIFIED,
-      data: {
-        classifiedIntent: result.classifiedIntent!,
-        originalMessage: input.message,
-        chatSessionId: input.chatSessionId,
-      },
-    };
-
-    // Include application results if available
-    const latestApplicationResult = CoordinatorStateHelper.getLatestApplicationResult(result);
-    if (latestApplicationResult) {
+    if (isSuccess) {
       return {
         success: true,
-        message: 'Intent classified and application processed successfully',
+        message: latestMessage,
         data: {
-          ...baseResponse.data,
-          applicationSpec: latestApplicationResult.applicationSpec,
-          enrichedSpec: latestApplicationResult.enrichedSpec,
-          executionResult: latestApplicationResult.executionResult,
+          classifiedIntent: result.classifiedIntent!,
+          originalMessage: input.message,
+          chatSessionId: input.chatSessionId,
           isCompleted: result.isCompleted,
         },
-      } as CoordinatorAgentSuccessOutput;
+      };
+    } else {
+      return {
+        success: false,
+        message: latestMessage,
+        data: {
+          error: latestMessage,
+        },
+      };
     }
-
-    return baseResponse;
   }
 
-  private createErrorResponse(result: CoordinatorStateType): CoordinatorAgentOutput {
-    const errorMessage =
-      result.errors.length > 0
-        ? result.errors.map((e) => e.errorMessage).join('; ')
-        : ApplicationErrors.GENERATION_FAILED;
+  private getLatestMessageContent(result: CoordinatorStateType): string {
+    const messages = result.messages || [];
 
-    return {
-      success: false,
-      message: SUCCESS_MESSAGES.CLASSIFICATION_FAILED,
-      data: {
-        error: errorMessage,
-      },
-    };
+    if (messages.length === 0) {
+      return 'No response available';
+    }
+
+    // Get the last message and extract its content
+    const lastMessage = messages[messages.length - 1];
+    const content = lastMessage.content;
+
+    if (typeof content === 'string') {
+      return content;
+    }
+
+    // Handle complex content types
+    if (Array.isArray(content)) {
+      return content
+        .map((item) => (typeof item === 'string' ? item : JSON.stringify(item)))
+        .join(' ');
+    }
+
+    return typeof content === 'object' ? JSON.stringify(content) : String(content);
   }
 
   private handleExecutionError(error: unknown): CoordinatorAgentOutput {
     this.logger.error(LOG_MESSAGES.GRAPH_EXECUTION_FAILED, error);
 
+    const errorMessage =
+      error instanceof Error ? error.message : ApplicationErrors.GENERATION_FAILED;
+
     return {
       success: false,
-      message: SUCCESS_MESSAGES.CLASSIFICATION_FAILED,
+      message: errorMessage,
       data: {
-        error: error instanceof Error ? error.message : ApplicationErrors.GENERATION_FAILED,
+        error: errorMessage,
       },
     };
   }

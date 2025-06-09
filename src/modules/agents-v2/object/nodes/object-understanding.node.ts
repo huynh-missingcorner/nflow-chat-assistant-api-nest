@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 
-import { OPENAI_GPT_4_1 } from '@/shared/infrastructure/langchain/models/openai/openai-models';
+import { OPENAI_GPT_4_1_FOR_TOOLS } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 
 import { OBJECT_GRAPH_NODES, OBJECT_LOG_MESSAGES } from '../constants/object-graph.constants';
 import { SYSTEM_PROMPTS } from '../constants/system-prompts';
@@ -45,7 +45,7 @@ export class ObjectUnderstandingNode {
 
   private async extractObjectSpecification(message: string): Promise<ObjectSpec | null> {
     try {
-      const llm = OPENAI_GPT_4_1.bindTools([objectExtractionTool]);
+      const llm = OPENAI_GPT_4_1_FOR_TOOLS.bindTools([objectExtractionTool]);
 
       const messages = [
         new SystemMessage(SYSTEM_PROMPTS.OBJECT_UNDERSTANDING_SYSTEM_PROMPT),

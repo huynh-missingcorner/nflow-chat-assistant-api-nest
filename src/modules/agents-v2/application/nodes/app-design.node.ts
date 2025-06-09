@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { ToolCall } from '@langchain/core/messages/tool';
 
-import { OPENAI_GPT_4_1 } from '@/shared/infrastructure/langchain/models/openai/openai-models';
+import { OPENAI_GPT_4_1_FOR_TOOLS } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 
 import {
   APPLICATION_ERROR_MESSAGES,
@@ -67,7 +67,7 @@ export class AppDesignNode extends ApplicationGraphNodeBase {
 
       // Get appropriate tools based on operation type
       const tools = this.getToolsForOperation(state.operationType);
-      const llm = OPENAI_GPT_4_1.bindTools(tools);
+      const llm = OPENAI_GPT_4_1_FOR_TOOLS.bindTools(tools);
 
       const messages = [
         new SystemMessage(this.getSystemPromptForOperation(state.operationType)),

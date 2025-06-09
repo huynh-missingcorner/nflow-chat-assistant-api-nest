@@ -36,15 +36,30 @@ export class SchemaExecutorNode {
 
       const schemaExecutionResult = await this.executeSchemaCreation(state);
 
+      // Always return execution results, regardless of status
+      // This ensures that successful operations are reported even when some objects fail
       if (schemaExecutionResult.status === EXECUTION_STATUS.FAILED) {
-        return this.createErrorResult(
-          ERROR_TEMPLATES.SCHEMA_EXECUTION_ERROR(
-            schemaExecutionResult.errors?.join(', ') || 'Unknown error',
-          ),
-          schemaExecutionResult,
-        );
+        // Check if there were any successful operations
+        const hasSuccessfulOperations =
+          schemaExecutionResult.completedObjects &&
+          schemaExecutionResult.completedObjects.length > 0;
+
+        if (!hasSuccessfulOperations) {
+          // Only return error result if absolutely no objects were created
+          return this.createErrorResult(
+            ERROR_TEMPLATES.SCHEMA_EXECUTION_ERROR(
+              schemaExecutionResult.errors?.join(', ') || 'Unknown error',
+            ),
+            schemaExecutionResult,
+          );
+        } else {
+          // Even though status is failed, we have some successful operations
+          // Return success result with the execution result containing both successes and failures
+          return this.createSuccessResult(schemaExecutionResult, state);
+        }
       }
 
+      // For success and partial status, always return success result
       return this.createSuccessResult(schemaExecutionResult, state);
     } catch (error) {
       this.logger.error(ERROR_TEMPLATES.SCHEMA_EXECUTION_ERROR('Schema execution failed'), error);
@@ -107,13 +122,22 @@ export class SchemaExecutorNode {
         const updatedState = { ...objectState, ...typeMappingState };
         const executionState = await this.objectExecutorNode.execute(updatedState);
 
-        if (executionState.error) {
-          throw new Error(executionState.error);
-        }
-
+        // Always check for execution results, even if there's an error
+        // This allows us to collect partial successes (e.g., object created but some fields failed)
         if (executionState.executionResult) {
           completedObjects.push(executionState.executionResult);
           this.logger.log(MESSAGE_TEMPLATES.OBJECT_CREATED_SUCCESS(objectSpec.objectName));
+        }
+
+        // If there's an error but we got some results, log it as a warning rather than throwing
+        if (executionState.error) {
+          if (executionState.executionResult) {
+            this.logger.warn(
+              `Object ${objectSpec.objectName} completed with partial success: ${executionState.error}`,
+            );
+          } else {
+            throw new Error(executionState.error);
+          }
         }
 
         processedObjects++;

@@ -12,6 +12,9 @@ export const GRAPH_NODES = {
   HANDLE_SUCCESS: 'handleSuccess',
   HANDLE_ERROR: 'handleError',
   HANDLE_RETRY: 'handleRetry',
+
+  // Summary
+  SUMMARIZE_EXECUTION: 'summarizeExecution',
 } as const;
 
 export const GRAPH_EDGES = {
@@ -22,6 +25,7 @@ export const GRAPH_EDGES = {
   NEXT_INTENT: 'nextIntent',
   APPLICATION_DOMAIN: 'applicationDomain',
   OBJECT_DOMAIN: 'objectDomain',
+  SUMMARIZE: 'summarize',
 } as const;
 
 export const GRAPH_CONFIG = {
@@ -64,4 +68,12 @@ export const SUCCESS_MESSAGES = {
   INTENT_CLASSIFIED: 'User intent classified successfully',
   CLASSIFICATION_FAILED: 'Failed to classify user intent',
   MULTIPLE_INTENTS_CLASSIFIED: (count: number) => `Successfully classified ${count} user intents`,
+} as const;
+
+export const SUMMARIZER_MESSAGES = {
+  STARTING_SUMMARY: 'Starting execution summary generation',
+  SUMMARY_GENERATED: 'Execution summary generated successfully',
+  SUMMARY_FAILED: 'Failed to generate execution summary',
+  SUMMARY_ERROR_PREFIX: 'Execution Summary: ',
+  SUMMARY_FALLBACK: 'Failed to generate execution summary due to an error.',
 } as const;

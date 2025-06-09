@@ -30,27 +30,42 @@ export class ObjectExecutorNode {
     try {
       this.logger.log(OBJECT_LOG_MESSAGES.EXECUTION_COMPLETED);
 
-      const executionSteps = this.buildExecutionPlan(state);
+      const executionPlan = this.buildExecutionPlan(state);
 
-      if (!executionSteps || executionSteps.length === 0) {
+      if (!executionPlan || executionPlan.steps.length === 0) {
         return this.createErrorResult('Unable to build execution plan from state');
       }
 
-      const executionResult = await this.executeSteps(executionSteps, state.chatSessionId);
+      const executionResult = await this.executeSteps(
+        executionPlan.steps,
+        executionPlan.stepIndexMapping,
+        state.chatSessionId,
+        state.executionResult || undefined,
+      );
 
-      // Check if there were any successful operations
-      const hasSuccessfulOperations =
-        executionResult.objectId ||
-        (executionResult.fieldIds && executionResult.fieldIds.length > 0);
+      // Always return execution results, regardless of status
+      // This ensures that successful operations are reported even when some steps fail
+      if (executionResult.status === 'failed') {
+        // Check if there were any successful operations
+        const hasSuccessfulOperations =
+          executionResult.objectId ||
+          (executionResult.fieldIds && executionResult.fieldIds.length > 0) ||
+          (executionResult.completedSteps && executionResult.completedSteps.length > 0);
 
-      if (executionResult.status === 'failed' && !hasSuccessfulOperations) {
-        return this.createErrorResult(
-          executionResult.errors?.join(', ') || 'Object execution failed',
-          executionResult,
-        );
+        if (!hasSuccessfulOperations) {
+          // Only return error result if absolutely nothing was created
+          return this.createErrorResult(
+            executionResult.errors?.join(', ') || 'Object execution failed',
+            executionResult,
+          );
+        } else {
+          // Even though status is failed, we have some successful operations
+          // Return success result with the execution result containing both successes and failures
+          return this.createSuccessResult(executionResult, state);
+        }
       }
 
-      // If we have partial success or full success, proceed to success handling
+      // For success and partial status, always return success result
       return this.createSuccessResult(executionResult, state);
     } catch (error) {
       this.logger.error('Object execution failed');
@@ -60,7 +75,9 @@ export class ObjectExecutorNode {
     }
   }
 
-  private buildExecutionPlan(state: ObjectStateType): ExecutionStep[] | null {
+  private buildExecutionPlan(
+    state: ObjectStateType,
+  ): { steps: ExecutionStep[]; stepIndexMapping: number[] } | null {
     try {
       const typeMappingResult = state.typeMappingResult;
       const apiFormat: ApiFormatParserInput | undefined = typeMappingResult?.apiFormat;
@@ -71,6 +88,7 @@ export class ObjectExecutorNode {
       }
 
       const steps: ExecutionStep[] = [];
+      const stepIndexMapping: number[] = []; // Maps array index to original step index
 
       // Get completed step indices if any exist
       const completedStepIndices: number[] = [];
@@ -99,6 +117,7 @@ export class ObjectExecutorNode {
           data: apiFormat.objectFormat,
           description: `Create object: ${apiFormat.objectFormat.name}`,
         });
+        stepIndexMapping.push(stepIndex);
       }
       stepIndex++;
 
@@ -112,6 +131,7 @@ export class ObjectExecutorNode {
               data: fieldFormat,
               description: `Create field: ${fieldFormat.data.name}`,
             });
+            stepIndexMapping.push(stepIndex);
           }
           stepIndex++;
         }
@@ -120,7 +140,7 @@ export class ObjectExecutorNode {
       this.logger.debug(
         `Built execution plan with ${steps.length} steps (${completedStepIndices.length} already completed)`,
       );
-      return steps;
+      return { steps, stepIndexMapping };
     } catch {
       this.logger.error('Error building execution plan');
       return null;
@@ -129,14 +149,26 @@ export class ObjectExecutorNode {
 
   private async executeSteps(
     steps: ExecutionStep[],
+    stepIndexMapping: number[],
     chatSessionId: string,
+    previousResult?: ObjectExecutionResult,
   ): Promise<ObjectExecutionResult> {
+    // Initialize result with previous execution data to preserve successful operations across retries
     const result: ObjectExecutionResult = {
       status: 'success',
-      fieldIds: [],
-      createdEntities: {},
-      errors: [],
-      completedSteps: [],
+      fieldIds: [...(previousResult?.fieldIds || [])],
+      createdEntities: previousResult?.createdEntities
+        ? {
+            ...previousResult.createdEntities,
+            // Ensure fields array is properly copied
+            fields: Array.isArray(previousResult.createdEntities.fields)
+              ? [...previousResult.createdEntities.fields]
+              : previousResult.createdEntities.fields,
+          }
+        : {},
+      errors: [...(previousResult?.errors || [])],
+      completedSteps: [...(previousResult?.completedSteps || [])],
+      objectId: previousResult?.objectId,
     };
 
     // Get userId from chatSessionId
@@ -179,14 +211,21 @@ export class ObjectExecutorNode {
 
         hasSuccessfulSteps = true;
 
-        // Track completed step
+        // Track completed step using the original step index
         if (result.completedSteps) {
-          result.completedSteps.push({
-            type: step.type,
-            stepIndex: i,
-            entityId: stepResult.objectId || stepResult.fieldId || 'Unknown',
-            entityName: stepResult.objectId || stepResult.fieldId || undefined,
-          });
+          const originalStepIndex = stepIndexMapping[i];
+          // Only add if not already present (avoid duplicates from retries)
+          const isAlreadyCompleted = result.completedSteps.some(
+            (existingStep) => existingStep.stepIndex === originalStepIndex,
+          );
+          if (!isAlreadyCompleted) {
+            result.completedSteps.push({
+              type: step.type,
+              stepIndex: originalStepIndex,
+              entityId: stepResult.objectId || stepResult.fieldId || 'Unknown',
+              entityName: stepResult.objectId || stepResult.fieldId || undefined,
+            });
+          }
         }
 
         // Collect successful results
@@ -196,39 +235,55 @@ export class ObjectExecutorNode {
           // Use the actual created object name (which is unique)
           result.createdEntities.object = stepResult.objectId || 'Unknown';
         } else if (step.type === 'create_field') {
-          if (result.fieldIds) {
-            result.fieldIds.push(stepResult.fieldId || '');
+          const fieldId = stepResult.fieldId || '';
+          // Only add if not already present (avoid duplicates from retries)
+          if (result.fieldIds && !result.fieldIds.includes(fieldId)) {
+            result.fieldIds.push(fieldId);
           }
           if (!result.createdEntities) result.createdEntities = {};
           if (!result.createdEntities.fields) {
             result.createdEntities.fields = [];
           }
           if (Array.isArray(result.createdEntities.fields)) {
-            // Use the actual created field name
-            result.createdEntities.fields.push(stepResult.fieldId || 'Unknown');
+            const fieldName = stepResult.fieldId || 'Unknown';
+            // Only add if not already present (avoid duplicates from retries)
+            if (!result.createdEntities.fields.includes(fieldName)) {
+              result.createdEntities.fields.push(fieldName);
+            }
           }
         }
       }
 
       // Determine final status based on execution results
-      if (hasFailedSteps && !hasSuccessfulSteps) {
+      // Consider both current execution and previous successful operations
+      const hasAnySuccessfulOperations =
+        hasSuccessfulSteps ||
+        result.objectId ||
+        (result.fieldIds && result.fieldIds.length > 0) ||
+        (result.completedSteps && result.completedSteps.length > 0);
+
+      if (hasFailedSteps && !hasAnySuccessfulOperations) {
         result.status = 'failed';
-      } else if (hasFailedSteps && hasSuccessfulSteps) {
+      } else if (hasFailedSteps && hasAnySuccessfulOperations) {
         result.status = 'partial';
-      } else {
+      } else if (hasAnySuccessfulOperations) {
         result.status = 'success';
+      } else {
+        result.status = 'failed';
       }
 
       return result;
     } catch (error) {
       this.logger.error('Error during step execution');
-      return {
-        status: 'failed',
-        errors: [error instanceof Error ? error.message : 'Step execution failed'],
-        fieldIds: [],
-        createdEntities: {},
-        completedSteps: [],
-      };
+      // Preserve any successful operations that occurred before the exception
+      const errorMessage = error instanceof Error ? error.message : 'Step execution failed';
+      if (result.errors) {
+        result.errors.push(errorMessage);
+      } else {
+        result.errors = [errorMessage];
+      }
+      result.status = hasSuccessfulSteps ? 'partial' : 'failed';
+      return result;
     }
   }
 

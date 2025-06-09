@@ -1,6 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { OBJECT_GRAPH_EDGES } from '../constants/object-graph.constants';
+import { IntentEnum } from '@/modules/agents-v2/coordinator/tools/intent-classifier.tool';
+
+import {
+  ERROR_TEMPLATES,
+  EXECUTION_STATUS,
+  MESSAGE_TEMPLATES,
+  OBJECT_GRAPH_EDGES,
+} from '../constants/object-graph.constants';
 import { ObjectStateType } from '../types/object-graph-state.types';
 
 @Injectable()
@@ -9,37 +16,36 @@ export class ObjectGraphEdgeRoutingStrategy {
 
   determineInitialRoute(state: ObjectStateType): string {
     if (!state.intent) {
-      this.logger.warn('No intent found in state, defaulting to error');
+      this.logger.warn(ERROR_TEMPLATES.NO_INTENT_FOUND);
       return OBJECT_GRAPH_EDGES.ERROR;
     }
 
-    const intent = state.intent;
-    const intentAction = intent.intent;
+    const intentAction = state.intent.intent;
 
+    // Direct routing based on intent action
     switch (intentAction) {
-      case 'create_object':
-        return OBJECT_GRAPH_EDGES.DESIGN;
-      case 'update_object_metadata':
-      case 'design_data_schema':
-        return OBJECT_GRAPH_EDGES.DESIGN;
+      case IntentEnum.enum.design_data_schema:
+        this.logger.log(MESSAGE_TEMPLATES.DESIGN_DATA_SCHEMA_ROUTING);
+        return OBJECT_GRAPH_EDGES.SCHEMA_UNDERSTANDING;
 
-      case 'manipulate_object_fields': {
-        const details: unknown = intent.details;
-        const detailsStr = typeof details === 'string' ? details : '';
-        if (detailsStr && (detailsStr.includes('add') || detailsStr.includes('create'))) {
-          return OBJECT_GRAPH_EDGES.UNDERSTAND;
-        }
-        return OBJECT_GRAPH_EDGES.DESIGN;
-      }
+      case IntentEnum.enum.create_object:
+      case IntentEnum.enum.update_object_metadata:
+        this.logger.log(MESSAGE_TEMPLATES.SINGLE_OBJECT_ROUTING);
+        return OBJECT_GRAPH_EDGES.OBJECT_UNDERSTANDING;
 
-      case 'delete_object':
-        return OBJECT_GRAPH_EDGES.EXECUTE;
+      case IntentEnum.enum.manipulate_object_fields:
+        // For field manipulation, default to field understanding
+        // Avoid text-based detection - let the understanding phase handle details
+        this.logger.log(MESSAGE_TEMPLATES.FIELD_MANIPULATION_CREATE_ROUTING);
+        return OBJECT_GRAPH_EDGES.FIELD_UNDERSTANDING;
+
+      case IntentEnum.enum.delete_object:
+        this.logger.log(MESSAGE_TEMPLATES.DELETE_OBJECT_ROUTING);
+        return OBJECT_GRAPH_EDGES.OBJECT_EXECUTION;
 
       default:
-        this.logger.warn(
-          `Unknown intent action: ${intentAction}, defaulting to field understanding`,
-        );
-        return OBJECT_GRAPH_EDGES.UNDERSTAND;
+        this.logger.warn(ERROR_TEMPLATES.UNKNOWN_INTENT_ACTION(intentAction));
+        return OBJECT_GRAPH_EDGES.FIELD_UNDERSTANDING;
     }
   }
 
@@ -48,12 +54,15 @@ export class ObjectGraphEdgeRoutingStrategy {
       return OBJECT_GRAPH_EDGES.ERROR;
     }
 
-    if (!state.fieldSpec && !state.objectSpec) {
-      this.logger.warn('No field or object spec extracted, routing to retry');
+    // Check if any spec was extracted
+    if (!state.fieldSpec && !state.objectSpec && !state.schemaSpec) {
+      this.logger.warn(ERROR_TEMPLATES.NO_SPEC_EXTRACTED);
       return OBJECT_GRAPH_EDGES.RETRY;
     }
 
-    return OBJECT_GRAPH_EDGES.DESIGN;
+    // All understanding nodes route to DB design
+    this.logger.log(MESSAGE_TEMPLATES.UNDERSTANDING_COMPLETED_ROUTING);
+    return OBJECT_GRAPH_EDGES.DB_DESIGN;
   }
 
   determineAfterDesignRoute(state: ObjectStateType): string {
@@ -61,17 +70,31 @@ export class ObjectGraphEdgeRoutingStrategy {
       return OBJECT_GRAPH_EDGES.ERROR;
     }
 
+    // Schema design - go directly to schema execution
+    if (state.isSchemaDesign && state.schemaDesignResult) {
+      if (!state.schemaDesignResult.valid) {
+        this.logger.warn(
+          ERROR_TEMPLATES.SCHEMA_DESIGN_VALIDATION_FAILED('Schema design validation failed'),
+        );
+        return OBJECT_GRAPH_EDGES.ERROR;
+      }
+      this.logger.log(MESSAGE_TEMPLATES.SCHEMA_DESIGN_COMPLETED_ROUTING);
+      return OBJECT_GRAPH_EDGES.SCHEMA_EXECUTION;
+    }
+
+    // Single object design - go to type mapping
     if (!state.dbDesignResult) {
-      this.logger.warn('No DB design result, routing to retry');
+      this.logger.warn(ERROR_TEMPLATES.NO_DB_DESIGN_RESULT);
       return OBJECT_GRAPH_EDGES.RETRY;
     }
 
     if (!state.dbDesignResult.valid) {
-      this.logger.warn('DB design validation failed, routing to error');
+      this.logger.warn(ERROR_TEMPLATES.DB_DESIGN_VALIDATION_FAILED('DB design validation failed'));
       return OBJECT_GRAPH_EDGES.ERROR;
     }
 
-    return OBJECT_GRAPH_EDGES.MAP_TYPES;
+    this.logger.log(MESSAGE_TEMPLATES.OBJECT_DESIGN_COMPLETED_ROUTING);
+    return OBJECT_GRAPH_EDGES.TYPE_MAPPING;
   }
 
   determineAfterMappingRoute(state: ObjectStateType): string {
@@ -80,12 +103,12 @@ export class ObjectGraphEdgeRoutingStrategy {
     }
 
     if (!state.typeMappingResult) {
-      this.logger.warn('No type mapping result, routing to retry');
+      this.logger.warn(ERROR_TEMPLATES.NO_TYPE_MAPPING_RESULT);
       return OBJECT_GRAPH_EDGES.RETRY;
     }
 
     if (state.typeMappingResult.errors && state.typeMappingResult.errors.length > 0) {
-      this.logger.warn('Type mapping errors detected, routing to error');
+      this.logger.warn(ERROR_TEMPLATES.TYPE_MAPPING_ERRORS_DETECTED);
       return OBJECT_GRAPH_EDGES.ERROR;
     }
 
@@ -93,11 +116,12 @@ export class ObjectGraphEdgeRoutingStrategy {
       !state.typeMappingResult.mappedFields ||
       state.typeMappingResult.mappedFields.length === 0
     ) {
-      this.logger.warn('No mapped fields, routing to retry');
+      this.logger.warn(ERROR_TEMPLATES.NO_MAPPED_FIELDS);
       return OBJECT_GRAPH_EDGES.RETRY;
     }
 
-    return OBJECT_GRAPH_EDGES.EXECUTE;
+    this.logger.log(MESSAGE_TEMPLATES.TYPE_MAPPING_COMPLETED_ROUTING);
+    return OBJECT_GRAPH_EDGES.OBJECT_EXECUTION;
   }
 
   determineAfterExecutionRoute(state: ObjectStateType): string {
@@ -105,29 +129,43 @@ export class ObjectGraphEdgeRoutingStrategy {
       return OBJECT_GRAPH_EDGES.ERROR;
     }
 
+    // Handle schema execution results
+    if (state.isSchemaDesign && state.schemaExecutionResult) {
+      if (state.schemaExecutionResult.status === EXECUTION_STATUS.FAILED) {
+        this.logger.warn(ERROR_TEMPLATES.SCHEMA_EXECUTION_FAILED);
+        return OBJECT_GRAPH_EDGES.ERROR;
+      }
+
+      if (state.schemaExecutionResult.status === EXECUTION_STATUS.PARTIAL) {
+        this.logger.warn(ERROR_TEMPLATES.SCHEMA_EXECUTION_PARTIAL);
+        return OBJECT_GRAPH_EDGES.RETRY;
+      }
+
+      return OBJECT_GRAPH_EDGES.SUCCESS;
+    }
+
+    // Handle single object execution results
     if (!state.executionResult) {
-      this.logger.warn('No execution result, routing to retry');
+      this.logger.warn(ERROR_TEMPLATES.NO_EXECUTION_RESULT);
       return OBJECT_GRAPH_EDGES.RETRY;
     }
 
-    if (state.executionResult.status === 'failed') {
+    if (state.executionResult.status === EXECUTION_STATUS.FAILED) {
       // Check if any steps were completed successfully
       const hasCompletedSteps =
         state.executionResult.completedSteps && state.executionResult.completedSteps.length > 0;
 
       if (hasCompletedSteps) {
-        this.logger.warn(
-          'Execution failed but has completed steps, routing to retry for remaining steps',
-        );
+        this.logger.warn(ERROR_TEMPLATES.EXECUTION_FAILED_WITH_COMPLETED_STEPS);
         return OBJECT_GRAPH_EDGES.RETRY;
       } else {
-        this.logger.warn('Execution failed with no completed steps, routing to error');
+        this.logger.warn(ERROR_TEMPLATES.EXECUTION_FAILED_NO_COMPLETED_STEPS);
         return OBJECT_GRAPH_EDGES.ERROR;
       }
     }
 
-    if (state.executionResult.status === 'partial') {
-      this.logger.warn('Partial execution, routing to retry for remaining steps');
+    if (state.executionResult.status === EXECUTION_STATUS.PARTIAL) {
+      this.logger.warn(ERROR_TEMPLATES.PARTIAL_EXECUTION);
       return OBJECT_GRAPH_EDGES.RETRY;
     }
 
@@ -136,7 +174,7 @@ export class ObjectGraphEdgeRoutingStrategy {
 
   determineRetryRoute(state: ObjectStateType): string {
     // Check if we've exceeded retry limits (handled in HandleRetryNode)
-    if (state.error && state.error.includes('Maximum retry')) {
+    if (state.error && state.error.includes(ERROR_TEMPLATES.MAXIMUM_RETRY_EXCEEDED)) {
       return OBJECT_GRAPH_EDGES.ERROR;
     }
 
@@ -147,11 +185,18 @@ export class ObjectGraphEdgeRoutingStrategy {
       state.executionResult.completedSteps &&
       state.executionResult.completedSteps.length > 0
     ) {
-      this.logger.log('Retrying with completed steps, going directly to execution');
-      return OBJECT_GRAPH_EDGES.EXECUTE;
+      this.logger.log(MESSAGE_TEMPLATES.RETRY_WITH_COMPLETED_STEPS);
+      return OBJECT_GRAPH_EDGES.OBJECT_EXECUTION;
     }
 
-    // Otherwise, restart from the beginning
-    return OBJECT_GRAPH_EDGES.RETRY;
+    // For schema execution retries
+    if (state.isSchemaDesign) {
+      this.logger.log(MESSAGE_TEMPLATES.SCHEMA_EXECUTION_RETRY);
+      return OBJECT_GRAPH_EDGES.FIELD_UNDERSTANDING;
+    }
+
+    // Otherwise, restart from the beginning for object execution
+    this.logger.log(MESSAGE_TEMPLATES.OBJECT_EXECUTION_RETRY);
+    return OBJECT_GRAPH_EDGES.FIELD_UNDERSTANDING;
   }
 }

@@ -9,6 +9,8 @@ import { HandleRetryNode } from '../nodes/handle-retry.node';
 import { HandleSuccessNode } from '../nodes/handle-success.node';
 import { ObjectExecutorNode } from '../nodes/object-executor.node';
 import { ObjectUnderstandingNode } from '../nodes/object-understanding.node';
+import { SchemaExecutorNode } from '../nodes/schema-executor.node';
+import { SchemaUnderstandingNode } from '../nodes/schema-understanding.node';
 import { TypeMapperNode } from '../nodes/type-mapper.node';
 import { ObjectGraphEdgeRoutingStrategy } from '../strategies/object-graph-edge-routing.strategy';
 import { ObjectState } from '../types/object-graph-state.types';
@@ -22,9 +24,11 @@ export class ObjectGraphBuilder implements IObjectGraphBuilder {
   constructor(
     private readonly fieldUnderstandingNode: FieldUnderstandingNode,
     private readonly objectUnderstandingNode: ObjectUnderstandingNode,
+    private readonly schemaUnderstandingNode: SchemaUnderstandingNode,
     private readonly dbDesignNode: DBDesignNode,
     private readonly typeMapperNode: TypeMapperNode,
     private readonly objectExecutorNode: ObjectExecutorNode,
+    private readonly schemaExecutorNode: SchemaExecutorNode,
     private readonly handleSuccessNode: HandleSuccessNode,
     private readonly handleErrorNode: HandleErrorNode,
     private readonly handleRetryNode: HandleRetryNode,
@@ -41,6 +45,10 @@ export class ObjectGraphBuilder implements IObjectGraphBuilder {
         OBJECT_GRAPH_NODES.OBJECT_UNDERSTANDING,
         this.objectUnderstandingNode.execute.bind(this.objectUnderstandingNode),
       )
+      .addNode(
+        OBJECT_GRAPH_NODES.SCHEMA_UNDERSTANDING,
+        this.schemaUnderstandingNode.execute.bind(this.schemaUnderstandingNode),
+      )
       .addNode(OBJECT_GRAPH_NODES.DB_DESIGN, this.dbDesignNode.execute.bind(this.dbDesignNode))
       .addNode(
         OBJECT_GRAPH_NODES.TYPE_MAPPER,
@@ -49,6 +57,10 @@ export class ObjectGraphBuilder implements IObjectGraphBuilder {
       .addNode(
         OBJECT_GRAPH_NODES.OBJECT_EXECUTOR,
         this.objectExecutorNode.execute.bind(this.objectExecutorNode),
+      )
+      .addNode(
+        OBJECT_GRAPH_NODES.SCHEMA_EXECUTOR,
+        this.schemaExecutorNode.execute.bind(this.schemaExecutorNode),
       )
       .addNode(
         OBJECT_GRAPH_NODES.HANDLE_SUCCESS,
@@ -67,51 +79,63 @@ export class ObjectGraphBuilder implements IObjectGraphBuilder {
       START,
       this.edgeRoutingStrategy.determineInitialRoute.bind(this.edgeRoutingStrategy),
       {
-        [OBJECT_GRAPH_EDGES.UNDERSTAND]: OBJECT_GRAPH_NODES.FIELD_UNDERSTANDING,
-        [OBJECT_GRAPH_EDGES.DESIGN]: OBJECT_GRAPH_NODES.OBJECT_UNDERSTANDING,
+        [OBJECT_GRAPH_EDGES.FIELD_UNDERSTANDING]: OBJECT_GRAPH_NODES.FIELD_UNDERSTANDING,
+        [OBJECT_GRAPH_EDGES.OBJECT_UNDERSTANDING]: OBJECT_GRAPH_NODES.OBJECT_UNDERSTANDING,
+        [OBJECT_GRAPH_EDGES.SCHEMA_UNDERSTANDING]: OBJECT_GRAPH_NODES.SCHEMA_UNDERSTANDING,
+        [OBJECT_GRAPH_EDGES.OBJECT_EXECUTION]: OBJECT_GRAPH_NODES.OBJECT_EXECUTOR,
         [OBJECT_GRAPH_EDGES.ERROR]: OBJECT_GRAPH_NODES.HANDLE_ERROR,
       },
     );
 
-    // After field understanding, go to DB design
+    // After any understanding node, go to DB design
     workflow.addConditionalEdges(
       OBJECT_GRAPH_NODES.FIELD_UNDERSTANDING,
       this.edgeRoutingStrategy.determineAfterUnderstandingRoute.bind(this.edgeRoutingStrategy),
       {
-        [OBJECT_GRAPH_EDGES.DESIGN]: OBJECT_GRAPH_NODES.DB_DESIGN,
+        [OBJECT_GRAPH_EDGES.DB_DESIGN]: OBJECT_GRAPH_NODES.DB_DESIGN,
         [OBJECT_GRAPH_EDGES.ERROR]: OBJECT_GRAPH_NODES.HANDLE_ERROR,
         [OBJECT_GRAPH_EDGES.RETRY]: OBJECT_GRAPH_NODES.HANDLE_RETRY,
       },
     );
 
-    // After object understanding, go to DB design
     workflow.addConditionalEdges(
       OBJECT_GRAPH_NODES.OBJECT_UNDERSTANDING,
       this.edgeRoutingStrategy.determineAfterUnderstandingRoute.bind(this.edgeRoutingStrategy),
       {
-        [OBJECT_GRAPH_EDGES.DESIGN]: OBJECT_GRAPH_NODES.DB_DESIGN,
+        [OBJECT_GRAPH_EDGES.DB_DESIGN]: OBJECT_GRAPH_NODES.DB_DESIGN,
         [OBJECT_GRAPH_EDGES.ERROR]: OBJECT_GRAPH_NODES.HANDLE_ERROR,
         [OBJECT_GRAPH_EDGES.RETRY]: OBJECT_GRAPH_NODES.HANDLE_RETRY,
       },
     );
 
-    // After DB design, go to type mapping
+    workflow.addConditionalEdges(
+      OBJECT_GRAPH_NODES.SCHEMA_UNDERSTANDING,
+      this.edgeRoutingStrategy.determineAfterUnderstandingRoute.bind(this.edgeRoutingStrategy),
+      {
+        [OBJECT_GRAPH_EDGES.DB_DESIGN]: OBJECT_GRAPH_NODES.DB_DESIGN,
+        [OBJECT_GRAPH_EDGES.ERROR]: OBJECT_GRAPH_NODES.HANDLE_ERROR,
+        [OBJECT_GRAPH_EDGES.RETRY]: OBJECT_GRAPH_NODES.HANDLE_RETRY,
+      },
+    );
+
+    // After DB design, go to type mapping or schema execution
     workflow.addConditionalEdges(
       OBJECT_GRAPH_NODES.DB_DESIGN,
       this.edgeRoutingStrategy.determineAfterDesignRoute.bind(this.edgeRoutingStrategy),
       {
-        [OBJECT_GRAPH_EDGES.MAP_TYPES]: OBJECT_GRAPH_NODES.TYPE_MAPPER,
+        [OBJECT_GRAPH_EDGES.TYPE_MAPPING]: OBJECT_GRAPH_NODES.TYPE_MAPPER,
+        [OBJECT_GRAPH_EDGES.SCHEMA_EXECUTION]: OBJECT_GRAPH_NODES.SCHEMA_EXECUTOR,
         [OBJECT_GRAPH_EDGES.ERROR]: OBJECT_GRAPH_NODES.HANDLE_ERROR,
         [OBJECT_GRAPH_EDGES.RETRY]: OBJECT_GRAPH_NODES.HANDLE_RETRY,
       },
     );
 
-    // After type mapping, go to execution
+    // After type mapping, go to object execution
     workflow.addConditionalEdges(
       OBJECT_GRAPH_NODES.TYPE_MAPPER,
       this.edgeRoutingStrategy.determineAfterMappingRoute.bind(this.edgeRoutingStrategy),
       {
-        [OBJECT_GRAPH_EDGES.EXECUTE]: OBJECT_GRAPH_NODES.OBJECT_EXECUTOR,
+        [OBJECT_GRAPH_EDGES.OBJECT_EXECUTION]: OBJECT_GRAPH_NODES.OBJECT_EXECUTOR,
         [OBJECT_GRAPH_EDGES.ERROR]: OBJECT_GRAPH_NODES.HANDLE_ERROR,
         [OBJECT_GRAPH_EDGES.RETRY]: OBJECT_GRAPH_NODES.HANDLE_RETRY,
       },
@@ -128,12 +152,23 @@ export class ObjectGraphBuilder implements IObjectGraphBuilder {
       },
     );
 
+    // After schema execution, go to success or handle error
+    workflow.addConditionalEdges(
+      OBJECT_GRAPH_NODES.SCHEMA_EXECUTOR,
+      this.edgeRoutingStrategy.determineAfterExecutionRoute.bind(this.edgeRoutingStrategy),
+      {
+        [OBJECT_GRAPH_EDGES.SUCCESS]: OBJECT_GRAPH_NODES.HANDLE_SUCCESS,
+        [OBJECT_GRAPH_EDGES.ERROR]: OBJECT_GRAPH_NODES.HANDLE_ERROR,
+        [OBJECT_GRAPH_EDGES.RETRY]: OBJECT_GRAPH_NODES.HANDLE_RETRY,
+      },
+    );
+
     workflow.addConditionalEdges(
       OBJECT_GRAPH_NODES.HANDLE_RETRY,
       this.edgeRoutingStrategy.determineRetryRoute.bind(this.edgeRoutingStrategy),
       {
-        [OBJECT_GRAPH_EDGES.RETRY]: OBJECT_GRAPH_NODES.FIELD_UNDERSTANDING,
-        [OBJECT_GRAPH_EDGES.EXECUTE]: OBJECT_GRAPH_NODES.OBJECT_EXECUTOR,
+        [OBJECT_GRAPH_EDGES.FIELD_UNDERSTANDING]: OBJECT_GRAPH_NODES.FIELD_UNDERSTANDING,
+        [OBJECT_GRAPH_EDGES.OBJECT_EXECUTION]: OBJECT_GRAPH_NODES.OBJECT_EXECUTOR,
         [OBJECT_GRAPH_EDGES.ERROR]: OBJECT_GRAPH_NODES.HANDLE_ERROR,
       },
     );

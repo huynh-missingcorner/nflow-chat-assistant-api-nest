@@ -1,6 +1,7 @@
 import { BaseMessage } from '@langchain/core/messages';
 import { Annotation, messagesStateReducer } from '@langchain/langgraph';
 
+import { RESET_MARKER } from '@/modules/agents-v2/coordinator/types/graph-state.types';
 import type { IntentDetails } from '@/modules/agents-v2/coordinator/types/subgraph-handler.types';
 
 import {
@@ -150,55 +151,139 @@ export const ObjectState = Annotation.Root({
   chatSessionId: Annotation<string>(),
   intent: Annotation<IntentDetails | null>({
     default: () => null,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return null;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
   // Schema-level design fields
   schemaSpec: Annotation<SchemaSpec | null>({
     default: () => null,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return null;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
   schemaDesignResult: Annotation<SchemaDesignResult | null>({
     default: () => null,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return null;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
   schemaExecutionResult: Annotation<SchemaExecutionResult | null>({
     default: () => null,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return null;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
   currentObjectIndex: Annotation<number>({
     default: () => 0,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return 0;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
   isSchemaDesign: Annotation<boolean>({
     default: () => false,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return false;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
   // Understanding phase
   fieldSpec: Annotation<FieldSpec | null>({
     default: () => null,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return null;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
   objectSpec: Annotation<ObjectSpec | null>({
     default: () => null,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return null;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
   // Planning phase
   dbDesignResult: Annotation<DBDesignResult | null>({
     default: () => null,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return null;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
   typeMappingResult: Annotation<TypeMappingResult | null>({
     default: () => null,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return null;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
   // Execution phase
   executionResult: Annotation<ObjectExecutionResult | null>({
     default: () => null,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return null;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
   error: Annotation<string | null>({
     default: () => null,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return null;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
   currentNode: Annotation<string>({
     default: () => 'start',
@@ -206,11 +291,25 @@ export const ObjectState = Annotation.Root({
   }),
   retryCount: Annotation<number>({
     default: () => 0,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return 0;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
   isCompleted: Annotation<boolean>({
     default: () => false,
-    reducer: (x, y) => y ?? x,
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return false;
+      }
+      // Otherwise, use new value if it exists, keep old value if not
+      return y ?? x;
+    },
   }),
 });
 

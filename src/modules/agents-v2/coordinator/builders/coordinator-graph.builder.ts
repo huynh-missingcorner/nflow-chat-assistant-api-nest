@@ -9,6 +9,7 @@ import { HandleErrorNode } from '../nodes/handle-error.node';
 import { HandleRetryNode } from '../nodes/handle-retry.node';
 import { HandleSuccessNode } from '../nodes/handle-success.node';
 import { ProcessNextIntentNode } from '../nodes/process-next-intent.node';
+import { StateResetNode } from '../nodes/state-reset.node';
 import { SummarizeExecutionNode } from '../nodes/summarize-execution.node';
 import { ValidateClassificationNode } from '../nodes/validate-classification.node';
 import { SubgraphWrapperService } from '../services/subgraph-wrapper.service';
@@ -22,6 +23,7 @@ export interface IGraphBuilder {
 @Injectable()
 export class CoordinatorGraphBuilder implements IGraphBuilder {
   constructor(
+    private readonly stateResetNode: StateResetNode,
     private readonly classifyIntentNode: ClassifyIntentNode,
     private readonly validateClassificationNode: ValidateClassificationNode,
     private readonly processNextIntentNode: ProcessNextIntentNode,
@@ -36,6 +38,7 @@ export class CoordinatorGraphBuilder implements IGraphBuilder {
 
   buildGraph(): ReturnType<typeof StateGraph.prototype.compile> {
     const workflow = new StateGraph(CoordinatorState)
+      .addNode(GRAPH_NODES.STATE_RESET, this.stateResetNode.execute.bind(this.stateResetNode))
       .addNode(
         GRAPH_NODES.CLASSIFY_INTENT,
         this.classifyIntentNode.execute.bind(this.classifyIntentNode),
@@ -67,7 +70,8 @@ export class CoordinatorGraphBuilder implements IGraphBuilder {
         this.summarizeExecutionNode.execute.bind(this.summarizeExecutionNode),
       );
 
-    workflow.addEdge(START, GRAPH_NODES.CLASSIFY_INTENT);
+    workflow.addEdge(START, GRAPH_NODES.STATE_RESET);
+    workflow.addEdge(GRAPH_NODES.STATE_RESET, GRAPH_NODES.CLASSIFY_INTENT);
 
     workflow.addConditionalEdges(
       GRAPH_NODES.CLASSIFY_INTENT,

@@ -55,18 +55,8 @@ export class CoordinatorAgentService implements ICoordinatorAgentService, OnModu
 
   private createInitialState(input: CoordinatorAgentInput): Partial<CoordinatorStateType> {
     return {
-      messages: [],
       originalMessage: input.message,
       chatSessionId: input.chatSessionId,
-      classifiedIntent: null,
-      currentIntentIndex: 0,
-      processedIntents: [],
-      errors: [],
-      currentNode: GRAPH_CONFIG.INITIAL_NODE,
-      retryCount: 0,
-      applicationResults: [],
-      objectResults: [],
-      isCompleted: false,
     };
   }
 

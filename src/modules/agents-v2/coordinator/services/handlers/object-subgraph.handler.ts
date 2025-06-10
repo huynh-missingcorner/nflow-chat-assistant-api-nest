@@ -5,15 +5,13 @@ import type {
   IntentError,
   ObjectIntentResult,
 } from '@/modules/agents-v2/coordinator/types/graph-state.types';
+import { RESET_MARKER } from '@/modules/agents-v2/coordinator/types/graph-state.types';
 import type {
   IntentDetails,
   SubgraphHandler,
   ValidationResult,
 } from '@/modules/agents-v2/coordinator/types/subgraph-handler.types';
-import type {
-  ObjectExecutionResult,
-  ObjectStateType,
-} from '@/modules/agents-v2/object/types/object-graph-state.types';
+import type { ObjectStateType } from '@/modules/agents-v2/object/types/object-graph-state.types';
 
 @Injectable()
 export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
@@ -115,32 +113,22 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
     }
 
     const subgraphMessage = this.buildSubgraphMessage(currentIntent, state.originalMessage);
-    const currentIntentResult = state.objectResults?.find(
-      (result) => result.intentIndex === state.currentIntentIndex,
-    );
-
-    let inheritedExecutionResult: ObjectExecutionResult | undefined;
-    if (currentIntentResult && currentIntentResult.intentIndex === state.currentIntentIndex) {
-      inheritedExecutionResult = currentIntentResult.result?.executionResult;
-    } else {
-      inheritedExecutionResult = undefined;
-    }
 
     return {
       messages: state.messages || [],
       originalMessage: subgraphMessage,
       chatSessionId: state.chatSessionId,
       intent: currentIntent,
-      // Always start fresh - let object subgraph rebuild its own state
-      fieldSpec: null,
-      objectSpec: null,
-      dbDesignResult: null,
-      typeMappingResult: null,
+      // Always start fresh - let object subgraph rebuild its own state using reset markers
+      fieldSpec: RESET_MARKER as never,
+      objectSpec: RESET_MARKER as never,
+      dbDesignResult: RESET_MARKER as never,
+      typeMappingResult: RESET_MARKER as never,
       // Only inherit executionResult for same-intent retries, never cross-intent
-      executionResult: inheritedExecutionResult,
+      executionResult: RESET_MARKER as never,
       currentNode: 'start',
-      retryCount: 0,
-      isCompleted: false,
+      retryCount: RESET_MARKER as never,
+      isCompleted: RESET_MARKER as never,
     };
   }
 

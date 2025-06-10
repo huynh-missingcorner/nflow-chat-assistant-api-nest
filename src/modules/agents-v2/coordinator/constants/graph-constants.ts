@@ -1,5 +1,6 @@
 export const GRAPH_NODES = {
   // Nodes
+  STATE_RESET: 'stateReset',
   CLASSIFY_INTENT: 'classifyIntent',
   VALIDATE_CLASSIFICATION: 'validateClassification',
   PROCESS_NEXT_INTENT: 'processNextIntent',

@@ -14,6 +14,7 @@ import { HandleErrorNode } from './nodes/handle-error.node';
 import { HandleRetryNode } from './nodes/handle-retry.node';
 import { HandleSuccessNode } from './nodes/handle-success.node';
 import { ProcessNextIntentNode } from './nodes/process-next-intent.node';
+import { StateResetNode } from './nodes/state-reset.node';
 import { SummarizeExecutionNode } from './nodes/summarize-execution.node';
 import { ValidateClassificationNode } from './nodes/validate-classification.node';
 import { ApplicationSubgraphHandler } from './services/handlers';
@@ -48,6 +49,7 @@ import { IntentCombinationValidator } from './validators/intent-combination.vali
     ClassifyIntentNode,
     ValidateClassificationNode,
     ProcessNextIntentNode,
+    StateResetNode,
     HandleSuccessNode,
     HandleErrorNode,
     HandleRetryNode,

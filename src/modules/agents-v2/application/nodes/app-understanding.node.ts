@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 
 import { OPENAI_GPT_4_1_FOR_TOOLS } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 
@@ -37,13 +37,18 @@ export class AppUnderstandingNode extends ApplicationGraphNodeBase {
       ];
 
       this.logger.debug('Invoking LLM with app understanding tool...');
-      const result = await llm.invoke(messages);
+      const resultChunk = await llm.invoke(messages);
+      const resultAIMessage = new AIMessage({
+        content: resultChunk.content,
+        id: resultChunk.id,
+        tool_calls: resultChunk.tool_calls,
+      });
 
       // Extract the tool call result
-      const toolCall = result.tool_calls?.[0];
+      const toolCall = resultChunk.tool_calls?.[0];
       if (!toolCall) {
         this.logger.error('No tool call found in LLM response');
-        this.logger.debug('LLM response:', JSON.stringify(result, null, 2));
+        this.logger.debug('LLM response:', JSON.stringify(resultChunk, null, 2));
         throw new Error('No tool call found in LLM response');
       }
 
@@ -58,7 +63,7 @@ export class AppUnderstandingNode extends ApplicationGraphNodeBase {
 
       return this.createSuccessResult({
         applicationSpec,
-        messages: state.messages.concat(result),
+        messages: [...messages, resultAIMessage],
       });
     } catch (error) {
       this.logger.error('Error in application understanding:', error);

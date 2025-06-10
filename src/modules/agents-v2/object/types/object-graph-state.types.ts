@@ -1,5 +1,5 @@
 import { BaseMessage } from '@langchain/core/messages';
-import { Annotation } from '@langchain/langgraph';
+import { Annotation, messagesStateReducer } from '@langchain/langgraph';
 
 import type { IntentDetails } from '@/modules/agents-v2/coordinator/types/subgraph-handler.types';
 
@@ -143,7 +143,8 @@ export interface ObjectExecutionResult {
 // Define the state schema for the object graph
 export const ObjectState = Annotation.Root({
   messages: Annotation<BaseMessage[]>({
-    reducer: (x, y) => x.concat(y),
+    reducer: messagesStateReducer,
+    default: () => [],
   }),
   originalMessage: Annotation<string>(),
   chatSessionId: Annotation<string>(),

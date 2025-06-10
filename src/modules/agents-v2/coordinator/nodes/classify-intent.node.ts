@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -28,7 +28,7 @@ export class ClassifyIntentNode extends GraphNodeBase {
         new HumanMessage(state.originalMessage),
       ];
 
-      const classifiedIntent = await this.performClassification(messages);
+      const { classifiedIntent, classifiedMessage } = await this.performClassification(messages);
 
       // Log the classified intents
       this.logger.debug(
@@ -39,7 +39,7 @@ export class ClassifyIntentNode extends GraphNodeBase {
 
       return this.createSuccessResult({
         classifiedIntent,
-        messages: [...state.messages, ...messages],
+        messages: [...messages, classifiedMessage],
       });
     } catch (error) {
       return this.handleError(error, 'intent classification');
@@ -50,11 +50,17 @@ export class ClassifyIntentNode extends GraphNodeBase {
     return GRAPH_NODES.CLASSIFY_INTENT;
   }
 
-  private async performClassification(
-    messages: (HumanMessage | SystemMessage)[],
-  ): Promise<IntentClassifierOutput> {
+  private async performClassification(messages: (HumanMessage | SystemMessage)[]): Promise<{
+    classifiedIntent: IntentClassifierOutput;
+    classifiedMessage: BaseMessage;
+  }> {
     const llmWithTools = OPENAI_GPT_4_1_FOR_TOOLS.bindTools([IntentClassifierTool]);
     const response = await llmWithTools.invoke(messages);
+    const resultAiMessage = new AIMessage({
+      content: response.content,
+      id: response.id,
+      tool_calls: response.tool_calls,
+    });
 
     if (!response.tool_calls || response.tool_calls.length === 0) {
       throw new Error(VALIDATION_MESSAGES.NO_TOOL_CALLS);
@@ -70,8 +76,11 @@ export class ClassifyIntentNode extends GraphNodeBase {
     }));
 
     return {
-      ...classifiedIntents,
-      intents: intentsWithIds,
+      classifiedIntent: {
+        ...classifiedIntents,
+        intents: intentsWithIds,
+      },
+      classifiedMessage: resultAiMessage,
     };
   }
 }

@@ -230,9 +230,15 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
       updatedObjectResults = [...existingObjectResults, objectResult];
     }
 
+    // Extract only NEW messages from subgraph to prevent duplication
+    const coordinatorMessageIds = coordinatorState.messages.map((message) => message.id);
+    const newMessages = subgraphOutput.messages.filter(
+      (message) => !coordinatorMessageIds.includes(message.id),
+    );
+
     // Always return the state update with incremented intent index
     const coordinatorUpdate: Partial<CoordinatorStateType> = {
-      messages: [...coordinatorState.messages, ...(subgraphOutput.messages || [])],
+      messages: [...coordinatorState.messages, ...newMessages],
       isCompleted: hasAnySuccess,
       processedIntents,
       currentIntentIndex: nextIntentIndex,
@@ -273,45 +279,5 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
     }
 
     return message;
-  }
-
-  transformToResponse(
-    subgraphOutput: ObjectStateType,
-    request: {
-      chatSessionId: string;
-      intent: IntentDetails;
-      objectSpec?: ObjectStateType['objectSpec'];
-    },
-    state: CoordinatorStateType,
-  ): {
-    chatSessionId: string;
-    subgraphType: string;
-    success: boolean;
-    result: {
-      message: string;
-      objectSpec: ObjectStateType['objectSpec'];
-      executionResult: ObjectStateType['executionResult'];
-    };
-    state: Partial<CoordinatorStateType>;
-    error: string | null;
-  } {
-    return {
-      chatSessionId: subgraphOutput.chatSessionId || request.chatSessionId,
-      subgraphType: 'object',
-      success: !subgraphOutput.error && subgraphOutput.isCompleted,
-      result: {
-        message: this.formatResponseMessage(subgraphOutput),
-        objectSpec: subgraphOutput.objectSpec,
-        executionResult: subgraphOutput.executionResult,
-      },
-      state: {
-        ...state,
-        messages: subgraphOutput.messages || [],
-        // Note: This method seems to be used for direct responses, not coordinator flow
-        // The object results should be managed by the coordinator's transformToCoordinatorState method
-        objectResults: state.objectResults || [],
-      },
-      error: subgraphOutput.error || null,
-    };
   }
 }

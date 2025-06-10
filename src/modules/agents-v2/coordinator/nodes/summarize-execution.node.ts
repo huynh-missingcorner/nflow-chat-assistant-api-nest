@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 
 import { OPENAI_GPT_4_1_FOR_SUMMARY } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 
@@ -26,15 +26,12 @@ export class SummarizeExecutionNode extends GraphNodeBase {
         new HumanMessage(humanMessage),
       ];
 
-      const summary = await this.generateSummary(messages);
+      const summaryMessage = await this.generateSummary(messages);
 
       this.logger.debug(SUMMARIZER_MESSAGES.SUMMARY_GENERATED);
 
       return this.createSuccessResult({
-        messages: [
-          ...state.messages,
-          new SystemMessage(`${SUMMARIZER_MESSAGES.SUMMARY_ERROR_PREFIX}${summary}`),
-        ],
+        messages: [...messages, summaryMessage],
         isCompleted: true,
       });
     } catch (error) {
@@ -153,13 +150,16 @@ export class SummarizeExecutionNode extends GraphNodeBase {
       .replace('{successfulOperations}', data.successfulOperations.toString());
   }
 
-  private async generateSummary(messages: (HumanMessage | SystemMessage)[]): Promise<string> {
+  private async generateSummary(messages: (HumanMessage | SystemMessage)[]): Promise<AIMessage> {
     const response = await OPENAI_GPT_4_1_FOR_SUMMARY.invoke(messages);
 
     if (!response.content) {
       throw new Error('No summary content received from LLM');
     }
 
-    return response.content as string;
+    return new AIMessage({
+      content: response.content,
+      id: response.id,
+    });
   }
 }

@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { Injectable } from '@nestjs/common';
+import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 
 import { OPENAI_GPT_4_1_FOR_TOOLS } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 
@@ -23,10 +23,13 @@ import {
   ObjectStateType,
   SchemaDesignResult,
 } from '../types/object-graph-state.types';
+import { ObjectGraphNodeBase } from './object-graph-node.base';
 
 @Injectable()
-export class DBDesignNode {
-  private readonly logger = new Logger(DBDesignNode.name);
+export class DBDesignNode extends ObjectGraphNodeBase {
+  protected getNodeName(): string {
+    return OBJECT_GRAPH_NODES.DB_DESIGN;
+  }
 
   async execute(state: ObjectStateType): Promise<Partial<ObjectStateType>> {
     try {
@@ -44,20 +47,21 @@ export class DBDesignNode {
           );
         }
 
-        return this.createSchemaSuccessResult(schemaDesignResult, state);
+        return this.createSchemaSuccessResult(schemaDesignResult);
       } else {
         // Original single object design logic
-        const dbDesignResult = await this.designNflowSchema(state);
+        const { result: dbDesignResult, newMessages } = await this.designNflowSchema(state);
 
         if (!dbDesignResult.valid) {
-          return this.createErrorResult(
+          return this.createDBErrorResult(
             dbDesignResult.conflicts?.join(', ') ||
               ERROR_TEMPLATES.SCHEMA_DESIGN_VALIDATION_FAILED('Unknown validation error'),
             dbDesignResult,
+            newMessages,
           );
         }
 
-        return this.createSuccessResult(dbDesignResult, state);
+        return this.createDBSuccessResult(dbDesignResult, newMessages);
       }
     } catch (error) {
       this.logger.error(ERROR_TEMPLATES.SCHEMA_DESIGN_FAILED, error);
@@ -67,33 +71,48 @@ export class DBDesignNode {
     }
   }
 
-  private async designNflowSchema(state: ObjectStateType): Promise<DBDesignResult> {
+  private async designNflowSchema(state: ObjectStateType): Promise<{
+    result: DBDesignResult;
+    newMessages: BaseMessage[];
+  }> {
     try {
-      const schema = await this.extractNflowSchema(state);
+      const { schema, newMessages } = await this.extractNflowSchema(state);
 
       if (!schema) {
-        return this.createFailedResult([ERROR_TEMPLATES.SCHEMA_DESIGN_FAILED]);
+        return {
+          result: this.createFailedResult([ERROR_TEMPLATES.SCHEMA_DESIGN_FAILED]),
+          newMessages,
+        };
       }
 
       const validationResult = this.validateSchemaDesign(schema);
 
       return {
-        valid: validationResult.isValid,
-        conflicts: validationResult.errors,
-        recommendations: schema.recommendations || [],
-        nflowSchema: schema,
+        result: {
+          valid: validationResult.isValid,
+          conflicts: validationResult.errors,
+          recommendations: schema.recommendations || [],
+          nflowSchema: schema,
+        },
+        newMessages,
       };
     } catch (error) {
       this.logger.error(ERROR_TEMPLATES.SCHEMA_DESIGN_FAILED, error);
-      return this.createFailedResult([
-        ERROR_TEMPLATES.SCHEMA_DESIGN_VALIDATION_FAILED(
-          error instanceof Error ? error.message : 'Unknown error',
-        ),
-      ]);
+      return {
+        result: this.createFailedResult([
+          ERROR_TEMPLATES.SCHEMA_DESIGN_VALIDATION_FAILED(
+            error instanceof Error ? error.message : 'Unknown error',
+          ),
+        ]),
+        newMessages: [],
+      };
     }
   }
 
-  private async extractNflowSchema(state: ObjectStateType): Promise<NflowSchemaDesignInput | null> {
+  private async extractNflowSchema(state: ObjectStateType): Promise<{
+    schema: NflowSchemaDesignInput | null;
+    newMessages: BaseMessage[];
+  }> {
     try {
       const llm = OPENAI_GPT_4_1_FOR_TOOLS.bindTools([nflowSchemaDesignTool]);
 
@@ -105,20 +124,27 @@ export class DBDesignNode {
       ];
 
       const response = await llm.invoke(messages);
+      const resultAiMessage = new AIMessage({
+        content: response.content,
+        id: response.id,
+        tool_calls: response.tool_calls,
+      });
+
+      const newMessages = [...messages, resultAiMessage];
 
       if (!response.tool_calls || response.tool_calls.length === 0) {
         this.logger.error('No tool calls found in Nflow schema design response');
-        return null;
+        return { schema: null, newMessages };
       }
 
       const toolCall = response.tool_calls[0];
       const schema = toolCall.args as NflowSchemaDesignInput;
 
       this.logger.debug(`Designed Nflow schema: ${JSON.stringify(schema, null, 2)}`);
-      return schema;
+      return { schema, newMessages };
     } catch (error) {
       this.logger.error('Error extracting Nflow schema', error);
-      return null;
+      return { schema: null, newMessages: [] };
     }
   }
 
@@ -520,31 +546,34 @@ export class DBDesignNode {
 
   private createSchemaSuccessResult(
     schemaDesignResult: SchemaDesignResult,
-    state: ObjectStateType,
   ): Partial<ObjectStateType> {
     return {
       schemaDesignResult,
       currentNode: OBJECT_GRAPH_NODES.SCHEMA_EXECUTOR,
-      messages: [
-        ...state.messages,
-        new SystemMessage(
-          `Database schema design completed: ${JSON.stringify(schemaDesignResult)}`,
-        ),
-      ],
     };
   }
 
-  private createSuccessResult(
+  private createDBErrorResult(
+    errorMessage: string,
     dbDesignResult: DBDesignResult,
-    state: ObjectStateType,
+    newMessages: BaseMessage[],
+  ): Partial<ObjectStateType> {
+    return {
+      error: ERROR_TEMPLATES.SCHEMA_DESIGN_VALIDATION_FAILED(errorMessage),
+      currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
+      dbDesignResult,
+      messages: newMessages,
+    };
+  }
+
+  private createDBSuccessResult(
+    dbDesignResult: DBDesignResult,
+    newMessages: BaseMessage[],
   ): Partial<ObjectStateType> {
     return {
       dbDesignResult,
       currentNode: OBJECT_GRAPH_NODES.TYPE_MAPPER,
-      messages: [
-        ...state.messages,
-        new SystemMessage(`Schema design completed: ${JSON.stringify(dbDesignResult)}`),
-      ],
+      messages: newMessages,
     };
   }
 }

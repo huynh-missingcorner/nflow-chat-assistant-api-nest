@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { Injectable } from '@nestjs/common';
+import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 
 import { OPENAI_GPT_4_1_FOR_TOOLS } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 
@@ -7,6 +7,7 @@ import { OBJECT_GRAPH_NODES, OBJECT_LOG_MESSAGES } from '../constants/object-gra
 import { SYSTEM_PROMPTS } from '../constants/system-prompts';
 import { objectExtractionTool } from '../tools/object-extraction.tool';
 import { ObjectSpec, ObjectStateType } from '../types/object-graph-state.types';
+import { ObjectGraphNodeBase } from './object-graph-node.base';
 
 interface ValidationResult {
   isValid: boolean;
@@ -14,36 +15,48 @@ interface ValidationResult {
 }
 
 @Injectable()
-export class ObjectUnderstandingNode {
-  private readonly logger = new Logger(ObjectUnderstandingNode.name);
+export class ObjectUnderstandingNode extends ObjectGraphNodeBase {
+  protected getNodeName(): string {
+    return OBJECT_GRAPH_NODES.OBJECT_UNDERSTANDING;
+  }
 
   async execute(state: ObjectStateType): Promise<Partial<ObjectStateType>> {
     try {
       this.logger.log(OBJECT_LOG_MESSAGES.OBJECT_UNDERSTANDING_COMPLETED);
 
-      const objectSpec = await this.extractObjectSpecification(state.originalMessage);
+      const { objectSpec, newMessages } = await this.extractObjectSpecification(
+        state.originalMessage,
+      );
 
       if (!objectSpec) {
-        return this.createErrorResult('Failed to extract object specification from the message');
+        return this.createErrorResult(
+          'Failed to extract object specification from the message',
+          newMessages,
+        );
       }
 
       const validationResult = this.validateObjectSpecification(objectSpec);
       if (!validationResult.isValid) {
         return this.createErrorResult(
           `Object specification validation failed: ${validationResult.errors.join(', ')}`,
+          newMessages,
         );
       }
 
-      return this.createSuccessResult(objectSpec, state);
+      return this.createObjectSuccessResult(objectSpec, newMessages);
     } catch (error) {
       this.logger.error('Object understanding failed', error);
       return this.createErrorResult(
         error instanceof Error ? error.message : 'Object understanding failed',
+        [],
       );
     }
   }
 
-  private async extractObjectSpecification(message: string): Promise<ObjectSpec | null> {
+  private async extractObjectSpecification(message: string): Promise<{
+    objectSpec: ObjectSpec | null;
+    newMessages: BaseMessage[];
+  }> {
     try {
       const llm = OPENAI_GPT_4_1_FOR_TOOLS.bindTools([objectExtractionTool]);
 
@@ -53,10 +66,17 @@ export class ObjectUnderstandingNode {
       ];
 
       const response = await llm.invoke(messages);
+      const responseMessage = new AIMessage({
+        content: response.content,
+        id: response.id,
+        tool_calls: response.tool_calls,
+      });
+
+      const newMessages = [...messages, responseMessage];
 
       if (!response.tool_calls || response.tool_calls.length === 0) {
         this.logger.error('No tool calls found in object extraction response');
-        return null;
+        return { objectSpec: null, newMessages };
       }
 
       const toolCall = response.tool_calls[0];
@@ -65,10 +85,10 @@ export class ObjectUnderstandingNode {
       this.logger.debug(
         `Extracted object specification: ${JSON.stringify(extractedSpec, null, 2)}`,
       );
-      return extractedSpec;
+      return { objectSpec: extractedSpec, newMessages };
     } catch (error) {
       this.logger.error('Error extracting object specification', error);
-      return null;
+      return { objectSpec: null, newMessages: [] };
     }
   }
 
@@ -105,24 +125,25 @@ export class ObjectUnderstandingNode {
     };
   }
 
-  private createErrorResult(errorMessage: string): Partial<ObjectStateType> {
+  private createErrorResult(
+    errorMessage: string,
+    newMessages: BaseMessage[],
+  ): Partial<ObjectStateType> {
     return {
       error: errorMessage,
       currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
+      messages: newMessages,
     };
   }
 
-  private createSuccessResult(
+  private createObjectSuccessResult(
     objectSpec: ObjectSpec,
-    state: ObjectStateType,
+    newMessages: BaseMessage[],
   ): Partial<ObjectStateType> {
     return {
       objectSpec,
       currentNode: OBJECT_GRAPH_NODES.DB_DESIGN,
-      messages: [
-        ...state.messages,
-        new SystemMessage(`Object understanding completed: ${JSON.stringify(objectSpec)}`),
-      ],
+      messages: newMessages,
     };
   }
 }

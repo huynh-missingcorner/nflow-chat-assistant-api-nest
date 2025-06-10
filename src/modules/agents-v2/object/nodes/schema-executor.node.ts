@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { SystemMessage } from '@langchain/core/messages';
 
 import {
   ERROR_TEMPLATES,
@@ -55,12 +54,12 @@ export class SchemaExecutorNode {
         } else {
           // Even though status is failed, we have some successful operations
           // Return success result with the execution result containing both successes and failures
-          return this.createSuccessResult(schemaExecutionResult, state);
+          return this.createSuccessResult(schemaExecutionResult);
         }
       }
 
       // For success and partial status, always return success result
-      return this.createSuccessResult(schemaExecutionResult, state);
+      return this.createSuccessResult(schemaExecutionResult);
     } catch (error) {
       this.logger.error(ERROR_TEMPLATES.SCHEMA_EXECUTION_ERROR('Schema execution failed'), error);
       return this.createErrorResult(
@@ -194,16 +193,11 @@ export class SchemaExecutorNode {
 
   private createSuccessResult(
     schemaExecutionResult: SchemaExecutionResult,
-    state: ObjectStateType,
   ): Partial<ObjectStateType> {
     return {
       schemaExecutionResult,
       isCompleted: true,
       currentNode: OBJECT_GRAPH_NODES.HANDLE_SUCCESS,
-      messages: [
-        ...state.messages,
-        new SystemMessage(`Schema execution completed: ${JSON.stringify(schemaExecutionResult)}`),
-      ],
     };
   }
 }

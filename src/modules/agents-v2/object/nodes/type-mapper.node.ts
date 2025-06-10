@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { Injectable } from '@nestjs/common';
+import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 
 import { OPENAI_GPT_4_1_FOR_TOOLS } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 
@@ -8,53 +8,78 @@ import { SYSTEM_PROMPTS } from '../constants/system-prompts';
 import { ApiFormatParserInput, apiFormatParserTool } from '../tools/api-format-parser.tool';
 import { NflowSchemaDesignInput } from '../tools/nflow-schema-design.tool';
 import { ObjectField, ObjectStateType, TypeMappingResult } from '../types/object-graph-state.types';
+import { ObjectGraphNodeBase } from './object-graph-node.base';
 
 @Injectable()
-export class TypeMapperNode {
-  private readonly logger = new Logger(TypeMapperNode.name);
+export class TypeMapperNode extends ObjectGraphNodeBase {
+  protected getNodeName(): string {
+    return OBJECT_GRAPH_NODES.TYPE_MAPPER;
+  }
 
   async execute(state: ObjectStateType): Promise<Partial<ObjectStateType>> {
     try {
       this.logger.log(OBJECT_LOG_MESSAGES.TYPE_MAPPING_COMPLETED);
 
-      const typeMappingResult = await this.parseApiFormat(state);
+      const { typeMappingResult, newMessages } = await this.parseApiFormat(state);
 
       if (!typeMappingResult || typeMappingResult.errors?.length) {
-        return this.createErrorResult(
-          typeMappingResult?.errors?.join(', ') || 'API format parsing failed',
+        return {
+          error: `API format parsing failed: ${typeMappingResult?.errors?.join(', ') || 'Unknown error'}`,
+          currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
           typeMappingResult,
-        );
+          messages: newMessages,
+        };
       }
 
-      return this.createSuccessResult(typeMappingResult, state);
+      return {
+        typeMappingResult,
+        currentNode: OBJECT_GRAPH_NODES.OBJECT_EXECUTOR,
+        messages: newMessages,
+      };
     } catch (error) {
       this.logger.error('API format parsing failed', error);
-      return this.createErrorResult(
-        error instanceof Error ? error.message : 'API format parsing failed',
-      );
+      return {
+        error: error instanceof Error ? error.message : 'API format parsing failed',
+        currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
+      };
     }
   }
 
-  private async parseApiFormat(state: ObjectStateType): Promise<TypeMappingResult | undefined> {
+  private async parseApiFormat(state: ObjectStateType): Promise<{
+    typeMappingResult: TypeMappingResult | undefined;
+    newMessages: BaseMessage[];
+  }> {
     try {
       const nflowSchema: NflowSchemaDesignInput | null = this.extractNflowSchema(state);
 
       if (!nflowSchema) {
-        return this.createFailedResult(['No Nflow schema found in design result']);
+        return {
+          typeMappingResult: this.createFailedResult(['No Nflow schema found in design result']),
+          newMessages: [],
+        };
       }
 
-      const apiFormat = await this.performApiParsing(nflowSchema, state);
+      const { apiFormat, newMessages } = await this.performApiParsing(nflowSchema, state);
 
       if (!apiFormat) {
-        return this.createFailedResult(['Failed to parse schema into API format']);
+        return {
+          typeMappingResult: this.createFailedResult(['Failed to parse schema into API format']),
+          newMessages,
+        };
       }
 
-      return this.createParsingResult(apiFormat);
+      return {
+        typeMappingResult: this.createParsingResult(apiFormat),
+        newMessages,
+      };
     } catch (error) {
       this.logger.error('Error during API format parsing', error);
-      return this.createFailedResult([
-        `API parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      ]);
+      return {
+        typeMappingResult: this.createFailedResult([
+          `API parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ]),
+        newMessages: [],
+      };
     }
   }
 
@@ -72,7 +97,10 @@ export class TypeMapperNode {
   private async performApiParsing(
     nflowSchema: NflowSchemaDesignInput,
     state: ObjectStateType,
-  ): Promise<ApiFormatParserInput | undefined> {
+  ): Promise<{
+    apiFormat: ApiFormatParserInput | undefined;
+    newMessages: BaseMessage[];
+  }> {
     try {
       const llm = OPENAI_GPT_4_1_FOR_TOOLS.bindTools([apiFormatParserTool]);
 
@@ -84,20 +112,27 @@ export class TypeMapperNode {
       ];
 
       const response = await llm.invoke(messages);
+      const responseMessage = new AIMessage({
+        content: response.content,
+        id: response.id,
+        tool_calls: response.tool_calls,
+      });
+
+      const newMessages = [...messages, responseMessage];
 
       if (!response.tool_calls || response.tool_calls.length === 0) {
         this.logger.error('No tool calls found in API parsing response');
-        return undefined;
+        return { apiFormat: undefined, newMessages };
       }
 
       const toolCall = response.tool_calls[0];
       const parsingResult = toolCall.args as ApiFormatParserInput;
 
       this.logger.debug(`API format parsing result: ${JSON.stringify(parsingResult, null, 2)}`);
-      return parsingResult;
+      return { apiFormat: parsingResult, newMessages };
     } catch (error) {
       this.logger.error('Error performing API parsing', error);
-      return undefined;
+      return { apiFormat: undefined, newMessages: [] };
     }
   }
 
@@ -162,31 +197,6 @@ export class TypeMapperNode {
       mappedFields: [],
       errors,
       warnings: [],
-    };
-  }
-
-  private createErrorResult(
-    errorMessage: string,
-    typeMappingResult?: TypeMappingResult,
-  ): Partial<ObjectStateType> {
-    return {
-      error: `API format parsing failed: ${errorMessage}`,
-      currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
-      typeMappingResult,
-    };
-  }
-
-  private createSuccessResult(
-    typeMappingResult: TypeMappingResult,
-    state: ObjectStateType,
-  ): Partial<ObjectStateType> {
-    return {
-      typeMappingResult,
-      currentNode: OBJECT_GRAPH_NODES.OBJECT_EXECUTOR,
-      messages: [
-        ...state.messages,
-        new SystemMessage(`API format parsing completed: ${JSON.stringify(typeMappingResult)}`),
-      ],
     };
   }
 }

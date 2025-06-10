@@ -1,5 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { SystemMessage } from '@langchain/core/messages';
+import { Injectable } from '@nestjs/common';
 
 import { ChatSessionService } from '@/modules/chat-session/chat-session.service';
 import { NFlowObjectService } from '@/modules/nflow/services/object.service';
@@ -9,6 +8,7 @@ import { generateUniqueObjectName } from '@/shared/utils';
 import { OBJECT_GRAPH_NODES, OBJECT_LOG_MESSAGES } from '../constants/object-graph.constants';
 import type { ApiFormatParserInput } from '../tools/api-format-parser.tool';
 import { ObjectExecutionResult, ObjectStateType } from '../types/object-graph-state.types';
+import { ObjectGraphNodeBase } from './object-graph-node.base';
 
 interface ExecutionStep {
   type: 'create_object' | 'create_field';
@@ -18,13 +18,17 @@ interface ExecutionStep {
 }
 
 @Injectable()
-export class ObjectExecutorNode {
-  private readonly logger = new Logger(ObjectExecutorNode.name);
+export class ObjectExecutorNode extends ObjectGraphNodeBase {
+  protected getNodeName(): string {
+    return OBJECT_GRAPH_NODES.OBJECT_EXECUTOR;
+  }
 
   constructor(
     private readonly chatSessionService: ChatSessionService,
     private readonly nflowObjectService: NFlowObjectService,
-  ) {}
+  ) {
+    super();
+  }
 
   async execute(state: ObjectStateType): Promise<Partial<ObjectStateType>> {
     try {
@@ -61,12 +65,12 @@ export class ObjectExecutorNode {
         } else {
           // Even though status is failed, we have some successful operations
           // Return success result with the execution result containing both successes and failures
-          return this.createSuccessResult(executionResult, state);
+          return this.createExecutionSuccessResult(executionResult);
         }
       }
 
       // For success and partial status, always return success result
-      return this.createSuccessResult(executionResult, state);
+      return this.createExecutionSuccessResult(executionResult);
     } catch (error) {
       this.logger.error('Object execution failed');
       return this.createErrorResult(
@@ -430,18 +434,13 @@ export class ObjectExecutorNode {
     };
   }
 
-  private createSuccessResult(
+  private createExecutionSuccessResult(
     executionResult: ObjectExecutionResult,
-    state: ObjectStateType,
   ): Partial<ObjectStateType> {
     return {
       executionResult,
       currentNode: OBJECT_GRAPH_NODES.HANDLE_SUCCESS,
       isCompleted: true,
-      messages: [
-        ...state.messages,
-        new SystemMessage(`Object execution completed: ${JSON.stringify(executionResult)}`),
-      ],
     };
   }
 }

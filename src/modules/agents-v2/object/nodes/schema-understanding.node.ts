@@ -39,7 +39,7 @@ export class SchemaUnderstandingNode {
         );
       }
 
-      return this.createSuccessResult(schemaSpec, state);
+      return this.createSuccessResult(schemaSpec);
     } catch (error) {
       this.logger.error(ERROR_TEMPLATES.SCHEMA_UNDERSTANDING_FAILED, error);
       return this.createErrorResult(
@@ -168,18 +168,11 @@ export class SchemaUnderstandingNode {
     };
   }
 
-  private createSuccessResult(
-    schemaSpec: SchemaSpec,
-    state: ObjectStateType,
-  ): Partial<ObjectStateType> {
+  private createSuccessResult(schemaSpec: SchemaSpec): Partial<ObjectStateType> {
     return {
       schemaSpec,
       isSchemaDesign: true,
       currentNode: OBJECT_GRAPH_NODES.DB_DESIGN,
-      messages: [
-        ...state.messages,
-        new SystemMessage(`Schema understanding completed: ${JSON.stringify(schemaSpec)}`),
-      ],
     };
   }
 }

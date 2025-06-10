@@ -1,5 +1,5 @@
 import { BaseMessage } from '@langchain/core/messages';
-import { Annotation } from '@langchain/langgraph';
+import { Annotation, messagesStateReducer } from '@langchain/langgraph';
 
 export type ApplicationOperationType =
   | 'create_application'
@@ -39,7 +39,8 @@ export interface ApplicationExecutionResult {
 // Define the state schema for the application graph
 export const ApplicationState = Annotation.Root({
   messages: Annotation<BaseMessage[]>({
-    reducer: (x, y) => x.concat(y),
+    reducer: messagesStateReducer,
+    default: () => [],
   }),
   originalMessage: Annotation<string>(),
   chatSessionId: Annotation<string>(),

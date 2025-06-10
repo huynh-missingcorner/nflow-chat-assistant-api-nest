@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { ToolCall } from '@langchain/core/messages/tool';
 
 import { OPENAI_GPT_4_1_FOR_TOOLS } from '@/shared/infrastructure/langchain/models/openai/openai-models';
@@ -61,7 +61,6 @@ export class AppDesignNode extends ApplicationGraphNodeBase {
         );
         return this.createSuccessResult({
           enrichedSpec,
-          messages: state.messages,
         });
       }
 
@@ -74,10 +73,15 @@ export class AppDesignNode extends ApplicationGraphNodeBase {
         new HumanMessage(formatAppDesignPrompt(state.applicationSpec)),
       ];
 
-      const result = await llm.invoke(messages);
+      const resultChunk = await llm.invoke(messages);
+      const resultAiMessage = new AIMessage({
+        content: resultChunk.content,
+        id: resultChunk.id,
+        tool_calls: resultChunk.tool_calls,
+      });
 
       // Process tool calls to extract API parameters
-      const designResult = this.processToolCalls(result.tool_calls || [], state.operationType);
+      const designResult = this.processToolCalls(resultChunk.tool_calls || [], state.operationType);
 
       // Validate the enriched specification
       this.validateEnrichedSpec(designResult.enrichedSpec, state.operationType);
@@ -86,7 +90,7 @@ export class AppDesignNode extends ApplicationGraphNodeBase {
 
       return this.createSuccessResult({
         enrichedSpec: designResult.enrichedSpec,
-        messages: state.messages.concat(result),
+        messages: [...messages, resultAiMessage],
       });
     } catch (error) {
       this.logger.error('Error in application design:', error);

@@ -22,7 +22,6 @@ export class ObjectGraphEdgeRoutingStrategy {
 
     const intentAction = state.intent.intent;
 
-    // Direct routing based on intent action
     switch (intentAction) {
       case IntentEnum.enum.design_data_schema:
         this.logger.log(MESSAGE_TEMPLATES.DESIGN_DATA_SCHEMA_ROUTING);
@@ -34,8 +33,6 @@ export class ObjectGraphEdgeRoutingStrategy {
         return OBJECT_GRAPH_EDGES.OBJECT_UNDERSTANDING;
 
       case IntentEnum.enum.manipulate_object_fields:
-        // For field manipulation, default to field understanding
-        // Avoid text-based detection - let the understanding phase handle details
         this.logger.log(MESSAGE_TEMPLATES.FIELD_MANIPULATION_CREATE_ROUTING);
         return OBJECT_GRAPH_EDGES.FIELD_UNDERSTANDING;
 

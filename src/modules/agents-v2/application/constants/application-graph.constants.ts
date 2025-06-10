@@ -23,7 +23,7 @@ export const APPLICATION_OPERATIONS = {
 } as const;
 
 export const APPLICATION_GRAPH_CONFIG = {
-  MAX_RETRY_COUNT: 3,
+  MAX_RETRY_COUNT: 1,
   DEFAULT_THREAD_ID: 'application_default',
   INITIAL_NODE: APPLICATION_GRAPH_NODES.APP_UNDERSTANDING,
 } as const;

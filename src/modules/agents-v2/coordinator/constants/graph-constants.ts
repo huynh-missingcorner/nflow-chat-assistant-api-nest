@@ -30,7 +30,7 @@ export const GRAPH_EDGES = {
 } as const;
 
 export const GRAPH_CONFIG = {
-  MAX_RETRY_COUNT: 3,
+  MAX_RETRY_COUNT: 1,
   DEFAULT_THREAD_ID: 'default-session',
   INITIAL_NODE: 'start',
 } as const;

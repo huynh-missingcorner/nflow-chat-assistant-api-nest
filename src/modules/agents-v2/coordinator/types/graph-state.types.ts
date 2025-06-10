@@ -67,29 +67,24 @@ export const CoordinatorState = Annotation.Root({
   classifiedIntent: Annotation<IntentClassifierOutput | null>({
     default: () => null,
     reducer: (x, y) => {
-      // Handle explicit reset
       if ((y as any) === RESET_MARKER) {
         return null;
       }
-      // Otherwise, use new value if it exists, keep old value if not
       return y ?? x;
     },
   }),
   currentIntentIndex: Annotation<number>({
     default: () => 0,
     reducer: (x, y) => {
-      // Handle explicit reset
       if ((y as any) === RESET_MARKER) {
         return 0;
       }
-      // Otherwise, use new value if it exists, keep old value if not
       return y ?? x;
     },
   }),
   processedIntents: Annotation<number[]>({
     default: () => [],
     reducer: (x, y) => {
-      // Handle reset operation - check if y contains the reset marker
       if (Array.isArray(y) && y.length === 1 && (y[0] as any) === RESET_MARKER) {
         return [];
       }
@@ -99,7 +94,6 @@ export const CoordinatorState = Annotation.Root({
   errors: Annotation<IntentError[]>({
     default: () => [],
     reducer: (x, y) => {
-      // Handle reset operation - check if y contains the reset marker
       if (Array.isArray(y) && y.length === 1 && (y[0] as any) === RESET_MARKER) {
         return [];
       }
@@ -113,11 +107,9 @@ export const CoordinatorState = Annotation.Root({
   retryCount: Annotation<number>({
     default: () => 0,
     reducer: (x, y) => {
-      // Handle explicit reset
       if ((y as any) === RESET_MARKER) {
         return 0;
       }
-      // Otherwise, use new value if it exists, keep old value if not
       return y ?? x;
     },
   }),
@@ -133,11 +125,9 @@ export const CoordinatorState = Annotation.Root({
   isCompleted: Annotation<boolean>({
     default: () => false,
     reducer: (x, y) => {
-      // Handle explicit reset
       if ((y as any) === RESET_MARKER) {
         return false;
       }
-      // Otherwise, use new value if it exists, keep old value if not
       return y ?? x;
     },
   }),
@@ -145,136 +135,13 @@ export const CoordinatorState = Annotation.Root({
 
 export type CoordinatorStateType = typeof CoordinatorState.State;
 
-// Helper functions to access the latest results (for backwards compatibility)
-export class CoordinatorStateHelper {
-  /**
-   * Get the latest application execution result
-   */
-  static getLatestApplicationResult(
-    state: CoordinatorStateType,
-  ): ApplicationIntentResult['result'] | null {
-    const results = state.applicationResults || [];
-    const latestResult = results[results.length - 1];
-    return latestResult?.result || null;
-  }
-
-  /**
-   * Get application result for a specific intent
-   */
-  static getApplicationResultForIntent(
-    state: CoordinatorStateType,
-    intentId: string,
-  ): ApplicationIntentResult | null {
-    const results = state.applicationResults || [];
-    return results.find((result) => result.intentId === intentId) || null;
-  }
-
-  /**
-   * Get object result for a specific intent
-   */
-  static getObjectResultForIntent(
-    state: CoordinatorStateType,
-    intentId: string,
-  ): ObjectIntentResult | null {
-    const results = state.objectResults || [];
-    return results.find((result) => result.intentId === intentId) || null;
-  }
-
-  /**
-   * Get all successful application results
-   */
-  static getSuccessfulApplicationResults(state: CoordinatorStateType): ApplicationIntentResult[] {
-    const results = state.applicationResults || [];
-    return results.filter((result) => result.status === 'success');
-  }
-
-  /**
-   * Get all successful object results
-   */
-  static getSuccessfulObjectResults(state: CoordinatorStateType): ObjectIntentResult[] {
-    const results = state.objectResults || [];
-    return results.filter((result) => result.status === 'success');
-  }
-
-  /**
-   * Get all object execution results for summarization
-   */
-  static getAllObjectExecutionResults(state: CoordinatorStateType): ObjectExecutionResult[] {
-    const results = state.objectResults || [];
-    return results
-      .map((result) => result.result.executionResult)
-      .filter((execResult): execResult is ObjectExecutionResult => execResult !== undefined);
-  }
-}
-
-export interface GraphNodeResult {
-  success: boolean;
-  data?: Partial<CoordinatorStateType>;
-  error?: string;
-}
-
 export interface DomainIntentCombination {
   domain: string;
   intent: string;
-}
-
-export interface GraphConfiguration {
-  maxRetryCount: number;
-  defaultThreadId: string;
-  initialNode: string;
-}
-
-export interface NodeExecutionContext {
-  state: CoordinatorStateType;
-  config?: GraphConfiguration;
-}
-
-/**
- * Interface for subgraph state transformation
- * Defines how coordinator state is transformed to/from subgraph states
- */
-export interface SubgraphStateTransformer<TSubgraphState> {
-  /**
-   * Transform coordinator state to subgraph input state
-   */
-  transformToSubgraphInput(coordinatorState: CoordinatorStateType): Partial<TSubgraphState>;
-
-  /**
-   * Transform subgraph output state back to coordinator state
-   */
-  transformFromSubgraphOutput(
-    subgraphState: TSubgraphState,
-    originalCoordinatorState: CoordinatorStateType,
-  ): Partial<CoordinatorStateType>;
-}
-
-/**
- * Validation interface for subgraph execution
- */
-export interface SubgraphExecutionValidator {
-  /**
-   * Validate state before subgraph execution
-   */
-  validatePreExecution(state: CoordinatorStateType): ValidationResult;
-
-  /**
-   * Validate state after subgraph execution
-   */
-  validatePostExecution(state: CoordinatorStateType): ValidationResult;
 }
 
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
   warnings: string[];
-}
-
-/**
- * Configuration for subgraph execution
- */
-export interface SubgraphExecutionConfig {
-  timeout?: number;
-  retryCount?: number;
-  validateInput?: boolean;
-  validateOutput?: boolean;
 }

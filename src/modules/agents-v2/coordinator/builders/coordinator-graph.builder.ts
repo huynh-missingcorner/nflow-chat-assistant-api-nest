@@ -70,9 +70,13 @@ export class CoordinatorGraphBuilder implements IGraphBuilder {
         this.summarizeExecutionNode.execute.bind(this.summarizeExecutionNode),
       );
 
+    // Start the workflow with state reset
     workflow.addEdge(START, GRAPH_NODES.STATE_RESET);
+
+    // After state reset, classify the intent
     workflow.addEdge(GRAPH_NODES.STATE_RESET, GRAPH_NODES.CLASSIFY_INTENT);
 
+    // After classification, validate the classification
     workflow.addConditionalEdges(
       GRAPH_NODES.CLASSIFY_INTENT,
       () => this.edgeRoutingStrategy.determineValidationRoute(),

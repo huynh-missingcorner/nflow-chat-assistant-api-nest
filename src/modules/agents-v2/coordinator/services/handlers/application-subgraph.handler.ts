@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { ApplicationStateType } from '@/modules/agents-v2/application/types/application-graph-state.types';
 import {
   ApplicationIntentResult,
-  CoordinatorStateHelper,
   CoordinatorStateType,
   IntentError,
 } from '@/modules/agents-v2/coordinator/types/graph-state.types';
@@ -110,17 +109,14 @@ export class ApplicationSubgraphHandler implements SubgraphHandler<ApplicationSt
     const applicationMessage = this.buildSubgraphMessage(currentIntent, state.originalMessage);
     const operationType = this.mapIntentToOperationType(currentIntent.intent);
 
-    // Get the latest application result for potential context (optional)
-    const latestApplicationResult = CoordinatorStateHelper.getLatestApplicationResult(state);
-
     return {
       originalMessage: applicationMessage,
       chatSessionId: state.chatSessionId,
       messages: state.messages,
       operationType,
       // Start with clean state for this execution
-      applicationSpec: latestApplicationResult?.applicationSpec || null,
-      enrichedSpec: latestApplicationResult?.enrichedSpec || null,
+      applicationSpec: null,
+      enrichedSpec: null,
       executionResult: null,
       isCompleted: false,
     };

@@ -83,10 +83,6 @@ export class EdgeRoutingStrategy implements IEdgeRoutingStrategy {
   }
 
   determineIntentRoutingOrSuccessRoute(state: CoordinatorStateType): string {
-    console.log(
-      `determineIntentRoutingOrSuccessRoute: currentIntentIndex=${state.currentIntentIndex}, totalIntents=${state.classifiedIntent?.intents?.length || 0}`,
-    );
-
     // Check if we have a current intent to route
     if (
       state.classifiedIntent &&
@@ -94,49 +90,38 @@ export class EdgeRoutingStrategy implements IEdgeRoutingStrategy {
       state.currentIntentIndex < state.classifiedIntent.intents.length
     ) {
       const currentIntent = state.classifiedIntent.intents[state.currentIntentIndex];
-      console.log(
-        `Current intent domain: ${currentIntent.domain}, intent: ${currentIntent.intent}`,
-      );
 
       // Route to appropriate domain subgraph regardless of previous errors
       if (currentIntent.domain === 'application') {
-        console.log(`Routing to APPLICATION_DOMAIN`);
         return GRAPH_EDGES.APPLICATION_DOMAIN;
       }
 
       if (currentIntent.domain === 'object') {
-        console.log(`Routing to OBJECT_DOMAIN`);
         return GRAPH_EDGES.OBJECT_DOMAIN;
       }
 
+      // TODO: Add other domains here as they get subgraphs
+
       // For other domains, continue to next intent (placeholder for future domain subgraphs)
-      console.log(`Unsupported domain ${currentIntent.domain}, routing to NEXT_INTENT`);
       return GRAPH_EDGES.NEXT_INTENT;
     }
 
     // No more intents to process - go to success (errors will be included in final state)
-    console.log(`No more intents to process, routing to SUCCESS`);
     return GRAPH_EDGES.SUCCESS;
   }
 
   determineAfterSubgraphRoute(state: CoordinatorStateType): string {
     // After subgraph execution, always check if we have more intents to process
     // Don't stop on errors - continue processing all intents
-    console.log(
-      `determineAfterSubgraphRoute: currentIntentIndex=${state.currentIntentIndex}, totalIntents=${state.classifiedIntent?.intents?.length || 0}`,
-    );
-
     if (
       state.classifiedIntent &&
       state.classifiedIntent.intents &&
       state.currentIntentIndex < state.classifiedIntent.intents.length
     ) {
-      console.log(`Routing to NEXT_INTENT from after subgraph`);
       return GRAPH_EDGES.NEXT_INTENT;
     }
 
     // All intents processed - go to success regardless of individual intent errors
-    console.log(`All intents processed, routing to SUCCESS`);
     return GRAPH_EDGES.SUCCESS;
   }
 }

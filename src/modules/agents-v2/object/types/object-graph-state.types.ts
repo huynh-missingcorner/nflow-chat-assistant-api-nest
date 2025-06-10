@@ -25,6 +25,8 @@ export interface FieldSpec {
   description?: string;
   defaultValue?: unknown;
   metadata?: Record<string, unknown>;
+  action?: 'create' | 'update' | 'delete' | 'recover';
+  objectName?: string;
 }
 
 export interface ObjectSpec {
@@ -132,13 +134,40 @@ export interface ObjectExecutionResult {
   fieldIds?: string[];
   status: ExecutionStatus;
   errors?: string[];
-  createdEntities?: Record<string, string | string[]>;
+  createdEntities?: {
+    object?: string;
+    objectDisplayName?: string;
+    objectDescription?: string;
+    objectNameMapping?: Record<string, string>;
+    fields?: string[];
+    [key: string]: string | string[] | Record<string, string> | undefined;
+  };
   completedSteps?: Array<{
     type: ExecutionStepType;
     stepIndex: number;
     entityId: string;
     entityName?: string;
   }>;
+}
+
+// New interface to track created objects in current thread
+export interface CreatedObjectInfo {
+  originalName: string;
+  uniqueName: string;
+  displayName: string;
+  description?: string;
+  createdAt: string;
+  intentIndex: number;
+  fields?: Array<{
+    name: string;
+    typeName: string;
+    displayName: string;
+  }>;
+}
+
+// New interface for object name mapping
+export interface ObjectNameMapping {
+  [originalName: string]: string;
 }
 
 // Define the state schema for the object graph
@@ -158,6 +187,36 @@ export const ObjectState = Annotation.Root({
       }
       // Otherwise, use new value if it exists, keep old value if not
       return y ?? x;
+    },
+  }),
+  // New state properties for tracking created objects in current thread
+  createdObjects: Annotation<CreatedObjectInfo[]>({
+    default: () => [],
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return [];
+      }
+      // Merge new objects with existing ones, avoiding duplicates by uniqueName
+      if (Array.isArray(y)) {
+        const existing = x || [];
+        const newObjects = y.filter(
+          (newObj) => !existing.some((existingObj) => existingObj.uniqueName === newObj.uniqueName),
+        );
+        return [...existing, ...newObjects];
+      }
+      return y ?? x;
+    },
+  }),
+  objectNameMapping: Annotation<ObjectNameMapping>({
+    default: () => ({}),
+    reducer: (x, y) => {
+      // Handle explicit reset
+      if ((y as any) === RESET_MARKER) {
+        return {};
+      }
+      // Merge new mappings with existing ones
+      return { ...x, ...y };
     },
   }),
   // Schema-level design fields

@@ -236,8 +236,17 @@ export class ObjectExecutorNode extends ObjectGraphNodeBase {
         if (step.type === 'create_object') {
           result.objectId = stepResult.objectId;
           if (!result.createdEntities) result.createdEntities = {};
-          // Use the actual created object name (which is unique)
+
+          // Store more complete object information
+          const objectData = step.data as ApiFormatParserInput['objectFormat'];
           result.createdEntities.object = stepResult.objectId || 'Unknown';
+          result.createdEntities.objectDisplayName = objectData.data.displayName;
+          result.createdEntities.objectDescription = objectData.data.description || undefined;
+
+          // Store the original name mapping for reference
+          const originalName = objectData.data.name; // This is the original name before uniquification
+          const uniqueName = stepResult.objectId || '';
+          result.createdEntities.objectNameMapping = { [originalName]: uniqueName };
         } else if (step.type === 'create_field') {
           const fieldId = stepResult.fieldId || '';
           // Only add if not already present (avoid duplicates from retries)

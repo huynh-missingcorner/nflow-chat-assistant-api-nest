@@ -11,7 +11,12 @@ import type {
   SubgraphHandler,
   ValidationResult,
 } from '@/modules/agents-v2/coordinator/types/subgraph-handler.types';
-import type { ObjectStateType } from '@/modules/agents-v2/object/types/object-graph-state.types';
+import type {
+  CreatedObjectInfo,
+  ObjectExecutionResult,
+  ObjectNameMapping,
+  ObjectStateType,
+} from '@/modules/agents-v2/object/types/object-graph-state.types';
 
 @Injectable()
 export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
@@ -114,12 +119,20 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
 
     const subgraphMessage = this.buildSubgraphMessage(currentIntent, state.originalMessage);
 
+    // Transform objectResults to createdObjects and objectNameMapping
+    const { createdObjects, objectNameMapping } = this.transformObjectResults(
+      state.objectResults || [],
+    );
+
     return {
       messages: state.messages || [],
       originalMessage: subgraphMessage,
       chatSessionId: state.chatSessionId,
       intent: currentIntent,
-      // Always start fresh - let object subgraph rebuild its own state using reset markers
+      // Pass the created objects and name mapping from coordinator state
+      createdObjects,
+      objectNameMapping,
+      // Always start fresh for other state - let object subgraph rebuild its own state using reset markers
       fieldSpec: RESET_MARKER as never,
       objectSpec: RESET_MARKER as never,
       dbDesignResult: RESET_MARKER as never,
@@ -130,6 +143,114 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
       retryCount: RESET_MARKER as never,
       isCompleted: RESET_MARKER as never,
     };
+  }
+
+  /**
+   * Transform objectResults from coordinator state to object graph state format
+   */
+  private transformObjectResults(objectResults: ObjectIntentResult[]): {
+    createdObjects: CreatedObjectInfo[];
+    objectNameMapping: ObjectNameMapping;
+  } {
+    const createdObjects: CreatedObjectInfo[] = [];
+    const objectNameMapping: ObjectNameMapping = {};
+
+    for (const result of objectResults) {
+      if (result.status === 'success' || result.status === 'partial') {
+        const executionResult = result.result?.executionResult;
+
+        if (executionResult && executionResult.createdEntities?.object) {
+          // Extract the unique object name (which is the primary key in NFlow)
+          const uniqueName = executionResult.createdEntities.object;
+
+          // Get the display name from the enhanced execution result
+          const displayName =
+            executionResult.createdEntities.objectDisplayName ||
+            result.result?.objectName ||
+            this.extractOriginalNameFromSummary(result.result?.summary) ||
+            uniqueName;
+
+          // Get description from execution result or use summary
+          const description =
+            executionResult.createdEntities.objectDescription ||
+            `Object created in intent ${result.intentIndex}`;
+
+          // Extract original name from the name mapping if available
+          let originalName = displayName;
+          if (executionResult.createdEntities.objectNameMapping) {
+            const mapping = executionResult.createdEntities.objectNameMapping;
+            // Find the original name that maps to this unique name
+            const originalKey = Object.keys(mapping).find((key) => mapping[key] === uniqueName);
+            if (originalKey) {
+              originalName = originalKey;
+            }
+          }
+
+          // Create object info
+          const objectInfo: CreatedObjectInfo = {
+            originalName,
+            uniqueName,
+            displayName,
+            description,
+            createdAt: result.timestamp,
+            intentIndex: result.intentIndex,
+            fields: this.extractFieldsFromExecutionResult(executionResult),
+          };
+
+          createdObjects.push(objectInfo);
+          objectNameMapping[displayName] = uniqueName;
+
+          // Also add mapping for original name if different
+          if (originalName !== displayName) {
+            objectNameMapping[originalName] = uniqueName;
+          }
+        }
+      }
+    }
+
+    return { createdObjects, objectNameMapping };
+  }
+
+  /**
+   * Extract original display name from result summary
+   */
+  private extractOriginalNameFromSummary(summary?: string): string | null {
+    if (!summary) return null;
+
+    // Try to extract object name from summary patterns like "Create object: ObjectName"
+    const createMatch = summary.match(/(?:Create|create)\s+(?:object|Object):\s*([^-\s]+)/);
+    if (createMatch) {
+      return createMatch[1].trim();
+    }
+
+    return null;
+  }
+
+  /**
+   * Extract field information from execution result
+   */
+  private extractFieldsFromExecutionResult(executionResult: ObjectExecutionResult): Array<{
+    name: string;
+    typeName: string;
+    displayName: string;
+  }> {
+    const fields: Array<{ name: string; typeName: string; displayName: string }> = [];
+
+    // If we have field information in createdEntities
+    const createdEntities = executionResult.createdEntities;
+    if (createdEntities && createdEntities.fields && Array.isArray(createdEntities.fields)) {
+      for (const fieldName of createdEntities.fields) {
+        if (typeof fieldName === 'string') {
+          fields.push({
+            name: fieldName,
+            typeName: 'unknown', // Type information might not be available in execution result
+            displayName: fieldName,
+          });
+        }
+      }
+    }
+
+    return fields;
   }
 
   transformToCoordinatorState(
@@ -191,7 +312,7 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
             ? 'failed'
             : 'failed',
       result: {
-        objectName: executionResult?.createdEntities?.object as string | undefined,
+        objectName: executionResult?.createdEntities?.object,
         summary: this.formatResponseMessage(subgraphOutput),
         entitiesCreated: {
           objectCount: executionResult?.objectId ? 1 : 0,

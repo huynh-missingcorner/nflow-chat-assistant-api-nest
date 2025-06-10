@@ -38,15 +38,35 @@ Your task is to analyze the user's request and extract:
 3. Whether the field is required
 4. Description and default value if mentioned
 5. Any additional metadata
+6. Action to perform - create, update, delete, or recover
+7. Target object name - the unique name of the object where this field belongs to (should match the unique name from created objects)
 
 ${AUTO_GENERATED_FIELDS_WARNING}
+
+**Action Detection:**
+- "add", "create", "new" → action: "create"
+- "update", "modify", "change", "edit" → action: "update"
+- "remove", "delete", "drop" → action: "delete"
+- "restore", "recover", "bring back" → action: "recover"
+
+**Object Name Detection:**
+- Look for object names mentioned in the message
+- Check against created objects in the current conversation
+- If no specific object is mentioned, leave objectName empty
+- Use the original display name as users would refer to it
+
+**Context Awareness:**
+- Consider the intent and details from the conversation
+- For field manipulation on existing objects, identify the target object and its unique name
+- For new object creation, objectName may be empty (field belongs to new object)
 
 Call the FieldExtractionTool with the extracted information.
 
 Examples:
-- "Add a required email field" → name: "email", typeHint: "text", required: true
-- "Create a status picklist field" → name: "status", typeHint: "picklist", required: false
-- "Add a json field for settings" → name: "settings", typeHint: "json", required: false
+- "Add a required email field to User object" → name: "email", typeHint: "text", required: true, action: "create", objectName: "user" (or "user_123123123")
+- "Update the status field in Order" → name: "status", typeHint: "text", required: false, action: "update", objectName: "order" (or "order_123123123")
+- "Delete the temporary field from Product" → name: "temporary", typeHint: "text", required: false, action: "delete", objectName: "product" (or "product_123123123")
+- "Add a json field for settings" → name: "settings", typeHint: "json", required: false, action: "create", objectName: null (field belongs to new object)
 
 Be precise and follow database naming conventions.`,
 

@@ -62,6 +62,29 @@ export class ObjectGraphEdgeRoutingStrategy {
     return OBJECT_GRAPH_EDGES.DB_DESIGN;
   }
 
+  /**
+   * Determine routing after field understanding specifically
+   * Routes directly to TYPE_MAPPER for field-only operations on existing objects
+   */
+  determineAfterFieldUnderstandingRoute(state: ObjectStateType): string {
+    if (state.error) {
+      return OBJECT_GRAPH_EDGES.ERROR;
+    }
+
+    if (!state.fieldSpec) {
+      this.logger.warn(ERROR_TEMPLATES.NO_SPEC_EXTRACTED);
+      return OBJECT_GRAPH_EDGES.RETRY;
+    }
+
+    // If field has an objectName (targeting existing object), skip DB design and go to type mapping
+    if (state.fieldSpec.objectName) {
+      this.logger.log('Field targeting existing object - routing directly to type mapping');
+      return OBJECT_GRAPH_EDGES.TYPE_MAPPING;
+    }
+
+    return OBJECT_GRAPH_EDGES.ERROR;
+  }
+
   determineAfterDesignRoute(state: ObjectStateType): string {
     if (state.error) {
       return OBJECT_GRAPH_EDGES.ERROR;
@@ -117,6 +140,14 @@ export class ObjectGraphEdgeRoutingStrategy {
       return OBJECT_GRAPH_EDGES.RETRY;
     }
 
+    // Determine routing based on operation type
+    // If fieldSpec has an objectName (targeting existing object), use field executor
+    if (state.fieldSpec?.objectName) {
+      this.logger.log('Field operation on existing object - routing to field executor');
+      return OBJECT_GRAPH_EDGES.FIELD_EXECUTION;
+    }
+
+    // Otherwise, use object executor for full object creation with fields
     this.logger.log(MESSAGE_TEMPLATES.TYPE_MAPPING_COMPLETED_ROUTING);
     return OBJECT_GRAPH_EDGES.OBJECT_EXECUTION;
   }
@@ -183,7 +214,14 @@ export class ObjectGraphEdgeRoutingStrategy {
       state.executionResult.completedSteps.length > 0
     ) {
       this.logger.log(MESSAGE_TEMPLATES.RETRY_WITH_COMPLETED_STEPS);
-      return OBJECT_GRAPH_EDGES.OBJECT_EXECUTION;
+
+      // Determine which executor to retry based on the operation type
+      if (state.fieldSpec?.objectName) {
+        this.logger.log('Retrying field execution');
+        return OBJECT_GRAPH_EDGES.FIELD_EXECUTION;
+      } else {
+        return OBJECT_GRAPH_EDGES.OBJECT_EXECUTION;
+      }
     }
 
     // For schema execution retries

@@ -7,6 +7,7 @@ import { BaseGraphHandlerService } from '@/shared/graph/handlers/base-graph-hand
 import { ObjectGraphBuilder } from './builders/object-graph.builder';
 import { ObjectHandlerNodeFactory } from './factories/handler-node.factory';
 import { DBDesignNode } from './nodes/db-design.node';
+import { FieldExecutorNode } from './nodes/field-executor.node';
 import { FieldUnderstandingNode } from './nodes/field-understanding.node';
 import { HandleErrorNode } from './nodes/handle-error.node';
 import { HandleRetryNode } from './nodes/handle-retry.node';
@@ -44,6 +45,7 @@ import { ObjectGraphEdgeRoutingStrategy } from './strategies/object-graph-edge-r
     DBDesignNode,
     TypeMapperNode,
     ObjectExecutorNode,
+    FieldExecutorNode,
     SchemaExecutorNode,
     HandleSuccessNode,
     HandleErrorNode,

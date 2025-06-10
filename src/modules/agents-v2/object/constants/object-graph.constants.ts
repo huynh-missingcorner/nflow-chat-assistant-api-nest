@@ -10,6 +10,7 @@ export const OBJECT_GRAPH_NODES = {
 
   // Execution nodes
   OBJECT_EXECUTOR: 'object_executor',
+  FIELD_EXECUTOR: 'field_executor',
   SCHEMA_EXECUTOR: 'schema_executor',
 
   // Handler nodes
@@ -28,6 +29,7 @@ export const OBJECT_GRAPH_EDGES = {
   DB_DESIGN: 'db_design',
   TYPE_MAPPING: 'type_mapping',
   OBJECT_EXECUTION: 'object_execution',
+  FIELD_EXECUTION: 'field_execution',
   SCHEMA_EXECUTION: 'schema_execution',
 
   // Terminal routes
@@ -101,6 +103,9 @@ export const OWD_TYPES = {
 export const EXECUTION_STEP_TYPES = {
   CREATE_OBJECT: 'create_object',
   CREATE_FIELD: 'create_field',
+  UPDATE_FIELD: 'update_field',
+  DELETE_FIELD: 'delete_field',
+  RECOVER_FIELD: 'recover_field',
 } as const;
 
 // Auto-generated field names that should be excluded
@@ -144,6 +149,7 @@ export const MESSAGE_TEMPLATES = {
 
   // Execution phase messages
   EXECUTION_COMPLETED: 'Object execution completed successfully',
+  FIELD_EXECUTION_COMPLETED: 'Field execution completed successfully',
   SCHEMA_EXECUTION_STARTED: 'Schema execution started',
   SCHEMA_EXECUTION_COMPLETED: 'Schema execution completed successfully',
 

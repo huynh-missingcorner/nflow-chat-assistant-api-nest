@@ -21,6 +21,7 @@ export class FieldUnderstandingNode extends ObjectGraphNodeBase {
 
       const { fieldSpec, newMessages } = await this.extractFieldSpecification(
         state.originalMessage,
+        state,
       );
 
       if (!fieldSpec) {
@@ -33,7 +34,7 @@ export class FieldUnderstandingNode extends ObjectGraphNodeBase {
 
       return {
         fieldSpec,
-        currentNode: OBJECT_GRAPH_NODES.DB_DESIGN,
+        currentNode: OBJECT_GRAPH_NODES.TYPE_MAPPER, // Route directly to TYPE_MAPPER
         messages: newMessages,
       };
     } catch (error) {
@@ -45,16 +46,21 @@ export class FieldUnderstandingNode extends ObjectGraphNodeBase {
     }
   }
 
-  private async extractFieldSpecification(message: string): Promise<{
+  private async extractFieldSpecification(
+    message: string,
+    state: ObjectStateType,
+  ): Promise<{
     fieldSpec: FieldSpec | null;
     newMessages: BaseMessage[];
   }> {
     try {
       const llm = OPENAI_GPT_4_1_FOR_TOOLS.bindTools([fieldExtractionTool]);
 
+      const contextualPrompt = this.buildContextualPrompt(message, state);
+
       const messages = [
         new SystemMessage(SYSTEM_PROMPTS.FIELD_EXTRACTION_SYSTEM_PROMPT),
-        new HumanMessage(message),
+        new HumanMessage(contextualPrompt),
       ];
 
       const response = await llm.invoke(messages);
@@ -78,5 +84,60 @@ export class FieldUnderstandingNode extends ObjectGraphNodeBase {
       this.logger.error('Error extracting field specification', error);
       return { fieldSpec: null, newMessages: [] };
     }
+  }
+
+  /**
+   * Build a contextual prompt that includes information about created objects in the current thread
+   */
+  private buildContextualPrompt(message: string, state: ObjectStateType): string {
+    let prompt = `User Request: ${message}\n\n`;
+
+    // Add intent context
+    if (state.intent) {
+      prompt += `Intent: ${state.intent.intent}\n`;
+      if (state.intent.details) {
+        prompt += `Intent Details: ${JSON.stringify(state.intent.details)}\n`;
+      }
+      if (state.intent.target) {
+        prompt += `Intent Target: ${Array.isArray(state.intent.target) ? state.intent.target.join(', ') : state.intent.target}\n`;
+      }
+      prompt += '\n';
+    }
+
+    // Add created objects context with name mapping
+    if (state.createdObjects && state.createdObjects.length > 0) {
+      prompt += `Created Objects in Current Thread:\n`;
+      for (const obj of state.createdObjects) {
+        prompt += `- Display Name: "${obj.displayName}" → Unique Name: "${obj.uniqueName}" (created in intent ${obj.intentIndex})`;
+        if (obj.description) {
+          prompt += ` - ${obj.description}`;
+        }
+        if (obj.fields && obj.fields.length > 0) {
+          prompt += `\n  Fields: ${obj.fields.map((f) => f.displayName).join(', ')}`;
+        }
+        prompt += '\n';
+      }
+      prompt += '\n';
+
+      // Add explicit mapping instructions
+      prompt += `Object Name Mapping Instructions:
+When the user refers to an object by its display name (e.g., "User", "E commerce User"), you MUST use the corresponding unique name for the objectName field.
+From the mapping above:
+`;
+      for (const obj of state.createdObjects) {
+        prompt += `- If user says "${obj.displayName}" → use objectName: "${obj.uniqueName}"\n`;
+      }
+      prompt += '\n';
+    }
+
+    prompt += `Based on the user request and context above, extract the field specification including:
+1. Field name and type
+2. Whether it's required
+3. Action to perform (create, update, delete, recover)
+4. Target object unique name (use the exact unique name from the mapping above)
+
+IMPORTANT: When specifying objectName, use the unique name (e.g., "user_1231231234") NOT the display name (e.g., "User").`;
+
+    return prompt;
   }
 }

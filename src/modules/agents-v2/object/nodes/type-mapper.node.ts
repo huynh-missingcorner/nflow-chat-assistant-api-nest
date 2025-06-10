@@ -6,6 +6,7 @@ import { OPENAI_GPT_4_1_FOR_TOOLS } from '@/shared/infrastructure/langchain/mode
 import { OBJECT_GRAPH_NODES, OBJECT_LOG_MESSAGES } from '../constants/object-graph.constants';
 import { SYSTEM_PROMPTS } from '../constants/system-prompts';
 import { ApiFormatParserInput, apiFormatParserTool } from '../tools/api-format-parser.tool';
+import { ChangeFieldInput, changeFieldTool } from '../tools/change-field.tool';
 import { NflowSchemaDesignInput } from '../tools/nflow-schema-design.tool';
 import { ObjectField, ObjectStateType, TypeMappingResult } from '../types/object-graph-state.types';
 import { ObjectGraphNodeBase } from './object-graph-node.base';
@@ -20,26 +21,47 @@ export class TypeMapperNode extends ObjectGraphNodeBase {
     try {
       this.logger.log(OBJECT_LOG_MESSAGES.TYPE_MAPPING_COMPLETED);
 
-      const { typeMappingResult, newMessages } = await this.parseApiFormat(state);
+      // Determine if this is a field-only operation
+      const isFieldOnlyOperation = state.fieldSpec?.objectName && !state.dbDesignResult;
 
-      if (!typeMappingResult || typeMappingResult.errors?.length) {
+      if (isFieldOnlyOperation) {
+        const { typeMappingResult, newMessages } = await this.parseFieldOperation(state);
+
+        if (!typeMappingResult || typeMappingResult.errors?.length) {
+          return {
+            error: `Field operation parsing failed: ${typeMappingResult?.errors?.join(', ') || 'Unknown error'}`,
+            currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
+            typeMappingResult,
+            messages: newMessages,
+          };
+        }
+
         return {
-          error: `API format parsing failed: ${typeMappingResult?.errors?.join(', ') || 'Unknown error'}`,
-          currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
+          typeMappingResult,
+          messages: newMessages,
+        };
+      } else {
+        // Standard API format parsing for object creation with fields
+        const { typeMappingResult, newMessages } = await this.parseApiFormat(state);
+
+        if (!typeMappingResult || typeMappingResult.errors?.length) {
+          return {
+            error: `API format parsing failed: ${typeMappingResult?.errors?.join(', ') || 'Unknown error'}`,
+            currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
+            typeMappingResult,
+            messages: newMessages,
+          };
+        }
+
+        return {
           typeMappingResult,
           messages: newMessages,
         };
       }
-
-      return {
-        typeMappingResult,
-        currentNode: OBJECT_GRAPH_NODES.OBJECT_EXECUTOR,
-        messages: newMessages,
-      };
     } catch (error) {
-      this.logger.error('API format parsing failed', error);
+      this.logger.error('Type mapping failed', error);
       return {
-        error: error instanceof Error ? error.message : 'API format parsing failed',
+        error: error instanceof Error ? error.message : 'Type mapping failed',
         currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
       };
     }
@@ -50,11 +72,19 @@ export class TypeMapperNode extends ObjectGraphNodeBase {
     newMessages: BaseMessage[];
   }> {
     try {
-      const nflowSchema: NflowSchemaDesignInput | null = this.extractNflowSchema(state);
+      // Try to extract from DB design result first (for full object creation)
+      let nflowSchema: NflowSchemaDesignInput | null = this.extractNflowSchema(state);
+
+      // If no schema from DB design, try to build from field spec (for field-only operations)
+      if (!nflowSchema && state.fieldSpec) {
+        nflowSchema = this.buildSchemaFromFieldSpec(state);
+      }
 
       if (!nflowSchema) {
         return {
-          typeMappingResult: this.createFailedResult(['No Nflow schema found in design result']),
+          typeMappingResult: this.createFailedResult([
+            'No schema found - neither from DB design nor field spec',
+          ]),
           newMessages: [],
         };
       }
@@ -160,6 +190,22 @@ export class TypeMapperNode extends ObjectGraphNodeBase {
       }
     }
 
+    // Add field spec context for field-only operations
+    if (state.fieldSpec) {
+      prompt += `Field Specification:\n`;
+      prompt += `- Field Name: ${state.fieldSpec.name}\n`;
+      prompt += `- Type Hint: ${state.fieldSpec.typeHint}\n`;
+      prompt += `- Required: ${state.fieldSpec.required || false}\n`;
+      prompt += `- Action: ${state.fieldSpec.action || 'create'}\n`;
+      prompt += `- Target Object: ${state.fieldSpec.objectName}\n`;
+      if (state.fieldSpec.description) {
+        prompt += `- Description: ${state.fieldSpec.description}\n`;
+      }
+      if (state.fieldSpec.defaultValue) {
+        prompt += `- Default Value: ${JSON.stringify(state.fieldSpec.defaultValue)}\n`;
+      }
+    }
+
     // Add intent context
     if (state.intent) {
       prompt += `\nOperation: ${state.intent.intent}\n`;
@@ -168,7 +214,22 @@ export class TypeMapperNode extends ObjectGraphNodeBase {
       }
     }
 
-    prompt += `\nParse this into the exact API format required by changeObjectTool and changeFieldTool. Ensure all type names, subtypes, and attributes are correctly formatted for the Nflow API.`;
+    prompt += `\nIMPORTANT INSTRUCTIONS:
+1. Convert the type hint "${state.fieldSpec?.typeHint || 'text'}" to the appropriate NFlow typeName
+2. Set the correct subType based on the field requirements
+3. Use the action "${state.fieldSpec?.action || 'create'}" for the field operation
+4. Ensure the objName in fieldsFormat matches the target object name exactly
+5. Parse this into the exact API format required by changeObjectTool and changeFieldTool
+
+Type Conversion Guidelines:
+- text/string → typeName: "text", subType: "short"/"long"/"rich" based on length
+- number/numeric → typeName: "numeric", subType: "integer"/"float" based on precision
+- boolean → typeName: "boolean"
+- date/datetime → typeName: "dateTime", subType: "date"/"time"/"date-time"
+- json → typeName: "json"
+- picklist → typeName: "pickList", subType: "single"/"multiple"
+- file → typeName: "file"
+- relation → typeName: "relation"`;
 
     return prompt;
   }
@@ -198,5 +259,181 @@ export class TypeMapperNode extends ObjectGraphNodeBase {
       errors,
       warnings: [],
     };
+  }
+
+  /**
+   * Build a minimal schema from field spec for field-only operations
+   */
+  private buildSchemaFromFieldSpec(state: ObjectStateType): NflowSchemaDesignInput | null {
+    if (!state.fieldSpec || !state.fieldSpec.objectName) {
+      return null;
+    }
+
+    // Create a minimal schema for field-only operations
+    // Let the LLM determine the correct NFlow type through the API parsing tools
+    const schema: NflowSchemaDesignInput = {
+      objectName: state.fieldSpec.objectName, // This should be the unique name from mapping
+      displayName: state.fieldSpec.objectName,
+      description: 'Existing object for field manipulation',
+      fields: [
+        {
+          name: state.fieldSpec.name,
+          displayName: state.fieldSpec.name,
+          typeName: 'text', // Default type - let the API parser tool determine the correct type
+          required: state.fieldSpec.required || false,
+          description: state.fieldSpec.description || undefined,
+          defaultValue: state.fieldSpec.defaultValue
+            ? JSON.stringify(state.fieldSpec.defaultValue)
+            : undefined,
+        },
+      ],
+      designNotes: [
+        'Field-only operation - existing object',
+        `Original type hint from user: ${state.fieldSpec.typeHint}`,
+        `Field action: ${state.fieldSpec.action || 'create'}`,
+      ],
+    };
+
+    return schema;
+  }
+
+  /**
+   * Parse field-only operations using the dedicated field operation tool
+   */
+  private async parseFieldOperation(state: ObjectStateType): Promise<{
+    typeMappingResult: TypeMappingResult | undefined;
+    newMessages: BaseMessage[];
+  }> {
+    try {
+      if (!state.fieldSpec) {
+        return {
+          typeMappingResult: this.createFailedResult(['No field specification found']),
+          newMessages: [],
+        };
+      }
+
+      const llm = OPENAI_GPT_4_1_FOR_TOOLS.bindTools([changeFieldTool]);
+
+      const fieldPrompt = this.buildFieldOperationPrompt(state);
+
+      const messages = [
+        new SystemMessage(this.getFieldOperationSystemPrompt()),
+        new HumanMessage(fieldPrompt),
+      ];
+
+      const response = await llm.invoke(messages);
+      const responseMessage = new AIMessage({
+        content: response.content,
+        id: response.id,
+        tool_calls: response.tool_calls,
+      });
+
+      const newMessages = [...messages, responseMessage];
+
+      if (!response.tool_calls || response.tool_calls.length === 0) {
+        this.logger.error('No tool calls found in field operation response');
+        return {
+          typeMappingResult: this.createFailedResult(['No field operation result']),
+          newMessages,
+        };
+      }
+
+      const toolCall = response.tool_calls[0];
+      const fieldOperation = toolCall.args as ChangeFieldInput;
+
+      // Convert field operation to API format
+      const apiFormat = this.convertFieldOperationToApiFormat(fieldOperation);
+
+      return {
+        typeMappingResult: this.createParsingResult(apiFormat),
+        newMessages,
+      };
+    } catch (error) {
+      this.logger.error('Error during field operation parsing', error);
+      return {
+        typeMappingResult: this.createFailedResult([
+          `Field operation parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ]),
+        newMessages: [],
+      };
+    }
+  }
+
+  /**
+   * Convert field operation to API format
+   */
+  private convertFieldOperationToApiFormat(fieldOperation: ChangeFieldInput): ApiFormatParserInput {
+    return {
+      objectFormat: {
+        data: {
+          displayName: 'Existing Object',
+          recordName: { label: 'Existing Object', type: 'text' },
+          owd: 'Private',
+          name: fieldOperation.objName,
+          description: 'Existing object for field operation',
+        },
+        action: 'update',
+        name: fieldOperation.objName,
+      },
+      fieldsFormat: [
+        {
+          objName: fieldOperation.objName,
+          data: fieldOperation.data as ApiFormatParserInput['fieldsFormat'][0]['data'],
+          action: fieldOperation.action,
+        },
+      ],
+      parsingNotes: ['Field-only operation on existing object'],
+    };
+  }
+
+  /**
+   * Build prompt for field operation
+   */
+  private buildFieldOperationPrompt(state: ObjectStateType): string {
+    const fieldSpec = state.fieldSpec!;
+
+    return `Convert this field specification into a proper field operation:
+
+Field Specification:
+- Field Name: ${fieldSpec.name}
+- Type Hint: ${fieldSpec.typeHint}
+- Required: ${fieldSpec.required || false}
+- Action: ${fieldSpec.action || 'create'}
+- Target Object: ${fieldSpec.objectName}
+- Description: ${fieldSpec.description || 'No description provided'}
+- Default Value: ${fieldSpec.defaultValue ? JSON.stringify(fieldSpec.defaultValue) : 'None'}
+
+Requirements:
+1. Convert the type hint "${fieldSpec.typeHint}" to the correct NFlow typeName and subType
+2. Use action "${fieldSpec.action || 'create'}"
+3. Set objName to "${fieldSpec.objectName}"
+4. Ensure all required attributes are properly configured
+5. Handle special type requirements (relations, pickLists, etc.)
+
+Convert this specification using the FieldOperationTool.`;
+  }
+
+  /**
+   * Get system prompt for field operations
+   */
+  private getFieldOperationSystemPrompt(): string {
+    return `You are an expert in NFlow field operations. Convert field specifications into proper field operations.
+
+Key Guidelines:
+1. **Type Mapping**: Convert user type hints to correct NFlow types:
+   - text/string → "text" with subType "short"/"long"/"rich"
+   - number/numeric → "numeric" with subType "integer"/"float"
+   - boolean → "boolean"
+   - date/datetime → "dateTime" with subType "date"/"time"/"date-time"
+   - json → "json"
+   - picklist → "pickList" with subType "single"/"multiple"
+   - file → "file"
+   - relation → "relation" with proper onDelete and filters
+
+2. **Actions**: Support create, update, delete, recover operations
+3. **Attributes**: Set proper subType and additional attributes based on field type
+4. **Validation**: Ensure all required fields are present and correctly formatted
+
+Use the FieldOperationTool to generate the field operation specification.`;
   }
 }

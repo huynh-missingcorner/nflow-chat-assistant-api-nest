@@ -67,7 +67,7 @@ const apiFieldFormatSchema = z.object({
     pickListId: z.string().nullable().optional().describe('Pick list ID for pickList fields'),
     value: z.string().nullable().optional().describe('Target object name for relation fields'),
   }),
-  action: z.enum(['create', 'update', 'delete']).describe('Action to perform'),
+  action: z.enum(['create', 'update', 'delete', 'recover']).describe('Action to perform'),
 });
 
 const apiFormatParserSchema = z.object({

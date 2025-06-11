@@ -84,23 +84,48 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
       errors.push('Object processing should be completed or have an error');
     }
 
-    // For completions, validate execution results
+    // For completions, validate execution results (support both single object and schema operations)
     if (subgraphOutput.isCompleted) {
-      if (!subgraphOutput.executionResult) {
-        errors.push('Completed object processing should have execution result');
-      } else {
-        // Allow for partial successes - validate that we have some useful results
-        const executionResult = subgraphOutput.executionResult;
-        const hasAnyResults =
-          executionResult.objectId ||
-          (executionResult.fieldIds && executionResult.fieldIds.length > 0) ||
-          (executionResult.completedSteps && executionResult.completedSteps.length > 0) ||
-          (executionResult.createdEntities &&
-            Object.keys(executionResult.createdEntities).length > 0);
+      const hasExecutionResult = !!subgraphOutput.executionResult;
+      const hasSchemaExecutionResult = !!subgraphOutput.schemaExecutionResult;
 
-        // Only flag as error if execution failed AND no results were produced
-        if (executionResult.status === 'failed' && !hasAnyResults && !subgraphOutput.error) {
-          errors.push('Object execution marked as failed but no error or results provided');
+      if (!hasExecutionResult && !hasSchemaExecutionResult) {
+        errors.push(
+          'Completed object processing should have execution result or schema execution result',
+        );
+      } else {
+        // For schema operations, validate that we have at least one successful object
+        if (hasSchemaExecutionResult && !hasExecutionResult) {
+          const schemaResult = subgraphOutput.schemaExecutionResult;
+          const hasAnySuccessfulObjects =
+            schemaResult?.completedObjects && schemaResult.completedObjects.length > 0;
+
+          // Only flag as error if schema execution failed AND no objects were created
+          if (
+            schemaResult?.status === 'failed' &&
+            !hasAnySuccessfulObjects &&
+            !subgraphOutput.error
+          ) {
+            errors.push(
+              'Schema execution marked as failed but no objects were created and no error provided',
+            );
+          }
+        } else if (hasExecutionResult) {
+          // For single object operations, use the original validation logic
+          const executionResult = subgraphOutput.executionResult;
+          if (executionResult) {
+            const hasAnyResults =
+              executionResult.objectId ||
+              (executionResult.fieldIds && executionResult.fieldIds.length > 0) ||
+              (executionResult.completedSteps && executionResult.completedSteps.length > 0) ||
+              (executionResult.createdEntities &&
+                Object.keys(executionResult.createdEntities).length > 0);
+
+            // Only flag as error if execution failed AND no results were produced
+            if (executionResult.status === 'failed' && !hasAnyResults && !subgraphOutput.error) {
+              errors.push('Object execution marked as failed but no error or results provided');
+            }
+          }
         }
       }
     }
@@ -253,6 +278,141 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
     return fields;
   }
 
+  /**
+   * Create object intent results supporting both single object and schema operations
+   * For schema operations: creates multiple results (one per object created)
+   * For single operations: creates one result
+   */
+  private createObjectIntentResults(
+    intentIndex: number,
+    subgraphOutput: ObjectStateType,
+    isObjectCompleted: boolean,
+    hasPartialSuccess: boolean,
+    hasFailed: boolean,
+  ): ObjectIntentResult[] {
+    const results: ObjectIntentResult[] = [];
+
+    // For schema operations, create one result per object created
+    if (subgraphOutput.schemaExecutionResult && !subgraphOutput.executionResult) {
+      const schemaResult = subgraphOutput.schemaExecutionResult;
+
+      // Create results for each completed object
+      for (const objectExecutionResult of schemaResult.completedObjects) {
+        const objectResult: ObjectIntentResult = {
+          intentId: `intent_${intentIndex}_object_${objectExecutionResult.objectId || 'unknown'}`,
+          intentIndex,
+          timestamp: new Date().toISOString(),
+          domain: 'object',
+          status:
+            objectExecutionResult.status === 'success'
+              ? 'success'
+              : objectExecutionResult.status === 'partial'
+                ? 'partial'
+                : 'failed',
+          result: {
+            objectName: objectExecutionResult.createdEntities?.object,
+            summary: this.formatObjectSpecificResponseMessage(
+              objectExecutionResult,
+              subgraphOutput.originalMessage || '',
+            ),
+            entitiesCreated: {
+              objectCount: 1, // Each result represents one object
+              fieldCount: objectExecutionResult.fieldIds?.length || 0,
+            },
+            // Keep execution result for summarization
+            executionResult: objectExecutionResult,
+          },
+        };
+        results.push(objectResult);
+      }
+
+      // If no objects were completed but we have a schema result, create a summary result
+      if (results.length === 0) {
+        const summaryResult: ObjectIntentResult = {
+          intentId: `intent_${intentIndex}_schema_summary`,
+          intentIndex,
+          timestamp: new Date().toISOString(),
+          domain: 'object',
+          status: isObjectCompleted ? 'success' : hasPartialSuccess ? 'partial' : 'failed',
+          result: {
+            objectName: schemaResult.schemaId,
+            summary: this.formatResponseMessage(subgraphOutput),
+            entitiesCreated: {
+              objectCount: 0,
+              fieldCount: 0,
+            },
+            // For schema operations without individual objects, store schema info in executionResult
+            executionResult: undefined,
+          },
+        };
+        results.push(summaryResult);
+      }
+    } else {
+      // For single object operations, create one result
+      const executionResult = subgraphOutput.executionResult;
+      const objectResult: ObjectIntentResult = {
+        intentId: `intent_${intentIndex}`,
+        intentIndex,
+        timestamp: new Date().toISOString(),
+        domain: 'object',
+        status: isObjectCompleted
+          ? 'success'
+          : hasPartialSuccess
+            ? 'partial'
+            : hasFailed
+              ? 'failed'
+              : 'failed',
+        result: {
+          objectName: executionResult?.createdEntities?.object,
+          summary: this.formatResponseMessage(subgraphOutput),
+          entitiesCreated: {
+            objectCount: executionResult?.objectId ? 1 : 0,
+            fieldCount: executionResult?.fieldIds?.length || 0,
+          },
+          // Keep execution result for summarization
+          executionResult: executionResult || undefined,
+        },
+      };
+      results.push(objectResult);
+    }
+
+    return results;
+  }
+
+  /**
+   * Format response message for a specific object within a schema operation
+   */
+  private formatObjectSpecificResponseMessage(
+    objectExecutionResult: ObjectExecutionResult,
+    originalMessage: string,
+  ): string {
+    const objectName =
+      objectExecutionResult.createdEntities?.objectDisplayName ||
+      objectExecutionResult.createdEntities?.object ||
+      'Unknown object';
+
+    let status: string;
+    let resultMessage: string;
+
+    switch (objectExecutionResult.status) {
+      case 'success':
+        status = 'succeeded';
+        resultMessage = 'succeeded';
+        break;
+      case 'partial':
+        status = 'partially succeeded';
+        resultMessage = `partially succeeded${objectExecutionResult.errors ? ` with errors: ${objectExecutionResult.errors.join(', ')}` : ''}`;
+        break;
+      case 'failed':
+      default:
+        status = 'failed';
+        resultMessage = `failed${objectExecutionResult.errors ? ` with error: ${objectExecutionResult.errors.join(', ')}` : ''}`;
+        break;
+    }
+
+    return `${originalMessage} - Object ${objectName} ${status}: ${resultMessage}`;
+  }
+
   transformToCoordinatorState(
     subgraphOutput: ObjectStateType,
     coordinatorState: CoordinatorStateType,
@@ -263,10 +423,28 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
     ];
     const nextIntentIndex = coordinatorState.currentIntentIndex + 1;
 
-    // Determine completion status based on execution result
-    const isObjectCompleted = subgraphOutput.executionResult?.status === 'success';
-    const hasPartialSuccess = subgraphOutput.executionResult?.status === 'partial';
-    const hasFailed = subgraphOutput.executionResult?.status === 'failed';
+    // Determine completion status based on execution result (support both single object and schema operations)
+    const executionResult = subgraphOutput.executionResult;
+    const schemaExecutionResult = subgraphOutput.schemaExecutionResult;
+
+    // For schema operations, evaluate overall status from schema result
+    // For single object operations, evaluate from execution result
+    let isObjectCompleted: boolean;
+    let hasPartialSuccess: boolean;
+    let hasFailed: boolean;
+
+    if (schemaExecutionResult && !executionResult) {
+      // Schema operation
+      isObjectCompleted = schemaExecutionResult.status === 'success';
+      hasPartialSuccess = schemaExecutionResult.status === 'partial';
+      hasFailed = schemaExecutionResult.status === 'failed';
+    } else {
+      // Single object operation
+      isObjectCompleted = executionResult?.status === 'success';
+      hasPartialSuccess = executionResult?.status === 'partial';
+      hasFailed = executionResult?.status === 'failed';
+    }
+
     const hasAnySuccess = isObjectCompleted || hasPartialSuccess;
 
     // Create intent error if there was a failure (but not for partial successes)
@@ -282,11 +460,16 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
         );
         const retryCount = existingErrorsForIntent.length;
 
-        const errorMessage =
-          subgraphOutput.error ||
-          (subgraphOutput.executionResult?.errors
-            ? subgraphOutput.executionResult.errors.join(', ')
-            : 'Object execution failed');
+        let errorMessage: string;
+        if (subgraphOutput.error) {
+          errorMessage = subgraphOutput.error;
+        } else if (schemaExecutionResult?.errors) {
+          errorMessage = schemaExecutionResult.errors.join(', ');
+        } else if (executionResult?.errors) {
+          errorMessage = executionResult.errors.join(', ');
+        } else {
+          errorMessage = 'Object execution failed';
+        }
 
         newIntentErrors.push({
           intentId: currentIntent.id,
@@ -297,47 +480,30 @@ export class ObjectSubgraphHandler implements SubgraphHandler<ObjectStateType> {
       }
     }
 
-    // Create object result for this intent - simplified to high-level data only
-    const executionResult = subgraphOutput.executionResult;
-    const objectResult: ObjectIntentResult = {
-      intentId: `intent_${coordinatorState.currentIntentIndex}`,
-      intentIndex: coordinatorState.currentIntentIndex,
-      timestamp: new Date().toISOString(),
-      domain: 'object',
-      status: isObjectCompleted
-        ? 'success'
-        : hasPartialSuccess
-          ? 'partial'
-          : hasFailed
-            ? 'failed'
-            : 'failed',
-      result: {
-        objectName: executionResult?.createdEntities?.object,
-        summary: this.formatResponseMessage(subgraphOutput),
-        entitiesCreated: {
-          objectCount: executionResult?.objectId ? 1 : 0,
-          fieldCount: executionResult?.fieldIds?.length || 0,
-        },
-        // Keep execution result for summarization
-        executionResult: executionResult || undefined,
-      },
-    };
-
-    // Update or add the object result for this specific intent
-    const existingObjectResults = coordinatorState.objectResults || [];
-    const existingResultIndex = existingObjectResults.findIndex(
-      (result) => result.intentIndex === coordinatorState.currentIntentIndex,
+    // Create object results for this intent
+    // For schema operations: create multiple results (one per object)
+    // For single operations: create one result
+    const objectResults: ObjectIntentResult[] = this.createObjectIntentResults(
+      coordinatorState.currentIntentIndex,
+      subgraphOutput,
+      isObjectCompleted,
+      hasPartialSuccess,
+      hasFailed,
     );
 
-    let updatedObjectResults: ObjectIntentResult[];
-    if (existingResultIndex >= 0) {
-      // Replace existing result for this intent (e.g., on retry)
-      updatedObjectResults = [...existingObjectResults];
-      updatedObjectResults[existingResultIndex] = objectResult;
-    } else {
-      // Add new result for this intent
-      updatedObjectResults = [...existingObjectResults, objectResult];
-    }
+    // Update or add the object results for this specific intent
+    const existingObjectResults = coordinatorState.objectResults || [];
+
+    // Remove any existing results for this intent (for retries)
+    const filteredExistingResults = existingObjectResults.filter(
+      (result) => result.intentIndex !== coordinatorState.currentIntentIndex,
+    );
+
+    // Add all new results for this intent
+    const updatedObjectResults: ObjectIntentResult[] = [
+      ...filteredExistingResults,
+      ...objectResults,
+    ];
 
     // Extract only NEW messages from subgraph to prevent duplication
     const coordinatorMessageIds = coordinatorState.messages.map((message) => message.id);

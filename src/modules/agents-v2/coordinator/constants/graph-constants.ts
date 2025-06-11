@@ -1,6 +1,7 @@
 export const GRAPH_NODES = {
   // Nodes
   STATE_RESET: 'stateReset',
+  CHAT_OR_NFLOW_FILTER: 'chatOrNflowFilter',
   CLASSIFY_INTENT: 'classifyIntent',
   VALIDATE_CLASSIFICATION: 'validateClassification',
   PROCESS_NEXT_INTENT: 'processNextIntent',
@@ -26,6 +27,8 @@ export const GRAPH_EDGES = {
   NEXT_INTENT: 'nextIntent',
   APPLICATION_DOMAIN: 'applicationDomain',
   OBJECT_DOMAIN: 'objectDomain',
+  NFLOW_OPERATION: 'nflowOperation',
+  CASUAL_CHAT: 'casualChat',
   SUMMARIZE: 'summarize',
 } as const;
 

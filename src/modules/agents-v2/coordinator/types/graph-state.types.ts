@@ -122,6 +122,7 @@ export const CoordinatorState = Annotation.Root({
     default: () => [],
     reducer: (x, y) => [...x, ...y],
   }),
+
   isCompleted: Annotation<boolean>({
     default: () => false,
     reducer: (x, y) => {

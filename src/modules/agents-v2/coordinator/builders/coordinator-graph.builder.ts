@@ -4,6 +4,7 @@ import { END, START, StateGraph } from '@langchain/langgraph';
 import { PersistenceService } from '@/shared/infrastructure/persistence';
 
 import { GRAPH_EDGES, GRAPH_NODES } from '../constants/graph-constants';
+import { ChatOrNflowFilterNode } from '../nodes/chat-or-nflow-filter.node';
 import { ClassifyIntentNode } from '../nodes/classify-intent.node';
 import { HandleErrorNode } from '../nodes/handle-error.node';
 import { HandleRetryNode } from '../nodes/handle-retry.node';
@@ -24,6 +25,7 @@ export interface IGraphBuilder {
 export class CoordinatorGraphBuilder implements IGraphBuilder {
   constructor(
     private readonly stateResetNode: StateResetNode,
+    private readonly chatOrNflowFilterNode: ChatOrNflowFilterNode,
     private readonly classifyIntentNode: ClassifyIntentNode,
     private readonly validateClassificationNode: ValidateClassificationNode,
     private readonly processNextIntentNode: ProcessNextIntentNode,
@@ -60,6 +62,10 @@ export class CoordinatorGraphBuilder implements IGraphBuilder {
         this.subgraphWrapperService.createSubgraphWrapper('object'),
       )
       .addNode(
+        GRAPH_NODES.CHAT_OR_NFLOW_FILTER,
+        this.chatOrNflowFilterNode.execute.bind(this.chatOrNflowFilterNode),
+      )
+      .addNode(
         GRAPH_NODES.HANDLE_SUCCESS,
         this.handleSuccessNode.execute.bind(this.handleSuccessNode),
       )
@@ -73,8 +79,18 @@ export class CoordinatorGraphBuilder implements IGraphBuilder {
     // Start the workflow with state reset
     workflow.addEdge(START, GRAPH_NODES.STATE_RESET);
 
-    // After state reset, classify the intent
-    workflow.addEdge(GRAPH_NODES.STATE_RESET, GRAPH_NODES.CLASSIFY_INTENT);
+    // After state reset, check if it's chat or nflow operation
+    workflow.addEdge(GRAPH_NODES.STATE_RESET, GRAPH_NODES.CHAT_OR_NFLOW_FILTER);
+
+    // After filter, either end (for chat) or continue to intent classification
+    workflow.addConditionalEdges(
+      GRAPH_NODES.CHAT_OR_NFLOW_FILTER,
+      this.edgeRoutingStrategy.determineChatOrNflowRoute.bind(this.edgeRoutingStrategy),
+      {
+        [GRAPH_EDGES.CASUAL_CHAT]: END,
+        [GRAPH_EDGES.NFLOW_OPERATION]: GRAPH_NODES.CLASSIFY_INTENT,
+      },
+    );
 
     // After classification, validate the classification
     workflow.addConditionalEdges(

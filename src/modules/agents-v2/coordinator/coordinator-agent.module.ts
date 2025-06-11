@@ -9,6 +9,7 @@ import { COORDINATOR_SYSTEM_PROMPT } from './constants/tokens';
 import { CoordinatorAgentService } from './coordinator-agent.service';
 import { CoordinatorHandlerNodeFactory } from './factories/handler-node.factory';
 import { NodeFactory } from './factories/node.factory';
+import { ChatOrNflowFilterNode } from './nodes/chat-or-nflow-filter.node';
 import { ClassifyIntentNode } from './nodes/classify-intent.node';
 import { HandleErrorNode } from './nodes/handle-error.node';
 import { HandleRetryNode } from './nodes/handle-retry.node';
@@ -50,6 +51,7 @@ import { IntentCombinationValidator } from './validators/intent-combination.vali
     ValidateClassificationNode,
     ProcessNextIntentNode,
     StateResetNode,
+    ChatOrNflowFilterNode,
     HandleSuccessNode,
     HandleErrorNode,
     HandleRetryNode,

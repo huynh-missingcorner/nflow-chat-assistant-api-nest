@@ -4,6 +4,7 @@ import { GRAPH_CONFIG, GRAPH_EDGES, GRAPH_NODES } from '../constants/graph-const
 import { CoordinatorStateType } from '../types/graph-state.types';
 
 export interface IEdgeRoutingStrategy {
+  determineChatOrNflowRoute(state: CoordinatorStateType): string;
   determineValidationRoute(): string;
   determineNextIntentOrErrorRoute(state: CoordinatorStateType): string;
   determineNextIntentOrSuccessRoute(state: CoordinatorStateType): string;
@@ -13,35 +14,12 @@ export interface IEdgeRoutingStrategy {
 
 @Injectable()
 export class EdgeRoutingStrategy implements IEdgeRoutingStrategy {
-  private hasCurrentIntentError(state: CoordinatorStateType): boolean {
-    if (
-      !state.classifiedIntent?.intents ||
-      state.currentIntentIndex >= state.classifiedIntent.intents.length
-    ) {
-      return false;
+  determineChatOrNflowRoute(state: CoordinatorStateType): string {
+    if (state.isCompleted) {
+      return GRAPH_EDGES.CASUAL_CHAT;
     }
 
-    const currentIntent = state.classifiedIntent.intents[state.currentIntentIndex];
-    return currentIntent.id
-      ? state.errors.some((error) => error.intentId === currentIntent.id)
-      : false;
-  }
-
-  private getCurrentIntentRetryCount(state: CoordinatorStateType): number {
-    if (
-      !state.classifiedIntent?.intents ||
-      state.currentIntentIndex >= state.classifiedIntent.intents.length
-    ) {
-      return 0;
-    }
-
-    const currentIntent = state.classifiedIntent.intents[state.currentIntentIndex];
-    if (!currentIntent.id) {
-      return 0;
-    }
-
-    const intentErrors = state.errors.filter((error) => error.intentId === currentIntent.id);
-    return intentErrors.length > 0 ? Math.max(...intentErrors.map((e) => e.retryCount)) : 0;
+    return GRAPH_EDGES.NFLOW_OPERATION;
   }
 
   determineValidationRoute(): string {
@@ -123,5 +101,38 @@ export class EdgeRoutingStrategy implements IEdgeRoutingStrategy {
 
     // All intents processed - go to success regardless of individual intent errors
     return GRAPH_EDGES.SUCCESS;
+  }
+
+  /* Private methods */
+
+  private hasCurrentIntentError(state: CoordinatorStateType): boolean {
+    if (
+      !state.classifiedIntent?.intents ||
+      state.currentIntentIndex >= state.classifiedIntent.intents.length
+    ) {
+      return false;
+    }
+
+    const currentIntent = state.classifiedIntent.intents[state.currentIntentIndex];
+    return currentIntent.id
+      ? state.errors.some((error) => error.intentId === currentIntent.id)
+      : false;
+  }
+
+  private getCurrentIntentRetryCount(state: CoordinatorStateType): number {
+    if (
+      !state.classifiedIntent?.intents ||
+      state.currentIntentIndex >= state.classifiedIntent.intents.length
+    ) {
+      return 0;
+    }
+
+    const currentIntent = state.classifiedIntent.intents[state.currentIntentIndex];
+    if (!currentIntent.id) {
+      return 0;
+    }
+
+    const intentErrors = state.errors.filter((error) => error.intentId === currentIntent.id);
+    return intentErrors.length > 0 ? Math.max(...intentErrors.map((e) => e.retryCount)) : 0;
   }
 }

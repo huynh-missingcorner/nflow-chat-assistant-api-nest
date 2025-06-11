@@ -173,6 +173,40 @@ export class TypeMapperNode extends ObjectGraphNodeBase {
     // Add Nflow schema information
     prompt += `Nflow Schema: ${JSON.stringify(nflowSchema, null, 2)}\n\n`;
 
+    // Add object name mapping context for relation fields
+    const allObjectMappings = new Map<string, string>();
+
+    // Add mappings from state.objectNameMapping (schema-level mappings)
+    if (state.objectNameMapping) {
+      for (const [originalName, uniqueName] of Object.entries(state.objectNameMapping)) {
+        allObjectMappings.set(originalName, uniqueName);
+      }
+    }
+
+    // Add mappings from created objects in current thread (thread-level mappings)
+    if (state.createdObjects && state.createdObjects.length > 0) {
+      for (const obj of state.createdObjects) {
+        allObjectMappings.set(obj.originalName, obj.uniqueName);
+      }
+    }
+
+    // Add object mapping context if available
+    if (allObjectMappings.size > 0) {
+      prompt += `Available Object Name Mappings:\n`;
+      for (const [originalName, uniqueName] of allObjectMappings) {
+        // Try to find display name from created objects
+        const createdObj = state.createdObjects?.find((obj) => obj.originalName === originalName);
+        const displayName = createdObj?.displayName || originalName;
+
+        if (displayName !== originalName) {
+          prompt += `- "${displayName}" / "${originalName}" → Unique Name: "${uniqueName}"\n`;
+        } else {
+          prompt += `- "${originalName}" → Unique Name: "${uniqueName}"\n`;
+        }
+      }
+      prompt += '\n';
+    }
+
     // Add context from original requirements
     if (state.objectSpec) {
       prompt += `Original Requirements:\n`;
@@ -219,7 +253,8 @@ export class TypeMapperNode extends ObjectGraphNodeBase {
 2. Set the correct subType based on the field requirements
 3. Use the action "${state.fieldSpec?.action || 'create'}" for the field operation
 4. Ensure the objName in fieldsFormat matches the target object name exactly
-5. Parse this into the exact API format required by changeObjectTool and changeFieldTool
+5. For relation fields, use the UNIQUE OBJECT NAME from the mapping above for the 'value' field
+6. Parse this into the exact API format required by changeObjectTool and changeFieldTool
 
 Type Conversion Guidelines:
 - text/string → typeName: "text", subType: "short"/"long"/"rich" based on length
@@ -229,7 +264,12 @@ Type Conversion Guidelines:
 - json → typeName: "json"
 - picklist → typeName: "pickList", subType: "single"/"multiple"
 - file → typeName: "file"
-- relation → typeName: "relation"`;
+- relation → typeName: "relation" (IMPORTANT: set 'value' to the unique target object name from mapping)
+
+CRITICAL FOR RELATION FIELDS:
+- When typeName is "relation", the 'value' field MUST contain the unique target object name
+- Look up the target object name in the mapping above and use the unique name
+- Example: if user mentions "User" and mapping shows "User" → "user_1234567890", use "user_1234567890" in the value field`;
 
     return prompt;
   }
@@ -392,9 +432,43 @@ Type Conversion Guidelines:
   private buildFieldOperationPrompt(state: ObjectStateType): string {
     const fieldSpec = state.fieldSpec!;
 
-    return `Convert this field specification into a proper field operation:
+    let prompt = `Convert this field specification into a proper field operation:\n\n`;
 
-Field Specification:
+    // Add object name mapping context for relation fields
+    const allObjectMappings = new Map<string, string>();
+
+    // Add mappings from state.objectNameMapping (schema-level mappings)
+    if (state.objectNameMapping) {
+      for (const [originalName, uniqueName] of Object.entries(state.objectNameMapping)) {
+        allObjectMappings.set(originalName, uniqueName);
+      }
+    }
+
+    // Add mappings from created objects in current thread (thread-level mappings)
+    if (state.createdObjects && state.createdObjects.length > 0) {
+      for (const obj of state.createdObjects) {
+        allObjectMappings.set(obj.originalName, obj.uniqueName);
+      }
+    }
+
+    // Add object mapping context if available
+    if (allObjectMappings.size > 0) {
+      prompt += `Available Object Name Mappings:\n`;
+      for (const [originalName, uniqueName] of allObjectMappings) {
+        // Try to find display name from created objects
+        const createdObj = state.createdObjects?.find((obj) => obj.originalName === originalName);
+        const displayName = createdObj?.displayName || originalName;
+
+        if (displayName !== originalName) {
+          prompt += `- "${displayName}" / "${originalName}" → Unique Name: "${uniqueName}"\n`;
+        } else {
+          prompt += `- "${originalName}" → Unique Name: "${uniqueName}"\n`;
+        }
+      }
+      prompt += '\n';
+    }
+
+    prompt += `Field Specification:
 - Field Name: ${fieldSpec.name}
 - Type Hint: ${fieldSpec.typeHint}
 - Required: ${fieldSpec.required || false}
@@ -406,11 +480,19 @@ Field Specification:
 Requirements:
 1. Convert the type hint "${fieldSpec.typeHint}" to the correct NFlow typeName and subType
 2. Use action "${fieldSpec.action || 'create'}"
-3. Set objName to "${fieldSpec.objectName}"
-4. Ensure all required attributes are properly configured
-5. Handle special type requirements (relations, pickLists, etc.)
+3. Set objName to "${fieldSpec.objectName}" (use unique name from mapping if available)
+4. For relation fields, set the 'value' field to the unique target object name from the mapping above
+5. Ensure all required attributes are properly configured
+6. Handle special type requirements (relations, pickLists, etc.)
+
+CRITICAL FOR RELATION FIELDS:
+- When typeHint is "relation", the 'value' field MUST contain the unique target object name
+- Look up the target object name in the mapping above and use the unique name
+- If no mapping exists, use the original name but log a warning
 
 Convert this specification using the FieldOperationTool.`;
+
+    return prompt;
   }
 
   /**

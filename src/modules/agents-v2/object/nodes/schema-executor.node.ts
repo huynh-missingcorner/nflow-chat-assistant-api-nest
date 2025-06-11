@@ -4,13 +4,16 @@ import {
   ERROR_TEMPLATES,
   EXECUTION_STATUS,
   MESSAGE_TEMPLATES,
+  NFLOW_DATA_TYPES,
   OBJECT_GRAPH_NODES,
 } from '../constants/object-graph.constants';
 import {
+  DBDesignResult,
   ExecutionStatus,
   ObjectExecutionResult,
   ObjectSpec,
   ObjectStateType,
+  SchemaDesignResult,
   SchemaExecutionResult,
 } from '../types/object-graph-state.types';
 import { ObjectExecutorNode } from './object-executor.node';
@@ -82,17 +85,34 @@ export class SchemaExecutorNode {
     const failedObjects: Array<{ objectSpec: ObjectSpec; error: string }> = [];
     let processedObjects = 0;
 
+    // Initialize global object name mapping for the entire schema
+    const globalObjectNameMapping = new Map<string, string>(
+      Object.entries(state.objectNameMapping || {}),
+    );
+
+    // Add any existing created objects to the mapping
+    if (state.createdObjects) {
+      for (const createdObj of state.createdObjects) {
+        globalObjectNameMapping.set(createdObj.originalName, createdObj.uniqueName);
+      }
+    }
+
     this.logger.log(MESSAGE_TEMPLATES.SCHEMA_EXECUTION_START(totalObjects));
 
-    // Create objects based on the order determined during design phase
+    // Phase 1: Create all objects first (without relation fields)
     for (const objectSpec of schemaSpec.objects) {
       try {
-        this.logger.log(MESSAGE_TEMPLATES.PROCESSING_OBJECT(objectSpec.objectName));
+        this.logger.log(
+          MESSAGE_TEMPLATES.PROCESSING_OBJECT(objectSpec.objectName) + ' (objects phase)',
+        );
+
+        // Create object-only state by filtering out relation fields
+        const objectOnlySpec = this.createObjectOnlySpec(objectSpec);
 
         // Create a temporary state for this object
         const objectState: ObjectStateType = {
           ...state,
-          objectSpec,
+          objectSpec: objectOnlySpec,
           currentObjectIndex: processedObjects,
           // Reset object-specific state
           dbDesignResult: null,
@@ -107,7 +127,10 @@ export class SchemaExecutorNode {
         );
 
         if (objectDesignResult) {
-          objectState.dbDesignResult = objectDesignResult;
+          // Also filter relation fields from design result
+          const filteredDesignResult =
+            this.filterRelationFieldsFromDesignResult(objectDesignResult);
+          objectState.dbDesignResult = filteredDesignResult;
         }
 
         // Execute type mapping for this object
@@ -122,9 +145,18 @@ export class SchemaExecutorNode {
         const executionState = await this.objectExecutorNode.execute(updatedState);
 
         // Always check for execution results, even if there's an error
-        // This allows us to collect partial successes (e.g., object created but some fields failed)
         if (executionState.executionResult) {
           completedObjects.push(executionState.executionResult);
+
+          // Update global object name mapping with newly created object
+          if (executionState.executionResult.createdEntities?.objectNameMapping) {
+            for (const [originalName, uniqueName] of Object.entries(
+              executionState.executionResult.createdEntities.objectNameMapping,
+            )) {
+              globalObjectNameMapping.set(originalName, uniqueName);
+            }
+          }
+
           this.logger.log(MESSAGE_TEMPLATES.OBJECT_CREATED_SUCCESS(objectSpec.objectName));
         }
 
@@ -153,6 +185,18 @@ export class SchemaExecutorNode {
       }
     }
 
+    // Phase 2: Create relation fields now that all objects exist
+    const relationExecutionResults = await this.executeRelationFields(
+      schemaSpec.objects,
+      schemaDesignResult,
+      state,
+      globalObjectNameMapping,
+    );
+
+    // Merge relation execution results with object execution results
+    completedObjects.push(...relationExecutionResults.successful);
+    failedObjects.push(...relationExecutionResults.failed);
+
     // Determine overall status
     let status: ExecutionStatus;
     if (failedObjects.length === 0) {
@@ -178,6 +222,144 @@ export class SchemaExecutorNode {
     );
 
     return result;
+  }
+
+  /**
+   * Create a new ObjectSpec with only non-relation fields
+   */
+  private createObjectOnlySpec(objectSpec: ObjectSpec): ObjectSpec {
+    if (!objectSpec.fields) {
+      return objectSpec;
+    }
+
+    return {
+      ...objectSpec,
+      fields: objectSpec.fields.filter((field) => field.typeHint !== 'relation'),
+    };
+  }
+
+  /**
+   * Filter relation fields from DB design result
+   */
+  private filterRelationFieldsFromDesignResult(designResult: DBDesignResult): DBDesignResult {
+    if (!designResult?.nflowSchema?.fields) {
+      return designResult;
+    }
+
+    return {
+      ...designResult,
+      nflowSchema: {
+        ...designResult.nflowSchema,
+        fields: designResult.nflowSchema.fields.filter(
+          (field) => field.typeName !== NFLOW_DATA_TYPES.RELATION,
+        ),
+      },
+    };
+  }
+
+  /**
+   * Execute relation fields after all objects are created
+   */
+  private async executeRelationFields(
+    objectSpecs: ObjectSpec[],
+    schemaDesignResult: SchemaDesignResult,
+    originalState: ObjectStateType,
+    globalObjectNameMapping: Map<string, string>,
+  ): Promise<{
+    successful: ObjectExecutionResult[];
+    failed: Array<{ objectSpec: ObjectSpec; error: string }>;
+  }> {
+    const successful: ObjectExecutionResult[] = [];
+    const failed: Array<{ objectSpec: ObjectSpec; error: string }> = [];
+
+    this.logger.log('Phase 2: Creating relation fields');
+
+    for (const objectSpec of objectSpecs) {
+      if (!objectSpec.fields) continue;
+
+      // Filter to only relation fields
+      const relationFields = objectSpec.fields.filter((field) => field.typeHint === 'relation');
+
+      if (relationFields.length === 0) continue;
+
+      try {
+        this.logger.log(
+          MESSAGE_TEMPLATES.PROCESSING_OBJECT(objectSpec.objectName) + ' (relations phase)',
+        );
+
+        // Create relation-only spec
+        const relationOnlySpec: ObjectSpec = {
+          ...objectSpec,
+          fields: relationFields,
+        };
+
+        // Create a temporary state for relation fields
+        const relationState: ObjectStateType = {
+          ...originalState,
+          objectSpec: relationOnlySpec,
+          // Reset object-specific state
+          dbDesignResult: null,
+          typeMappingResult: null,
+          executionResult: null,
+          error: null,
+          // Pass the global object name mapping
+          objectNameMapping: Object.fromEntries(globalObjectNameMapping),
+        };
+
+        // Find and filter design result to only relation fields
+        const objectDesignResult = schemaDesignResult.objects.find(
+          (result) => result.nflowSchema?.objectName === objectSpec.objectName,
+        );
+
+        if (objectDesignResult?.nflowSchema?.fields) {
+          const relationDesignResult: DBDesignResult = {
+            ...objectDesignResult,
+            nflowSchema: {
+              ...objectDesignResult.nflowSchema,
+              fields: objectDesignResult.nflowSchema.fields.filter(
+                (field) => field.typeName === NFLOW_DATA_TYPES.RELATION,
+              ),
+            },
+          };
+          relationState.dbDesignResult = relationDesignResult;
+        }
+
+        // Execute type mapping for relation fields
+        const typeMappingState = await this.typeMapperNode.execute(relationState);
+
+        if (typeMappingState.error) {
+          throw new Error(typeMappingState.error);
+        }
+
+        // Execute relation field creation with object name mapping support
+        const updatedState = { ...relationState, ...typeMappingState };
+        const executionState = await this.objectExecutorNode.execute(updatedState);
+
+        if (executionState.executionResult) {
+          successful.push(executionState.executionResult);
+          this.logger.log(
+            `Successfully created relation fields for object: ${objectSpec.objectName}`,
+          );
+        }
+
+        if (executionState.error && !executionState.executionResult) {
+          throw new Error(executionState.error);
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        this.logger.error(
+          `Failed to create relation fields for object ${objectSpec.objectName}:`,
+          error,
+        );
+
+        failed.push({
+          objectSpec,
+          error: `Relation fields creation failed: ${errorMessage}`,
+        });
+      }
+    }
+
+    return { successful, failed };
   }
 
   private createErrorResult(

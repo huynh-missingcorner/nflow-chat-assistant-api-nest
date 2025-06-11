@@ -42,6 +42,7 @@ export class FieldExecutorNode extends ObjectGraphNodeBase {
       const executionResult = await this.executeFieldSteps(
         executionPlan.steps,
         state.chatSessionId,
+        state,
         state.executionResult || undefined,
       );
 
@@ -109,6 +110,7 @@ export class FieldExecutorNode extends ObjectGraphNodeBase {
   private async executeFieldSteps(
     steps: FieldExecutionStep[],
     chatSessionId: string,
+    state: ObjectStateType,
     previousResult?: ObjectExecutionResult,
   ): Promise<ObjectExecutionResult> {
     // Initialize result with previous execution data to preserve successful operations across retries
@@ -154,7 +156,7 @@ export class FieldExecutorNode extends ObjectGraphNodeBase {
         const step = steps[i];
         this.logger.log(`Executing field step ${i + 1}/${steps.length}: ${step.description}`);
 
-        const stepResult = await this.executeFieldStep(step, userId);
+        const stepResult = await this.executeFieldStep(step, userId, state);
 
         if (!stepResult.success) {
           hasFailedSteps = true;
@@ -232,6 +234,7 @@ export class FieldExecutorNode extends ObjectGraphNodeBase {
   private async executeFieldStep(
     step: FieldExecutionStep,
     userId: string,
+    state: ObjectStateType,
   ): Promise<{ success: boolean; fieldId?: string; error?: string }> {
     try {
       this.logger.debug(
@@ -240,6 +243,47 @@ export class FieldExecutorNode extends ObjectGraphNodeBase {
       );
 
       const fieldData = step.fieldData;
+
+      // Initialize object name mapping from state
+      const objectNameMapping = new Map<string, string>();
+
+      // Add mappings from state.objectNameMapping (schema-level mappings)
+      if (state.objectNameMapping) {
+        for (const [originalName, uniqueName] of Object.entries(state.objectNameMapping)) {
+          objectNameMapping.set(originalName, uniqueName);
+        }
+      }
+
+      // Add mappings from created objects in current thread (thread-level mappings)
+      if (state.createdObjects && state.createdObjects.length > 0) {
+        for (const obj of state.createdObjects) {
+          objectNameMapping.set(obj.originalName, obj.uniqueName);
+        }
+      }
+
+      // Get the correct object name (use mapping if available)
+      const objName = objectNameMapping.get(fieldData.objName) || fieldData.objName;
+
+      // For relation fields, also map the target object name
+      let fieldValue = fieldData.data.value || undefined;
+      if (fieldData.data.typeName === 'relation' && fieldValue) {
+        // Check if we have a mapping for the target object
+        const mappedTargetObject = objectNameMapping.get(fieldValue);
+        if (mappedTargetObject) {
+          fieldValue = mappedTargetObject;
+          this.logger.debug(
+            `Mapped relation target from '${fieldData.data.value}' to '${mappedTargetObject}'`,
+          );
+        } else {
+          this.logger.warn(
+            `No mapping found for relation target object '${fieldValue}', using original name`,
+          );
+        }
+
+        this.logger.debug(
+          `Processing relation field '${fieldData.data.name}' with target object '${fieldValue}'`,
+        );
+      }
 
       // Properly transform attributes to match FieldAttributesDto
       const attributes = fieldData.data.attributes
@@ -256,13 +300,13 @@ export class FieldExecutorNode extends ObjectGraphNodeBase {
 
       // Build the FieldDto according to the NFlow API specification
       const fieldDto: FieldDto = {
-        objName: fieldData.objName,
+        objName: objName,
         action: step.action,
         data: {
           typeName: fieldData.data.typeName,
           name: fieldData.data.name,
           displayName: fieldData.data.displayName,
-          value: fieldData.data.value || undefined,
+          value: fieldValue,
           description: fieldData.data.description || undefined,
           pickListId: fieldData.data.pickListId || undefined,
           attributes,

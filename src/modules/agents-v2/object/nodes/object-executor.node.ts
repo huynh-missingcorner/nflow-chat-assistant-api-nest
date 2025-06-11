@@ -44,6 +44,7 @@ export class ObjectExecutorNode extends ObjectGraphNodeBase {
         executionPlan.steps,
         executionPlan.stepIndexMapping,
         state.chatSessionId,
+        state,
         state.executionResult || undefined,
       );
 
@@ -155,6 +156,7 @@ export class ObjectExecutorNode extends ObjectGraphNodeBase {
     steps: ExecutionStep[],
     stepIndexMapping: number[],
     chatSessionId: string,
+    state: ObjectStateType,
     previousResult?: ObjectExecutionResult,
   ): Promise<ObjectExecutionResult> {
     // Initialize result with previous execution data to preserve successful operations across retries
@@ -194,7 +196,29 @@ export class ObjectExecutorNode extends ObjectGraphNodeBase {
 
     let hasSuccessfulSteps = false;
     let hasFailedSteps = false;
-    const objectNameMapping = new Map<string, string>(); // Map original object names to unique names
+
+    // Initialize object name mapping with existing mappings from state
+    const objectNameMapping = new Map<string, string>(
+      Object.entries(previousResult?.createdEntities?.objectNameMapping || {}),
+    );
+
+    // Add mappings from state.objectNameMapping if available
+    if (state.objectNameMapping) {
+      for (const [originalName, uniqueName] of Object.entries(state.objectNameMapping)) {
+        objectNameMapping.set(originalName, uniqueName);
+      }
+    }
+
+    // Add mappings from created objects in current thread
+    if (state.createdObjects) {
+      for (const createdObj of state.createdObjects) {
+        objectNameMapping.set(createdObj.originalName, createdObj.uniqueName);
+      }
+    }
+
+    this.logger.debug(
+      `Initialized object name mapping with ${objectNameMapping.size} entries: ${JSON.stringify(Object.fromEntries(objectNameMapping))}`,
+    );
 
     try {
       // Execute all steps, collecting errors but not stopping
@@ -423,6 +447,23 @@ export class ObjectExecutorNode extends ObjectGraphNodeBase {
       // Get the correct object name (use unique name if it exists, otherwise use original)
       const correctObjectName = objectNameMapping.get(fieldData.objName) || fieldData.objName;
 
+      // For relation fields, also map the target object name
+      let fieldValue = fieldData.data.value || undefined;
+      if (fieldData.data.typeName === 'relation' && fieldValue) {
+        // Check if we have a mapping for the target object
+        const mappedTargetObject = objectNameMapping.get(fieldValue);
+        if (mappedTargetObject) {
+          fieldValue = mappedTargetObject;
+          this.logger.debug(
+            `Mapped relation target from '${fieldData.data.value}' to '${mappedTargetObject}'`,
+          );
+        } else {
+          this.logger.warn(
+            `No mapping found for relation target object '${fieldValue}', using original name`,
+          );
+        }
+      }
+
       // Properly transform attributes to match FieldAttributesDto
       const attributes = fieldData.data.attributes
         ? {
@@ -443,7 +484,7 @@ export class ObjectExecutorNode extends ObjectGraphNodeBase {
           typeName: fieldData.data.typeName,
           name: fieldData.data.name, // Use original field name (no need to make it unique)
           displayName: fieldData.data.displayName,
-          value: fieldData.data.value || undefined, // Convert null to undefined
+          value: fieldValue, // Use the mapped target object name for relations
           description: fieldData.data.description || undefined, // Convert null to undefined
           pickListId: fieldData.data.pickListId || undefined, // Convert null to undefined
           attributes,

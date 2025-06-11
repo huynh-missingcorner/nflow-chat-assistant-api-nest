@@ -254,6 +254,40 @@ export class ObjectExecutorNode extends ObjectGraphNodeBase {
             result.fieldIds.push(fieldId);
           }
           if (!result.createdEntities) result.createdEntities = {};
+
+          // Store detailed field information as JSON string to work with the extensible structure
+          const fieldData = step.data as ApiFormatParserInput['fieldsFormat'][0];
+          const fieldInfo = {
+            name: fieldData.data.name,
+            displayName: fieldData.data.displayName,
+            typeName: fieldData.data.typeName,
+            description: fieldData.data.description || undefined,
+          };
+
+          // Store as JSON string array in fieldsDetailed
+          if (!result.createdEntities.fieldsDetailed) {
+            result.createdEntities.fieldsDetailed = JSON.stringify([fieldInfo]);
+          } else if (typeof result.createdEntities.fieldsDetailed === 'string') {
+            try {
+              const existingFields = JSON.parse(result.createdEntities.fieldsDetailed) as Array<{
+                name: string;
+                displayName: string;
+                typeName: string;
+                description?: string;
+              }>;
+              // Only add if not already present (avoid duplicates from retries)
+              const fieldExists = existingFields.some((f) => f.name === fieldInfo.name);
+              if (!fieldExists) {
+                existingFields.push(fieldInfo);
+                result.createdEntities.fieldsDetailed = JSON.stringify(existingFields);
+              }
+            } catch {
+              // If parsing fails, reset with current field
+              result.createdEntities.fieldsDetailed = JSON.stringify([fieldInfo]);
+            }
+          }
+
+          // Keep the legacy fields array for backward compatibility
           if (!result.createdEntities.fields) {
             result.createdEntities.fields = [];
           }

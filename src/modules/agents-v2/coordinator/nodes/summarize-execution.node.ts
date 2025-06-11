@@ -67,26 +67,84 @@ export class SummarizeExecutionNode extends GraphNodeBase {
   - Intent ID: ${intentId}
   - Status: ${status}
   - Timestamp: ${timestamp}
-  - Application Spec: ${appResult.applicationSpec ? JSON.stringify(appResult.applicationSpec, null, 2) : 'Not available'}
-  - Enriched Spec: ${appResult.enrichedSpec ? 'Available' : 'Not available'}
-  - Execution Result: ${appResult.executionResult ? JSON.stringify(appResult.executionResult, null, 2) : 'Not available'}`;
+  - Application Name: ${appResult.applicationSpec?.appName || 'Not available'}
+  - Application ID: ${appResult.executionResult?.appId || 'Not available'}`;
           })
           .join('\n\n')
       : 'No application results available';
 
-    // Process object results
+    // Process object results with detailed field information
     const objectResultsData = objectResults?.length
       ? objectResults
           .map((result, index) => {
             const { intentId, status, result: objResult, timestamp } = result;
+
+            // Extract object information
+            const objectInfo = objResult.executionResult?.createdEntities;
+            const objectName = objectInfo?.object || objResult.objectName || 'Not specified';
+            const objectDisplayName = objectInfo?.objectDisplayName || 'Not specified';
+            const objectDescription = objectInfo?.objectDescription || '';
+
+            // Extract field information with more details
+            let fieldsInfo = 'No fields created';
+            if (
+              objResult.executionResult?.fieldIds &&
+              objResult.executionResult.fieldIds.length > 0
+            ) {
+              // Try to get detailed field information first
+              if (objectInfo?.fieldsDetailed && typeof objectInfo.fieldsDetailed === 'string') {
+                try {
+                  const detailedFields = JSON.parse(objectInfo.fieldsDetailed) as Array<{
+                    name: string;
+                    displayName: string;
+                    typeName: string;
+                    description?: string;
+                  }>;
+
+                  if (detailedFields.length > 0) {
+                    const fieldsList = detailedFields
+                      .map((f) => `${f.displayName} (${f.name}) - ${f.typeName}`)
+                      .join(', ');
+                    fieldsInfo = `${detailedFields.length} fields created: ${fieldsList}`;
+                  }
+                } catch {
+                  // Fallback to basic field count if JSON parsing fails
+                  const fieldCount = objResult.executionResult.fieldIds.length;
+                  const fieldsList = objResult.executionResult.fieldIds.join(', ');
+                  fieldsInfo = `${fieldCount} fields created: ${fieldsList}`;
+                }
+              } else {
+                // Fallback to basic field information
+                const fieldCount = objResult.executionResult.fieldIds.length;
+                const fieldsList = objResult.executionResult.fieldIds.join(', ');
+                fieldsInfo = `${fieldCount} fields created: ${fieldsList}`;
+              }
+            } else if (
+              objectInfo?.fields &&
+              Array.isArray(objectInfo.fields) &&
+              objectInfo.fields.length > 0
+            ) {
+              const fieldCount = objectInfo.fields.length;
+              const fieldsList = objectInfo.fields.join(', ');
+              fieldsInfo = `${fieldCount} fields created: ${fieldsList}`;
+            }
+
+            // Extract additional execution details
+            const executionStatus = objResult.executionResult?.status || status;
+            const executionErrors = objResult.executionResult?.errors?.length
+              ? `Errors: ${objResult.executionResult.errors.join(', ')}`
+              : 'No errors';
+
             return `Object ${index + 1}:
   - Intent ID: ${intentId}
-  - Status: ${status}
+  - Status: ${executionStatus}
   - Timestamp: ${timestamp}
-  - Object Name: ${objResult.objectName || 'Not specified'}
-  - Summary: ${objResult.summary || 'Not available'}
-  - Entities Created: ${objResult.entitiesCreated ? `${objResult.entitiesCreated.objectCount} objects, ${objResult.entitiesCreated.fieldCount} fields` : 'Not available'}
-  - Execution Result: ${objResult.executionResult ? JSON.stringify(objResult.executionResult, null, 2) : 'Not available'}`;
+  - Object Name: ${objectName}
+  - Object Display Name: ${objectDisplayName}
+  - Object Description: ${objectDescription}
+  - Fields: ${fieldsInfo}
+  - Execution Status: ${executionErrors}
+  - Summary: ${objResult.summary || 'Object creation completed'}`;
           })
           .join('\n\n')
       : 'No object results available';

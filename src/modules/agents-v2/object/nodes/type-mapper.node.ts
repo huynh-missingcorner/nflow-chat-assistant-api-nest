@@ -269,7 +269,9 @@ Type Conversion Guidelines:
 CRITICAL FOR RELATION FIELDS:
 - When typeName is "relation", the 'value' field MUST contain the unique target object name
 - Look up the target object name in the mapping above and use the unique name
-- Example: if user mentions "User" and mapping shows "User" → "user_1234567890", use "user_1234567890" in the value field`;
+- If the field has targetObject property, use that as the value for the relation field
+- Example: if user mentions "User" and mapping shows "User" → "user_1234567890", use "user_1234567890" in the value field
+- For auto-generated relation fields, use the targetObject property as the value`;
 
     return prompt;
   }

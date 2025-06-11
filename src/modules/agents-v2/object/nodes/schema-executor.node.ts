@@ -7,6 +7,7 @@ import {
   NFLOW_DATA_TYPES,
   OBJECT_GRAPH_NODES,
 } from '../constants/object-graph.constants';
+import { RelationshipProcessorService } from '../services/relationship-processor.service';
 import {
   DBDesignResult,
   ExecutionStatus,
@@ -26,6 +27,7 @@ export class SchemaExecutorNode {
   constructor(
     private readonly typeMapperNode: TypeMapperNode,
     private readonly objectExecutorNode: ObjectExecutorNode,
+    private readonly relationshipProcessor: RelationshipProcessorService,
   ) {}
 
   async execute(state: ObjectStateType): Promise<Partial<ObjectStateType>> {
@@ -274,23 +276,93 @@ export class SchemaExecutorNode {
 
     this.logger.log('Phase 2: Creating relation fields');
 
-    for (const objectSpec of objectSpecs) {
-      if (!objectSpec.fields) continue;
+    // Check if there are relationships to process from the original schema spec
+    if (
+      !originalState.schemaSpec?.globalRelationships ||
+      originalState.schemaSpec.globalRelationships.length === 0
+    ) {
+      this.logger.log('No relationships defined in schema, skipping relation fields creation');
+      return { successful, failed };
+    }
 
-      // Filter to only relation fields
-      const relationFields = objectSpec.fields.filter((field) => field.typeHint === 'relation');
+    // Re-process relationships with the actual object name mappings
+    const mockSchema = {
+      schemaName: originalState.schemaSpec.schemaName,
+      description: originalState.schemaSpec.description,
+      objects: objectSpecs.map((spec) => ({
+        objectName: spec.objectName,
+        displayName: spec.objectName, // Use objectName as displayName for processing
+        description: spec.description,
+        fields: [], // We don't need fields for relationship processing
+        priority: 1,
+        dependencies: [],
+      })),
+      relationships: originalState.schemaSpec.globalRelationships.map((rel) => ({
+        fromObject: rel.fromObject,
+        toObject: rel.toObject,
+        relationshipType: rel.type,
+        description: rel.description,
+      })),
+      creationOrder: objectSpecs.map((spec) => spec.objectName), // Add required creationOrder
+    };
 
-      if (relationFields.length === 0) continue;
+    // Process relationships with object name mappings
+    const relationshipResult = this.relationshipProcessor.processRelationships(
+      mockSchema,
+      globalObjectNameMapping,
+    );
+
+    if (!relationshipResult.success) {
+      this.logger.error(
+        'Failed to process relationships with object mappings',
+        relationshipResult.errors,
+      );
+      // Add all objects as failed due to relationship processing failure
+      for (const objectSpec of objectSpecs) {
+        failed.push({
+          objectSpec,
+          error: `Relationship processing failed: ${relationshipResult.errors.join(', ')}`,
+        });
+      }
+      return { successful, failed };
+    }
+
+    // Execute relation fields for each object that has generated relation fields
+    for (const processedObject of relationshipResult.processedObjects) {
+      if (processedObject.fields.length === 0) continue;
+
+      // Find the original object spec outside try block for error handling
+      const originalObjectSpec = objectSpecs.find(
+        (spec) => spec.objectName === processedObject.objectName,
+      );
+      if (!originalObjectSpec) {
+        failed.push({
+          objectSpec: {
+            objectName: processedObject.objectName,
+            description: processedObject.description,
+            fields: [],
+          },
+          error: `Original object spec not found for ${processedObject.objectName}`,
+        });
+        continue;
+      }
 
       try {
         this.logger.log(
-          MESSAGE_TEMPLATES.PROCESSING_OBJECT(objectSpec.objectName) + ' (relations phase)',
+          MESSAGE_TEMPLATES.PROCESSING_OBJECT(processedObject.objectName) + ' (relations phase)',
         );
 
-        // Create relation-only spec
+        // Create relation-only spec with the generated relation fields
         const relationOnlySpec: ObjectSpec = {
-          ...objectSpec,
-          fields: relationFields,
+          ...originalObjectSpec,
+          fields: processedObject.fields.map((field) => ({
+            name: field.name,
+            typeHint: 'relation',
+            required: field.required,
+            description: field.description,
+            action: 'create',
+            objectName: processedObject.objectName,
+          })),
         };
 
         // Create a temporary state for relation fields
@@ -306,23 +378,25 @@ export class SchemaExecutorNode {
           objectNameMapping: Object.fromEntries(globalObjectNameMapping),
         };
 
-        // Find and filter design result to only relation fields
-        const objectDesignResult = schemaDesignResult.objects.find(
-          (result) => result.nflowSchema?.objectName === objectSpec.objectName,
-        );
-
-        if (objectDesignResult?.nflowSchema?.fields) {
-          const relationDesignResult: DBDesignResult = {
-            ...objectDesignResult,
-            nflowSchema: {
-              ...objectDesignResult.nflowSchema,
-              fields: objectDesignResult.nflowSchema.fields.filter(
-                (field) => field.typeName === NFLOW_DATA_TYPES.RELATION,
-              ),
-            },
-          };
-          relationState.dbDesignResult = relationDesignResult;
-        }
+        // Create design result for the relation fields
+        const relationDesignResult: DBDesignResult = {
+          valid: true,
+          objectId: processedObject.objectName,
+          nflowSchema: {
+            objectName: processedObject.objectName,
+            displayName: processedObject.displayName,
+            description: processedObject.description,
+            fields: processedObject.fields.map((field) => ({
+              name: field.name,
+              displayName: field.displayName,
+              typeName: field.typeName as 'relation',
+              required: field.required,
+              description: field.description,
+              targetObject: field.targetObject,
+            })),
+          },
+        };
+        relationState.dbDesignResult = relationDesignResult;
 
         // Execute type mapping for relation fields
         const typeMappingState = await this.typeMapperNode.execute(relationState);
@@ -338,7 +412,7 @@ export class SchemaExecutorNode {
         if (executionState.executionResult) {
           successful.push(executionState.executionResult);
           this.logger.log(
-            `Successfully created relation fields for object: ${objectSpec.objectName}`,
+            `Successfully created relation fields for object: ${processedObject.objectName}`,
           );
         }
 
@@ -348,12 +422,12 @@ export class SchemaExecutorNode {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         this.logger.error(
-          `Failed to create relation fields for object ${objectSpec.objectName}:`,
+          `Failed to create relation fields for object ${processedObject.objectName}:`,
           error,
         );
 
         failed.push({
-          objectSpec,
+          objectSpec: originalObjectSpec,
           error: `Relation fields creation failed: ${errorMessage}`,
         });
       }

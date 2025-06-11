@@ -370,15 +370,20 @@ export class DBDesignNode extends ObjectGraphNodeBase {
         objectResults.push(objResult);
       }
 
-      return {
+      const finalResult: SchemaDesignResult = {
         valid: true,
         schemaId: schema.schemaName,
         conflicts: [],
-        recommendations: schema.recommendations || [],
+        recommendations: [
+          ...(schema.recommendations || []),
+          'Relationship fields will be generated during schema execution phase',
+        ],
         objects: objectResults,
         totalObjects: schema.objects.length,
         processedObjects: schema.objects.length,
       };
+
+      return finalResult;
     } catch (error) {
       this.logger.error(ERROR_TEMPLATES.SCHEMA_DESIGN_FAILED, error);
       return this.createFailedSchemaResult([

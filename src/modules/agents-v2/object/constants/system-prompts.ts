@@ -174,7 +174,7 @@ ${AUTO_GENERATED_FIELDS_VALIDATION}
 - attributes: {subType?: string, onDelete?: string, filters?: array}
 - description: Optional field description
 - pickListId: For pickList fields
-- value: For relation fields (target object name)
+- value: For relation fields (target object name - MUST use unique object name from mapping)
 
 **Type Mapping Rules:**
 1. **FIRST: Filter out auto-generated fields before processing**
@@ -183,13 +183,15 @@ ${AUTO_GENERATED_FIELDS_VALIDATION}
 4. Handle special configurations for relation and pickList fields
 5. Generate proper technical names (camelCase/snake_case)
 6. Create user-friendly display names
+7. **For relation fields: ALWAYS set the 'value' field to the target object's unique name**
 
 **Validation:**
 - All required fields must be present
 - Type names must be exact Nflow API types
 - Subtypes must be valid for the chosen type
-- Relation fields need target object specification
+- Relation fields need target object specification and value field
 - **No auto-generated field names allowed**
+- **Relation fields must have 'value' field set to target object unique name**
 
 Parse the schema and generate exact API-compatible format while excluding forbidden fields.`,
 
@@ -288,11 +290,41 @@ ${AUTO_GENERATED_FIELDS_RESTRICTION}
 - Set creation priorities and dependencies
 - Exclude all auto-generated fields
 
+**CRITICAL: Relationship Field Creation:**
+When relationships are defined between objects, you MUST automatically create relation fields:
+
+1. **Relationship Processing Rules:**
+   - For each relationship, create a relation field in the source object
+   - Set typeName to "relation" for all relationship fields
+   - Set targetObject to the unique name of the target object
+   - Use appropriate field naming conventions:
+     * one-to-one: targetObjectName (e.g., "user" for User object)
+     * one-to-many: targetObjectName (e.g., "address" for Address object)
+     * many-to-many: targetObjectNameList (e.g., "categoryList" for Category objects)
+
+2. **Relation Field Requirements:**
+   - typeName: MUST be "relation"
+   - name: Technical field name following naming pattern
+   - displayName: User-friendly name (e.g., "Related User", "Related Address List")
+   - targetObject: Unique name of target object (this will be used as 'value' in API)
+   - description: Relationship description
+   - required: Usually false unless business rules require it
+
+3. **Relationship Type Handling:**
+   - **one-to-one**: Create single relation field in source object
+   - **one-to-many**: Create single relation field in source object pointing to target
+   - **many-to-many**: Create relation fields in both objects (bidirectional)
+
+4. **Examples:**
+   - User -> Address (one-to-one): name: "address", typeName: "relation", targetObject: "address_1234567890"
+   - User -> Order (one-to-many): name: "order", typeName: "relation", targetObject: "order_1234567890"
+
 **Relationship Design:**
-- Use relation fields to connect objects
+- Use relation fields to connect objects (MANDATORY for all relationships)
 - Define relationship types (one-to-one, one-to-many, many-to-many)
 - Set proper field mappings between related objects
 - Consider cascade behaviors and referential integrity
+- Automatically generate relation fields for each defined relationship
 
 **Creation Order:**
 - Independent objects first (no dependencies)
@@ -306,6 +338,7 @@ ${AUTO_GENERATED_FIELDS_RESTRICTION}
 - Set proper validation rules and constraints
 - Define user-friendly display names
 - Validate all field names against auto-generated list
+- ALWAYS create relation fields for defined relationships
 
-Design complete, normalized database schemas that can be implemented efficiently.`,
+Design complete, normalized database schemas with proper relation fields that can be implemented efficiently.`,
 } as const;

@@ -75,6 +75,7 @@ const schemaRelationshipSchema = z.object({
     .enum([
       RELATIONSHIP_TYPES.ONE_TO_ONE,
       RELATIONSHIP_TYPES.ONE_TO_MANY,
+      RELATIONSHIP_TYPES.MANY_TO_ONE,
       RELATIONSHIP_TYPES.MANY_TO_MANY,
     ])
     .describe('Type of relationship'),

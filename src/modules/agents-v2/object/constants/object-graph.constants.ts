@@ -49,6 +49,7 @@ export const EXECUTION_STATUS = {
 export const RELATIONSHIP_TYPES = {
   ONE_TO_ONE: 'one-to-one',
   ONE_TO_MANY: 'one-to-many',
+  MANY_TO_ONE: 'many-to-one',
   MANY_TO_MANY: 'many-to-many',
 } as const;
 
@@ -179,6 +180,12 @@ export const MESSAGE_TEMPLATES = {
   RETRY_WITH_COMPLETED_STEPS: 'Retrying with completed steps, going directly to object execution',
   SCHEMA_EXECUTION_RETRY: 'Schema execution retry, restarting from field understanding',
   OBJECT_EXECUTION_RETRY: 'Object execution retry, restarting from field understanding',
+
+  // Relationship processing messages
+  RELATIONSHIP_PROCESSING_STARTED: 'Relationship processing started',
+  RELATIONSHIP_FIELDS_GENERATED: (count: number) => `Generated ${count} relationship fields`,
+  RELATIONSHIP_FIELD_CREATED: (fieldName: string, sourceObject: string, targetObject: string) =>
+    `Created relationship field '${fieldName}' from ${sourceObject} to ${targetObject}`,
 } as const;
 
 // Error Message Templates
@@ -263,9 +270,55 @@ export const VALIDATION_TEMPLATES = {
     `All fields in object '${objectName}' must have a name`,
   FIELD_MUST_HAVE_TYPE_HINT: (fieldName: string, objectName: string) =>
     `Field '${fieldName}' in object '${objectName}' must have a type hint`,
+
+  // Relationship validation templates
+  RELATIONSHIP_TARGET_OBJECT_REQUIRED: (relationshipType: string, sourceObject: string) =>
+    `${relationshipType} relationship from '${sourceObject}' must specify a target object`,
+  RELATIONSHIP_SOURCE_OBJECT_REQUIRED: (relationshipType: string) =>
+    `${relationshipType} relationship must specify a source object`,
+  RELATIONSHIP_FIELD_NAME_INVALID: (fieldName: string, objectName: string) =>
+    `Relationship field name '${fieldName}' in object '${objectName}' is invalid`,
+  RELATIONSHIP_TARGET_OBJECT_NOT_FOUND: (targetObject: string, sourceObject: string) =>
+    `Target object '${targetObject}' not found for relationship in object '${sourceObject}'`,
+  RELATIONSHIP_CIRCULAR_DEPENDENCY: (objectA: string, objectB: string) =>
+    `Circular dependency detected between objects '${objectA}' and '${objectB}'`,
+  RELATIONSHIP_FIELD_MISSING_VALUE: (fieldName: string, objectName: string) =>
+    `Relationship field '${fieldName}' in object '${objectName}' must have a value field with target object name`,
+  RELATIONSHIP_INVALID_TYPE: (relationshipType: string) =>
+    `Invalid relationship type: ${relationshipType}. Must be one of: one-to-one, one-to-many, many-to-many`,
 } as const;
 
 export const OBJECT_LOG_MESSAGES = MESSAGE_TEMPLATES;
 export const OBJECT_ERROR_MESSAGES = ERROR_TEMPLATES;
 export const OBJECT_SUCCESS_MESSAGES = SUCCESS_TEMPLATES;
 export const OBJECT_VALIDATION_MESSAGES = VALIDATION_TEMPLATES;
+
+// Relationship Field Configuration
+export const RELATIONSHIP_FIELD_CONFIG = {
+  DEFAULT_ON_DELETE: 'setNull',
+  DEFAULT_REQUIRED: false,
+  FIELD_NAME_PATTERNS: {
+    ONE_TO_ONE: (targetObjectName: string) => `${targetObjectName}`,
+    ONE_TO_MANY: (targetObjectName: string) => `${targetObjectName}`,
+    MANY_TO_MANY: (targetObjectName: string) => `${targetObjectName}List`,
+  },
+  DISPLAY_NAME_PATTERNS: {
+    ONE_TO_ONE: (targetDisplayName: string) => `Related ${targetDisplayName}`,
+    ONE_TO_MANY: (targetDisplayName: string) => `Related ${targetDisplayName}`,
+    MANY_TO_MANY: (targetDisplayName: string) => `Related ${targetDisplayName} List`,
+  },
+} as const;
+
+// Relationship Processing Constants
+export const RELATIONSHIP_PROCESSING = {
+  RELATION_FIELD_PREFIX: 'related',
+  DEFAULT_RELATION_DESCRIPTION: (
+    sourceObject: string,
+    targetObject: string,
+    relationshipType: string,
+  ) => `${relationshipType} relationship from ${sourceObject} to ${targetObject}`,
+  RELATION_FIELD_VALIDATION: {
+    REQUIRED_FIELDS: ['typeName', 'name', 'displayName', 'targetObject'],
+    VALID_ON_DELETE_ACTIONS: ['noAction', 'setNull', 'cascade'],
+  },
+} as const;

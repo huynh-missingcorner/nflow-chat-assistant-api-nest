@@ -1,5 +1,5 @@
 {
-  "cSpell.words": ["Checkpointer", "HITL", "langchain", "langgraph", "Nflow"],
+  "cSpell.words": ["Checkpointer", "HITL", "langchain", "langgraph", "Nflow", "picklist"],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   }

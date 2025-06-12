@@ -13,6 +13,14 @@ interface TokenResponse {
   idToken: string;
 }
 
+interface RequestOptions<T = unknown> {
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  endpoint: string;
+  userId: string;
+  data?: T;
+  config?: AxiosRequestConfig;
+}
+
 @Injectable()
 export class BaseNFlowService {
   protected readonly baseUrl: string;
@@ -88,20 +96,12 @@ export class BaseNFlowService {
 
   /**
    * Make a request to the NFlow API with user-specific authentication
-   * @param method HTTP method
-   * @param endpoint API endpoint
-   * @param data Optional request data
-   * @param config Optional Axios config
-   * @param userId The ID of the user making the request
+   * @param options Request options object containing method, endpoint, userId, data, and config
    * @returns The API response
    */
-  protected async makeRequest<T>(
-    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
-    endpoint: string,
-    data?: unknown,
-    config: AxiosRequestConfig = {},
-    userId?: string,
-  ): Promise<T> {
+  protected async makeRequest<T>(options: RequestOptions): Promise<T> {
+    const { method, endpoint, userId, data, config = {} } = options;
+
     if (!userId) {
       throw new UnauthorizedException('User ID is required for NFlow API access');
     }
@@ -160,5 +160,52 @@ export class BaseNFlowService {
 
       throw error;
     }
+  }
+
+  /**
+   * Convenience methods for common HTTP operations
+   */
+  protected async get<T>(
+    endpoint: string,
+    userId: string,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
+    return this.makeRequest<T>({ method: 'GET', endpoint, userId, config });
+  }
+
+  protected async post<T>(
+    endpoint: string,
+    userId: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
+    return this.makeRequest<T>({ method: 'POST', endpoint, userId, data, config });
+  }
+
+  protected async put<T>(
+    endpoint: string,
+    userId: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
+    return this.makeRequest<T>({ method: 'PUT', endpoint, userId, data, config });
+  }
+
+  protected async patch<T>(
+    endpoint: string,
+    userId: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
+    return this.makeRequest<T>({ method: 'PATCH', endpoint, userId, data, config });
+  }
+
+  protected async delete<T>(
+    endpoint: string,
+    userId: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
+    return this.makeRequest<T>({ method: 'DELETE', endpoint, userId, data, config });
   }
 }

@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { KeycloakService } from '@/modules/auth/services/keycloak.service';
 import { RedisSessionService } from '@/shared/services/redis-session.service';
 
+import { NFLOW_API_ENDPOINTS } from '../constants/api-endpoints';
 import { FieldDto, FieldResponse, ObjectDto, ObjectResponse } from '../types';
 import { BaseNFlowService } from './base.service';
 
@@ -26,44 +27,32 @@ export class NFlowObjectService extends BaseNFlowService {
   }
 
   async getObject(name: string, userId: string): Promise<ObjectResponse> {
-    return this.makeRequest('GET', `/mo/${name}`, undefined, {}, userId);
+    return this.get(NFLOW_API_ENDPOINTS.OBJECTS.GET_OBJECT(name), userId);
   }
 
   // CUD operations for objects
   async changeObject(data: ObjectDto, userId: string): Promise<ObjectResponse> {
     if (data.action === 'delete') {
-      return this.makeRequest(
-        'POST',
-        `/mo/remove`,
-        {
-          names: [data.name],
-        },
-        {},
-        userId,
-      );
+      return this.post(NFLOW_API_ENDPOINTS.OBJECTS.REMOVE_OBJECTS, userId, {
+        names: [data.name],
+      });
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { name, ...rest } = data; // name is not used
-    return this.makeRequest('POST', '/mo', rest, {}, userId);
+    return this.post(NFLOW_API_ENDPOINTS.OBJECTS.CREATE_UPDATE_OBJECT, userId, rest);
   }
 
   async getFieldsForObject(name: string, userId: string): Promise<FieldResponse[]> {
-    return this.makeRequest('GET', `/mo/${name}/fields`, undefined, {}, userId);
+    return this.get(NFLOW_API_ENDPOINTS.OBJECTS.GET_FIELDS(name), userId);
   }
 
   // CUD operations for fields
   async changeField(data: FieldDto, userId: string): Promise<FieldResponse> {
     if (data.action === 'delete') {
-      return this.makeRequest(
-        'POST',
-        `/mo/${data.objName}/fields`,
-        {
-          action: 'delete',
-          name: data.name ?? data.data.name,
-        },
-        {},
-        userId,
-      );
+      return this.post(NFLOW_API_ENDPOINTS.OBJECTS.MANAGE_FIELDS(data.objName), userId, {
+        action: 'delete',
+        name: data.name ?? data.data.name,
+      });
     }
 
     const { objName, ...requestBody } = data;
@@ -143,6 +132,6 @@ export class NFlowObjectService extends BaseNFlowService {
       }
     }
 
-    return this.makeRequest('POST', `/mo/${objName}/fields`, requestBody, {}, userId);
+    return this.post(NFLOW_API_ENDPOINTS.OBJECTS.MANAGE_FIELDS(objName), userId, requestBody);
   }
 }

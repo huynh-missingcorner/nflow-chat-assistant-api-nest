@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { KeycloakService } from '@/modules/auth/services/keycloak.service';
 import { RedisSessionService } from '@/shared/services/redis-session.service';
 
+import { NFLOW_API_ENDPOINTS } from '../constants/api-endpoints';
 import { CreateLayoutDto, LayoutResponse } from '../types';
 import { BaseNFlowService } from './base.service';
 
@@ -26,6 +27,6 @@ export class NFlowLayoutService extends BaseNFlowService {
   }
 
   async createLayout(data: CreateLayoutDto, userId: string): Promise<LayoutResponse> {
-    return this.makeRequest('POST', '/builder/layouts', data, {}, userId);
+    return this.post(NFLOW_API_ENDPOINTS.BUILDER.LAYOUTS.CREATE_LAYOUT, userId, data);
   }
 }

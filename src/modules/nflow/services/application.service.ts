@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { KeycloakService } from '@/modules/auth/services/keycloak.service';
 import { RedisSessionService } from '@/shared/services/redis-session.service';
 
+import { NFLOW_API_ENDPOINTS } from '../constants/api-endpoints';
 import { BuilderAppResponse, CreateApplicationDto, UpdateApplicationDto } from '../types';
 import { BaseNFlowService } from './base.service';
 
@@ -32,48 +33,30 @@ export class NFlowApplicationService extends BaseNFlowService {
     if (!data.profiles) {
       data.profiles = [];
     }
-    return this.makeRequest(
-      'POST',
-      '/builder/apps',
-      {
-        ...data,
-        profiles: ['admin'],
-        credentials: [],
-        tagNames: [],
-      },
-      {},
-      userId,
-    );
+    return this.post(NFLOW_API_ENDPOINTS.BUILDER.APPS.CREATE_APP, userId, {
+      ...data,
+      profiles: ['admin'],
+      credentials: [],
+      tagNames: [],
+    });
   }
 
   async updateApp(data: UpdateApplicationDto, userId: string): Promise<BuilderAppResponse> {
     const { name, ...updateData } = data;
-    return this.makeRequest(
-      'PUT',
-      `/builder/apps/${name}`,
-      {
-        ...updateData,
-        profiles: ['admin'],
-        credentials: [],
-      },
-      {},
-      userId,
-    );
+    return this.put(NFLOW_API_ENDPOINTS.BUILDER.APPS.UPDATE_APP(name), userId, {
+      ...updateData,
+      profiles: ['admin'],
+      credentials: [],
+    });
   }
 
   async getApp(name: string, userId: string): Promise<BuilderAppResponse> {
-    return this.makeRequest('GET', `/builder/apps/${name}`, undefined, {}, userId);
+    return this.get(NFLOW_API_ENDPOINTS.BUILDER.APPS.GET_APP(name), userId);
   }
 
   async deleteApp(name: string, userId: string): Promise<void> {
-    return this.makeRequest(
-      'POST',
-      `/builder/apps/remove`,
-      {
-        names: [name],
-      },
-      {},
-      userId,
-    );
+    return this.post(NFLOW_API_ENDPOINTS.BUILDER.APPS.REMOVE_APPS, userId, {
+      names: [name],
+    });
   }
 }

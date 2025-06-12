@@ -5,7 +5,7 @@ import { OPENAI_GPT_4_1_FOR_TOOLS } from '@/shared/infrastructure/langchain/mode
 
 import { OBJECT_GRAPH_NODES, OBJECT_LOG_MESSAGES } from '../constants/object-graph.constants';
 import { SYSTEM_PROMPTS } from '../constants/system-prompts';
-import { objectExtractionTool } from '../tools/object-extraction.tool';
+import { objectExtractionTool } from '../tools/object/object-extraction.tool';
 import { ObjectSpec, ObjectStateType } from '../types/object-graph-state.types';
 import { ObjectGraphNodeBase } from './object-graph-node.base';
 

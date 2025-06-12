@@ -5,9 +5,9 @@ import { OPENAI_GPT_4_1_FOR_TOOLS } from '@/shared/infrastructure/langchain/mode
 
 import { OBJECT_GRAPH_NODES, OBJECT_LOG_MESSAGES } from '../constants/object-graph.constants';
 import { SYSTEM_PROMPTS } from '../constants/system-prompts';
-import { ApiFormatParserInput, apiFormatParserTool } from '../tools/api-format-parser.tool';
-import { ChangeFieldInput, changeFieldTool } from '../tools/change-field.tool';
-import { NflowSchemaDesignInput } from '../tools/nflow-schema-design.tool';
+import { ChangeFieldInput, changeFieldTool } from '../tools/fields/change-field.tool';
+import { ApiFormatParserInput, apiFormatParserTool } from '../tools/others/api-format-parser.tool';
+import { NflowSchemaDesignInput } from '../tools/others/nflow-schema-design.tool';
 import { ObjectField, ObjectStateType, TypeMappingResult } from '../types/object-graph-state.types';
 import { ObjectGraphNodeBase } from './object-graph-node.base';
 

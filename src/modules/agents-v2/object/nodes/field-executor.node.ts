@@ -5,7 +5,7 @@ import { NFlowObjectService } from '@/modules/nflow/services/object.service';
 import { FieldDto } from '@/modules/nflow/types';
 
 import { OBJECT_GRAPH_NODES, OBJECT_LOG_MESSAGES } from '../constants/object-graph.constants';
-import type { ApiFormatParserInput } from '../tools/api-format-parser.tool';
+import type { ApiFormatParserInput } from '../tools/others/api-format-parser.tool';
 import { ObjectExecutionResult, ObjectStateType } from '../types/object-graph-state.types';
 import { ObjectGraphNodeBase } from './object-graph-node.base';
 

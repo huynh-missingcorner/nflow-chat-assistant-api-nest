@@ -10,7 +10,7 @@ import {
   NFLOW_DATA_TYPES,
   RELATIONSHIP_TYPES,
 } from '../constants/object-graph.constants';
-import type { ApiFormatParserInput } from '../tools/api-format-parser.tool';
+import type { ApiFormatParserInput } from '../tools/others/api-format-parser.tool';
 
 // Type definitions based on constants
 export type RelationshipType = (typeof RELATIONSHIP_TYPES)[keyof typeof RELATIONSHIP_TYPES];

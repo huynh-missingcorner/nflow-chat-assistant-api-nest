@@ -15,8 +15,11 @@ import { SYSTEM_PROMPTS } from '../constants/system-prompts';
 import {
   DatabaseSchemaDesignInput,
   databaseSchemaDesignTool,
-} from '../tools/database-schema-design.tool';
-import { NflowSchemaDesignInput, nflowSchemaDesignTool } from '../tools/nflow-schema-design.tool';
+} from '../tools/others/database-schema-design.tool';
+import {
+  NflowSchemaDesignInput,
+  nflowSchemaDesignTool,
+} from '../tools/others/nflow-schema-design.tool';
 import {
   DBDesignResult,
   NflowSchemaResult,

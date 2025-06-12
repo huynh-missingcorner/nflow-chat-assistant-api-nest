@@ -10,7 +10,10 @@ import {
   VALIDATION_TEMPLATES,
 } from '../constants/object-graph.constants';
 import { SYSTEM_PROMPTS } from '../constants/system-prompts';
-import { SchemaExtractionInput, schemaExtractionTool } from '../tools/schema-extraction.tool';
+import {
+  SchemaExtractionInput,
+  schemaExtractionTool,
+} from '../tools/others/schema-extraction.tool';
 import { ObjectStateType, SchemaSpec } from '../types/object-graph-state.types';
 
 interface SchemaValidationResult {

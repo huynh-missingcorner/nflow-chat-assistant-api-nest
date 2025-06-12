@@ -6,7 +6,7 @@ import {
   NFLOW_SUBTYPES,
   OBJECT_GRAPH_CONFIG,
   RELATIONSHIP_TYPES,
-} from '../constants/object-graph.constants';
+} from '@/modules/agents-v2/object/constants/object-graph.constants';
 
 const nflowFieldSchema = z.object({
   name: z.string().describe('Technical field name (camelCase or snake_case)'),

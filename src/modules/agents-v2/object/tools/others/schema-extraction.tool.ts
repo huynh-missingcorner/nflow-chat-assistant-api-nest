@@ -1,7 +1,7 @@
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 
-import { RELATIONSHIP_TYPES } from '../constants/object-graph.constants';
+import { RELATIONSHIP_TYPES } from '@/modules/agents-v2/object/constants/object-graph.constants';
 
 const fieldSpecSchema = z.object({
   name: z.string().describe('Field name'),

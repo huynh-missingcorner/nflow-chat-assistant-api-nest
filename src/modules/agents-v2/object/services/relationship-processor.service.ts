@@ -7,7 +7,7 @@ import {
   RELATIONSHIP_TYPES,
   VALIDATION_TEMPLATES,
 } from '../constants/object-graph.constants';
-import { DatabaseSchemaDesignInput } from '../tools/database-schema-design.tool';
+import { DatabaseSchemaDesignInput } from '../tools/others/database-schema-design.tool';
 
 interface RelationField {
   name: string;

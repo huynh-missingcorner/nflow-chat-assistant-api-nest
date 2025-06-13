@@ -153,6 +153,34 @@ export interface ObjectExecutionResult {
   }>;
 }
 
+// Type for processed objects from relationship processor
+export interface ProcessedObject {
+  objectName: string;
+  displayName: string;
+  description?: string;
+  fields: Array<{
+    name: string;
+    displayName: string;
+    typeName: string;
+    required: boolean;
+    subType?: string;
+    description?: string;
+    targetObject?: string;
+    pickListOptions?: string[];
+    defaultValue?: string;
+  }>;
+  priority: number;
+  dependencies?: string[];
+}
+
+// Standard execution result interface for consistency
+export interface StandardExecutionResult<T = any> {
+  success: boolean;
+  data?: T;
+  errors?: string[];
+  warnings?: string[];
+}
+
 // New interface to track created objects in current thread
 export interface CreatedObjectInfo {
   originalName: string;

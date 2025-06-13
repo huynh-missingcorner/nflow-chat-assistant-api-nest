@@ -21,7 +21,15 @@ export interface FieldExecutionOptions {
 export interface FieldExecutionResult {
   success: boolean;
   fieldId?: string;
+  fieldName?: string;
   error?: string;
+}
+
+export interface BatchFieldExecutionResult {
+  successful: Array<{ fieldId: string; fieldName: string }>;
+  failed: Array<{ fieldName: string; error: string }>;
+  hasSuccessfulOperations: boolean;
+  hasFailedOperations: boolean;
 }
 
 @Injectable()
@@ -49,100 +57,26 @@ export class FieldExecutorService {
     options: FieldExecutionOptions,
   ): Promise<FieldExecutionResult> {
     try {
-      this.logger.debug(
-        `Executing ${action} field operation for: ${fieldData.data.name}`,
-        JSON.stringify(fieldData, null, 2),
-      );
+      this.logger.debug(`Executing ${action} field operation for: ${fieldData.data.name}`);
 
-      // Initialize object name mapping
-      const objectNameMapping = options.objectNameMapping || new Map<string, string>();
-
-      // Add mappings from state if available
-      if (options.state?.objectNameMapping) {
-        for (const [originalName, uniqueName] of Object.entries(options.state.objectNameMapping)) {
-          objectNameMapping.set(originalName, uniqueName);
-        }
-      }
-
-      // Add mappings from created objects in current thread
-      if (options.state?.createdObjects && options.state.createdObjects.length > 0) {
-        for (const obj of options.state.createdObjects) {
-          objectNameMapping.set(obj.originalName, obj.uniqueName);
-        }
-      }
-
-      // Get the correct object name (use mapping if available)
-      const objName = objectNameMapping.get(fieldData.objName) || fieldData.objName;
-
-      // For relation fields, also map the target object name
-      let fieldValue = fieldData.data.value || undefined;
-      if (fieldData.data.typeName === 'relation' && fieldValue) {
-        const mappedTargetObject = objectNameMapping.get(fieldValue);
-        if (mappedTargetObject) {
-          fieldValue = mappedTargetObject;
-          this.logger.debug(
-            `Mapped relation target from '${fieldData.data.value}' to '${mappedTargetObject}'`,
-          );
-        } else {
-          this.logger.warn(
-            `No mapping found for relation target object '${fieldValue}', using original name`,
-          );
-        }
-
-        this.logger.debug(
-          `Processing relation field '${fieldData.data.name}' with target object '${fieldValue}'`,
-        );
-      }
-
-      // Properly transform attributes to match FieldAttributesDto
-      const attributes = fieldData.data.attributes
-        ? {
-            subType: fieldData.data.attributes.subType,
-            onDelete: fieldData.data.attributes.onDelete as RelationOnDeleteAction | undefined,
-            filters: fieldData.data.attributes.filters as Array<Array<any>> | undefined,
-          }
-        : undefined;
-
-      // Get pickListId from field specification if available (for newly created pickLists)
-      let pickListId = fieldData.data.pickListId;
-      if (
-        fieldData.data.typeName === 'pickList' &&
-        options.state?.fieldSpec &&
-        options.state.fieldSpec.pickListInfo &&
-        options.state.fieldSpec.pickListInfo.createdPickListId
-      ) {
-        pickListId = options.state.fieldSpec.pickListInfo.createdPickListId;
-        this.logger.debug(
-          `Using created pickListId: ${pickListId} for field: ${fieldData.data.name}`,
-        );
-      }
-
-      // Validate that pickList fields have a pickListId
-      if (fieldData.data.typeName === 'pickList' && !pickListId) {
-        this.logger.warn(
-          `PickList field ${fieldData.data.name} is missing pickListId - this may cause API errors`,
-        );
-      }
-
-      // Handle delete operations differently
       if (action === 'delete') {
-        return await this.executeFieldDeletion(fieldData, options.userId);
+        return this.executeFieldDeletion(fieldData, options.userId);
       }
 
-      // Build the FieldDto for create/update/recover operations
-      const fieldDto: FieldDto = {
-        objName: objName,
+      const objectNameMapping = this.buildObjectNameMapping(options);
+      const mappedObjectName = this.resolveObjectName(fieldData.objName, objectNameMapping);
+      const mappedFieldValue = this.resolveFieldValue(fieldData, objectNameMapping);
+      const pickListId = this.resolvePickListId(fieldData, options.state);
+
+      this.validateFieldData(fieldData, pickListId);
+
+      const fieldDto = this.buildFieldDto(
+        fieldData,
         action,
-        data: {
-          typeName: fieldData.data.typeName,
-          name: fieldData.data.name,
-          displayName: fieldData.data.displayName,
-          value: fieldValue,
-          description: fieldData.data.description || undefined,
-          pickListId: pickListId || undefined,
-          attributes,
-        },
-      };
+        mappedObjectName,
+        mappedFieldValue,
+        pickListId,
+      );
 
       const result = await this.nflowObjectService.changeField(fieldDto, options.userId);
 
@@ -150,47 +84,14 @@ export class FieldExecutorService {
       return {
         success: true,
         fieldId: result.name,
+        fieldName: fieldData.data.name,
       };
     } catch (error) {
       this.logger.error(`Failed to ${action} field via API`, error);
       return {
         success: false,
+        fieldName: fieldData.data.name,
         error: error instanceof Error ? error.message : `Field ${action} failed`,
-      };
-    }
-  }
-
-  /**
-   * Execute field deletion with special handling
-   */
-  private async executeFieldDeletion(
-    fieldData: ApiFieldFormat,
-    userId: string,
-  ): Promise<FieldExecutionResult> {
-    try {
-      // For delete operations, the API expects different parameters
-      const deleteFieldDto = {
-        objName: fieldData.objName,
-        action: 'delete' as const,
-        name: fieldData.data.name, // The API expects the field name directly for delete
-        data: {
-          name: fieldData.data.name,
-          typeName: fieldData.data.typeName,
-          displayName: fieldData.data.displayName,
-        },
-      };
-
-      const result = await this.nflowObjectService.changeField(deleteFieldDto, userId);
-      this.logger.log(`Field deletion completed successfully: ${result.name}`);
-      return {
-        success: true,
-        fieldId: result.name,
-      };
-    } catch (error) {
-      this.logger.error('Failed to delete field via API', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Field deletion failed',
       };
     }
   }
@@ -202,30 +103,176 @@ export class FieldExecutorService {
     fieldsData: ApiFieldsFormat,
     action: FieldActionType,
     options: FieldExecutionOptions,
-  ): Promise<{
-    successful: Array<{ fieldId: string; fieldName: string }>;
-    failed: Array<{ fieldName: string; error: string }>;
-    hasSuccessfulOperations: boolean;
-    hasFailedOperations: boolean;
-  }> {
+  ): Promise<BatchFieldExecutionResult> {
+    const results = await Promise.allSettled(
+      fieldsData.map((fieldData) => this.executeField(fieldData, action, options)),
+    );
+
+    return this.processBatchResults(results);
+  }
+
+  private buildObjectNameMapping(options: FieldExecutionOptions): Map<string, string> {
+    const mapping = new Map(options.objectNameMapping || []);
+
+    if (options.state?.objectNameMapping) {
+      Object.entries(options.state.objectNameMapping).forEach(([original, unique]) => {
+        mapping.set(original, unique);
+      });
+    }
+
+    if (options.state?.createdObjects) {
+      options.state.createdObjects.forEach((obj) => {
+        mapping.set(obj.originalName, obj.uniqueName);
+      });
+    }
+
+    return mapping;
+  }
+
+  private resolveObjectName(originalName: string, mapping: Map<string, string>): string {
+    return mapping.get(originalName) || originalName;
+  }
+
+  private resolveFieldValue(
+    fieldData: ApiFieldFormat,
+    mapping: Map<string, string>,
+  ): string | undefined {
+    const { typeName, value } = fieldData.data;
+
+    if (typeName !== 'relation' || !value) {
+      return value || undefined;
+    }
+
+    const mappedValue = mapping.get(value);
+    if (mappedValue) {
+      this.logger.debug(`Mapped relation target from '${value}' to '${mappedValue}'`);
+      return mappedValue;
+    }
+
+    this.logger.warn(`No mapping found for relation target object '${value}', using original name`);
+    return value;
+  }
+
+  private resolvePickListId(
+    fieldData: ApiFieldFormat,
+    state?: ObjectStateType,
+  ): string | undefined {
+    if (fieldData.data.typeName !== 'pickList') {
+      return fieldData.data.pickListId ?? undefined;
+    }
+
+    const createdPickListId = state?.fieldSpec?.pickListInfo?.createdPickListId;
+    if (createdPickListId) {
+      this.logger.debug(
+        `Using created pickListId: ${createdPickListId} for field: ${fieldData.data.name}`,
+      );
+      return createdPickListId;
+    }
+
+    return fieldData.data.pickListId ?? undefined;
+  }
+
+  private validateFieldData(fieldData: ApiFieldFormat, pickListId?: string): void {
+    if (fieldData.data.typeName === 'pickList' && !pickListId) {
+      this.logger.warn(
+        `PickList field ${fieldData.data.name} is missing pickListId - this may cause API errors`,
+      );
+    }
+  }
+
+  private buildFieldDto(
+    fieldData: ApiFieldFormat,
+    action: FieldActionType,
+    objectName: string,
+    fieldValue: string | undefined,
+    pickListId: string | undefined,
+  ): FieldDto {
+    const attributes = this.buildFieldAttributes(fieldData);
+
+    return {
+      objName: objectName,
+      action,
+      data: {
+        typeName: fieldData.data.typeName,
+        name: fieldData.data.name,
+        displayName: fieldData.data.displayName,
+        value: fieldValue,
+        description: fieldData.data.description || undefined,
+        pickListId: pickListId || undefined,
+        attributes,
+      },
+    };
+  }
+
+  private buildFieldAttributes(fieldData: ApiFieldFormat) {
+    return fieldData.data.attributes
+      ? {
+          subType: fieldData.data.attributes.subType,
+          onDelete: fieldData.data.attributes.onDelete as RelationOnDeleteAction | undefined,
+          filters: fieldData.data.attributes.filters as Array<Array<any>> | undefined,
+        }
+      : undefined;
+  }
+
+  /**
+   * Execute field deletion with special handling
+   */
+  private async executeFieldDeletion(
+    fieldData: ApiFieldFormat,
+    userId: string,
+  ): Promise<FieldExecutionResult> {
+    try {
+      const deleteFieldDto = {
+        objName: fieldData.objName,
+        action: 'delete' as const,
+        name: fieldData.data.name,
+        data: {
+          name: fieldData.data.name,
+          typeName: fieldData.data.typeName,
+          displayName: fieldData.data.displayName,
+        },
+      };
+
+      const result = await this.nflowObjectService.changeField(deleteFieldDto, userId);
+      this.logger.log(`Field deletion completed successfully: ${result.name}`);
+
+      return {
+        success: true,
+        fieldId: result.name,
+        fieldName: fieldData.data.name,
+      };
+    } catch (error) {
+      this.logger.error('Failed to delete field via API', error);
+      return {
+        success: false,
+        fieldName: fieldData.data.name,
+        error: error instanceof Error ? error.message : 'Field deletion failed',
+      };
+    }
+  }
+
+  private processBatchResults(
+    results: PromiseSettledResult<FieldExecutionResult>[],
+  ): BatchFieldExecutionResult {
     const successful: Array<{ fieldId: string; fieldName: string }> = [];
     const failed: Array<{ fieldName: string; error: string }> = [];
 
-    for (const fieldData of fieldsData) {
-      const result = await this.executeField(fieldData, action, options);
-
-      if (result.success && result.fieldId) {
+    results.forEach((result) => {
+      if (result.status === 'fulfilled' && result.value.success && result.value.fieldId) {
         successful.push({
-          fieldId: result.fieldId,
-          fieldName: fieldData.data.name,
+          fieldId: result.value.fieldId,
+          fieldName: result.value.fieldName || 'Unknown',
         });
       } else {
+        const error = result.status === 'fulfilled' ? result.value.error : String(result.reason);
+        const fieldName =
+          result.status === 'fulfilled' ? result.value.fieldName || 'Unknown' : 'Unknown';
         failed.push({
-          fieldName: fieldData.data.name,
-          error: result.error || 'Unknown error',
+          fieldName,
+          error: error || 'Unknown error',
         });
       }
-    }
+    });
 
     return {
       successful,

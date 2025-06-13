@@ -2,7 +2,10 @@ import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 
 const mutatePickListItemSchema = z.object({
-  action: z.enum(['CREATE', 'UPDATE', 'DELETE', 'RESTORE']).optional(),
+  action: z
+    .enum(['CREATE', 'UPDATE', 'DELETE', 'RESTORE'])
+    .default('CREATE')
+    .describe('Action to perform on the picklist item - REQUIRED for all operations'),
   name: z.string().describe('Name of the picklist item'),
   displayName: z.string().optional().describe('Display name of the picklist item'),
   parentName: z.string().optional().describe('Parent name for hierarchical picklist items'),
@@ -27,7 +30,16 @@ type CreatePickListInput = z.infer<typeof createPickListSchema>;
 
 const createPickListHandler = async (input: CreatePickListInput): Promise<CreatePickListInput> => {
   return new Promise((resolve) => {
-    resolve(input);
+    // Ensure all items have the CREATE action for new pickLists
+    const processedInput = {
+      ...input,
+      items:
+        input.items?.map((item) => ({
+          ...item,
+          action: item.action || 'CREATE', // Ensure action is always set
+        })) || [],
+    };
+    resolve(processedInput);
   });
 };
 

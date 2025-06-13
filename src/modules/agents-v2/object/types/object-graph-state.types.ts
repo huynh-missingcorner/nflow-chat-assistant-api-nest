@@ -11,6 +11,7 @@ import {
   RELATIONSHIP_TYPES,
 } from '../constants/object-graph.constants';
 import type { ApiFormatParserInput } from '../tools/others/api-format-parser.tool';
+import type { PickListInfo } from './picklist-field.types';
 
 // Type definitions based on constants
 export type RelationshipType = (typeof RELATIONSHIP_TYPES)[keyof typeof RELATIONSHIP_TYPES];
@@ -27,6 +28,8 @@ export interface FieldSpec {
   metadata?: Record<string, unknown>;
   action?: 'create' | 'update' | 'delete' | 'recover';
   objectName?: string;
+  // PickList-specific properties
+  pickListInfo?: PickListInfo;
 }
 
 export interface ObjectSpec {

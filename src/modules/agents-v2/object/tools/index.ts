@@ -1,5 +1,7 @@
 import { changeFieldTool } from './fields/change-field.tool';
 import { fieldExistenceTool } from './fields/field-existence.tool';
+import { fieldExtractionTool } from './fields/field-extraction.tool';
+import { pickListAnalysisTool } from './fields/picklist-analysis.tool';
 import { changeObjectTool } from './object/change-object.tool';
 import { objectExtractionTool } from './object/object-extraction.tool';
 import { apiFormatParserTool } from './others/api-format-parser.tool';
@@ -22,12 +24,14 @@ export const allObjectTools = [
   createPickListTool,
   databaseSchemaDesignTool,
   fieldExistenceTool,
+  fieldExtractionTool,
   getPickListTool,
   getPickListAuditLogsTool,
   managePickListLifecycleTool,
   managePickListStatusTool,
   nflowSchemaDesignTool,
   objectExtractionTool,
+  pickListAnalysisTool,
   schemaExtractionTool,
   searchPickListsTool,
   updatePickListTool,
@@ -41,12 +45,14 @@ export {
   createPickListTool,
   databaseSchemaDesignTool,
   fieldExistenceTool,
+  fieldExtractionTool,
   getPickListAuditLogsTool,
   getPickListTool,
   managePickListLifecycleTool,
   managePickListStatusTool,
   nflowSchemaDesignTool,
   objectExtractionTool,
+  pickListAnalysisTool,
   schemaExtractionTool,
   searchPickListsTool,
   updatePickListTool,

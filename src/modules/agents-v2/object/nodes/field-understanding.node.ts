@@ -1,16 +1,50 @@
 import { Injectable } from '@nestjs/common';
 import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 
+import { ChatSessionService } from '@/modules/chat-session/chat-session.service';
+import { NflowPicklistService } from '@/modules/nflow/services/picklist.service';
 import { OPENAI_GPT_4_1_FOR_TOOLS } from '@/shared/infrastructure/langchain/models/openai/openai-models';
 
 import { OBJECT_GRAPH_NODES, OBJECT_LOG_MESSAGES } from '../constants/object-graph.constants';
-import { SYSTEM_PROMPTS } from '../constants/system-prompts';
+import {
+  buildFieldExtractionContextPrompt,
+  FIELD_EXTRACTION_SYSTEM_PROMPT,
+} from '../prompts/field-extraction.prompts';
+import { PickListFieldService } from '../services/picklist-field.service';
 import { fieldExtractionTool } from '../tools/fields/field-extraction.tool';
+import { pickListAnalysisTool } from '../tools/fields/picklist-analysis.tool';
 import { FieldSpec, ObjectStateType } from '../types/object-graph-state.types';
 import { ObjectGraphNodeBase } from './object-graph-node.base';
 
+interface ToolCall {
+  name: string;
+  args: unknown;
+}
+
+function isFieldExtractionToolCall(toolCall: unknown): toolCall is ToolCall {
+  return (
+    typeof toolCall === 'object' &&
+    toolCall !== null &&
+    'name' in toolCall &&
+    'args' in toolCall &&
+    (toolCall as ToolCall).name === 'FieldExtractionTool'
+  );
+}
+
+/**
+ * Node responsible for understanding and extracting field specifications from user messages
+ * Handles pickList detection and creation through dedicated service
+ */
 @Injectable()
 export class FieldUnderstandingNode extends ObjectGraphNodeBase {
+  constructor(
+    private readonly chatSessionService: ChatSessionService,
+    private readonly picklistService: NflowPicklistService,
+    private readonly pickListFieldService: PickListFieldService,
+  ) {
+    super();
+  }
+
   protected getNodeName(): string {
     return OBJECT_GRAPH_NODES.FIELD_UNDERSTANDING;
   }
@@ -25,27 +59,34 @@ export class FieldUnderstandingNode extends ObjectGraphNodeBase {
       );
 
       if (!fieldSpec) {
-        return {
-          error: 'Failed to extract field specification',
-          currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
-          messages: newMessages,
-        };
+        return this.createErrorResult('Failed to extract field specification', newMessages);
       }
 
-      return {
+      // Handle pickList creation if needed
+      const { updatedFieldSpec, pickListMessages } = await this.handlePickListCreation(
         fieldSpec,
-        currentNode: OBJECT_GRAPH_NODES.TYPE_MAPPER, // Route directly to TYPE_MAPPER
-        messages: newMessages,
+        state.originalMessage,
+        state.chatSessionId,
+      );
+
+      const allMessages = [...newMessages, ...pickListMessages];
+
+      return {
+        fieldSpec: updatedFieldSpec,
+        currentNode: OBJECT_GRAPH_NODES.TYPE_MAPPER,
+        messages: allMessages,
       };
     } catch (error) {
       this.logger.error('Field understanding failed', error);
-      return {
-        error: error instanceof Error ? error.message : 'Field understanding failed',
-        currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
-      };
+      return this.createErrorResult(
+        error instanceof Error ? error.message : 'Field understanding failed',
+      );
     }
   }
 
+  /**
+   * Extracts basic field specification from user message
+   */
   private async extractFieldSpecification(
     message: string,
     state: ObjectStateType,
@@ -54,32 +95,43 @@ export class FieldUnderstandingNode extends ObjectGraphNodeBase {
     newMessages: BaseMessage[];
   }> {
     try {
-      const llm = OPENAI_GPT_4_1_FOR_TOOLS.bindTools([fieldExtractionTool]);
+      const llm = OPENAI_GPT_4_1_FOR_TOOLS.bindTools([fieldExtractionTool, pickListAnalysisTool]);
 
       const contextualPrompt = this.buildContextualPrompt(message, state);
 
-      const messages = [
-        new SystemMessage(SYSTEM_PROMPTS.FIELD_EXTRACTION_SYSTEM_PROMPT),
+      const fieldExtractionMessages = [
+        new SystemMessage(FIELD_EXTRACTION_SYSTEM_PROMPT),
         new HumanMessage(contextualPrompt),
       ];
 
-      const response = await llm.invoke(messages);
-      const responseMessage = new AIMessage({
-        content: response.content,
-        id: response.id,
-        tool_calls: response.tool_calls,
+      const fieldResponse = await llm.invoke(fieldExtractionMessages);
+      const fieldResponseMessage = new AIMessage({
+        content: fieldResponse.content,
+        id: fieldResponse.id,
+        tool_calls: fieldResponse.tool_calls,
       });
 
-      const newMessages = [...messages, responseMessage];
+      const allMessages: BaseMessage[] = [...fieldExtractionMessages, fieldResponseMessage];
 
-      const toolCalls = response.tool_calls;
-      if (!toolCalls || toolCalls.length === 0) {
-        this.logger.error('No tool calls found in field extraction response');
-        return { fieldSpec: null, newMessages };
+      const fieldToolCall = this.extractFieldToolCall(fieldResponse.tool_calls);
+      if (!isFieldExtractionToolCall(fieldToolCall)) {
+        this.logger.error('FieldExtractionTool not found in tool calls');
+        return { fieldSpec: null, newMessages: allMessages };
       }
 
-      const toolCall = toolCalls[0];
-      return { fieldSpec: toolCall.args as FieldSpec, newMessages };
+      const basicFieldSpec = fieldToolCall.args as FieldSpec;
+
+      // If this might be a pickList field, analyze further
+      if (this.pickListFieldService.isPickListField(basicFieldSpec)) {
+        const enhancedFieldSpec = await this.enhanceFieldSpecWithPickListAnalysis(
+          basicFieldSpec,
+          message,
+          allMessages,
+        );
+        return { fieldSpec: enhancedFieldSpec.fieldSpec, newMessages: enhancedFieldSpec.messages };
+      }
+
+      return { fieldSpec: basicFieldSpec, newMessages: allMessages };
     } catch (error) {
       this.logger.error('Error extracting field specification', error);
       return { fieldSpec: null, newMessages: [] };
@@ -87,57 +139,140 @@ export class FieldUnderstandingNode extends ObjectGraphNodeBase {
   }
 
   /**
-   * Build a contextual prompt that includes information about created objects in the current thread
+   * Handles pickList creation workflow
+   */
+  private async handlePickListCreation(
+    fieldSpec: FieldSpec,
+    originalMessage: string,
+    chatSessionId: string,
+  ): Promise<{ updatedFieldSpec: FieldSpec; pickListMessages: BaseMessage[] }> {
+    if (!fieldSpec.pickListInfo?.needsNewPickList) {
+      return { updatedFieldSpec: fieldSpec, pickListMessages: [] };
+    }
+
+    try {
+      const validationResult = this.pickListFieldService.validatePickListInfo(
+        fieldSpec.pickListInfo,
+      );
+      if (!validationResult.isValid) {
+        this.logger.warn('Invalid pickList info:', validationResult.errors);
+        // Continue without pickList creation but log warnings
+        return { updatedFieldSpec: fieldSpec, pickListMessages: [] };
+      }
+
+      const creationResult = await this.pickListFieldService.createPickListForField(
+        fieldSpec.pickListInfo,
+        fieldSpec.name,
+        fieldSpec.description || '',
+        chatSessionId,
+      );
+
+      if (!creationResult.success) {
+        throw new Error(creationResult.error || 'PickList creation failed');
+      }
+
+      // Update field spec with created pickList ID
+      const updatedFieldSpec: FieldSpec = {
+        ...fieldSpec,
+        pickListInfo: {
+          ...fieldSpec.pickListInfo,
+          createdPickListId: creationResult.pickListId,
+        },
+      };
+
+      this.logger.log(`Created pickList with ID: ${creationResult.pickListId}`);
+      return { updatedFieldSpec, pickListMessages: [] };
+    } catch (error) {
+      this.logger.error('Failed to create pickList for field', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Enhances field specification with pickList analysis
+   */
+  private async enhanceFieldSpecWithPickListAnalysis(
+    basicFieldSpec: FieldSpec,
+    message: string,
+    existingMessages: BaseMessage[],
+  ): Promise<{ fieldSpec: FieldSpec; messages: BaseMessage[] }> {
+    try {
+      const analysisResult = await this.pickListFieldService.analyzePickListRequirements(
+        {
+          name: basicFieldSpec.name,
+          typeHint: basicFieldSpec.typeHint,
+          description: basicFieldSpec.description,
+          objectName: basicFieldSpec.objectName,
+        },
+        message,
+      );
+
+      if (analysisResult.isPickListField && analysisResult.needsNewPickList) {
+        // Update field spec with pickList information
+        const updatedFieldSpec: FieldSpec = {
+          ...basicFieldSpec,
+          typeHint: 'pickList',
+          pickListInfo: {
+            needsNewPickList: true,
+            pickListName: analysisResult.suggestedPickListName,
+            pickListDisplayName: analysisResult.suggestedPickListDisplayName,
+            pickListDescription: analysisResult.suggestedPickListDescription,
+            pickListItems: analysisResult.extractedItems,
+          },
+        };
+
+        return { fieldSpec: updatedFieldSpec, messages: existingMessages };
+      }
+
+      return { fieldSpec: basicFieldSpec, messages: existingMessages };
+    } catch (error) {
+      this.logger.error('Error enhancing field spec with pickList analysis', error);
+      return { fieldSpec: basicFieldSpec, messages: existingMessages };
+    }
+  }
+
+  /**
+   * Extracts field tool call from response
+   */
+  private extractFieldToolCall(toolCalls: unknown[] | undefined): unknown {
+    if (!toolCalls || toolCalls.length === 0) {
+      return null;
+    }
+
+    return (
+      toolCalls.find((tc) => {
+        return (
+          typeof tc === 'object' &&
+          tc !== null &&
+          'name' in tc &&
+          (tc as { name: string }).name === 'FieldExtractionTool'
+        );
+      }) || null
+    );
+  }
+
+  /**
+   * Builds contextual prompt that includes information about created objects
    */
   private buildContextualPrompt(message: string, state: ObjectStateType): string {
-    let prompt = `User Request: ${message}\n\n`;
+    return buildFieldExtractionContextPrompt(
+      message,
+      state.createdObjects,
+      state.intent || undefined,
+    );
+  }
 
-    // Add intent context
-    if (state.intent) {
-      prompt += `Intent: ${state.intent.intent}\n`;
-      if (state.intent.details) {
-        prompt += `Intent Details: ${JSON.stringify(state.intent.details)}\n`;
-      }
-      if (state.intent.target) {
-        prompt += `Intent Target: ${Array.isArray(state.intent.target) ? state.intent.target.join(', ') : state.intent.target}\n`;
-      }
-      prompt += '\n';
-    }
-
-    // Add created objects context with name mapping
-    if (state.createdObjects && state.createdObjects.length > 0) {
-      prompt += `Created Objects in Current Thread:\n`;
-      for (const obj of state.createdObjects) {
-        prompt += `- Display Name: "${obj.displayName}" → Unique Name: "${obj.uniqueName}" (created in intent ${obj.intentIndex})`;
-        if (obj.description) {
-          prompt += ` - ${obj.description}`;
-        }
-        if (obj.fields && obj.fields.length > 0) {
-          prompt += `\n  Fields: ${obj.fields.map((f) => f.displayName).join(', ')}`;
-        }
-        prompt += '\n';
-      }
-      prompt += '\n';
-
-      // Add explicit mapping instructions
-      prompt += `Object Name Mapping Instructions:
-When the user refers to an object by its display name (e.g., "User", "E commerce User"), you MUST use the corresponding unique name for the objectName field.
-From the mapping above:
-`;
-      for (const obj of state.createdObjects) {
-        prompt += `- If user says "${obj.displayName}" → use objectName: "${obj.uniqueName}"\n`;
-      }
-      prompt += '\n';
-    }
-
-    prompt += `Based on the user request and context above, extract the field specification including:
-1. Field name and type
-2. Whether it's required
-3. Action to perform (create, update, delete, recover)
-4. Target object unique name (use the exact unique name from the mapping above)
-
-IMPORTANT: When specifying objectName, use the unique name (e.g., "user_1231231234") NOT the display name (e.g., "User").`;
-
-    return prompt;
+  /**
+   * Creates error result with optional messages
+   */
+  private createErrorResult(
+    errorMessage: string,
+    messages?: BaseMessage[],
+  ): Partial<ObjectStateType> {
+    return {
+      error: `Field understanding failed: ${errorMessage}`,
+      currentNode: OBJECT_GRAPH_NODES.HANDLE_ERROR,
+      messages: messages || [],
+    };
   }
 }

@@ -9,6 +9,7 @@ import { NFlowApplicationService } from './services/application.service';
 import { NFlowFlowService } from './services/flow.service';
 import { NFlowLayoutService } from './services/layout.service';
 import { NFlowObjectService } from './services/object.service';
+import { NflowPicklistService } from './services/picklist.service';
 
 @Module({
   imports: [
@@ -20,7 +21,19 @@ import { NFlowObjectService } from './services/object.service';
     SharedModule,
     AuthModule,
   ],
-  providers: [NFlowApplicationService, NFlowObjectService, NFlowFlowService, NFlowLayoutService],
-  exports: [NFlowApplicationService, NFlowObjectService, NFlowFlowService, NFlowLayoutService],
+  providers: [
+    NFlowApplicationService,
+    NFlowObjectService,
+    NFlowFlowService,
+    NFlowLayoutService,
+    NflowPicklistService,
+  ],
+  exports: [
+    NFlowApplicationService,
+    NFlowObjectService,
+    NFlowFlowService,
+    NFlowLayoutService,
+    NflowPicklistService,
+  ],
 })
 export class NFlowModule {}

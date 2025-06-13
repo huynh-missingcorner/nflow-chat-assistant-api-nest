@@ -298,6 +298,27 @@ export class FieldExecutorNode extends ObjectGraphNodeBase {
           }
         : undefined;
 
+      // Get pickListId from field specification if available (for newly created pickLists)
+      let pickListId = fieldData.data.pickListId;
+      if (
+        fieldData.data.typeName === 'pickList' &&
+        state.fieldSpec &&
+        state.fieldSpec.pickListInfo &&
+        state.fieldSpec.pickListInfo.createdPickListId
+      ) {
+        pickListId = state.fieldSpec.pickListInfo.createdPickListId;
+        this.logger.debug(
+          `Using created pickListId: ${pickListId} for field: ${fieldData.data.name}`,
+        );
+      }
+
+      // Validate that pickList fields have a pickListId
+      if (fieldData.data.typeName === 'pickList' && !pickListId) {
+        this.logger.warn(
+          `PickList field ${fieldData.data.name} is missing pickListId - this may cause API errors`,
+        );
+      }
+
       // Build the FieldDto according to the NFlow API specification
       const fieldDto: FieldDto = {
         objName: objName,
@@ -308,7 +329,7 @@ export class FieldExecutorNode extends ObjectGraphNodeBase {
           displayName: fieldData.data.displayName,
           value: fieldValue,
           description: fieldData.data.description || undefined,
-          pickListId: fieldData.data.pickListId || undefined,
+          pickListId: pickListId || undefined,
           attributes,
         },
       };
@@ -343,7 +364,7 @@ export class FieldExecutorNode extends ObjectGraphNodeBase {
         fieldId: result.name,
       };
     } catch (error) {
-      this.logger.error(`Failed to ${step.action} field via API`, error);
+      this.logger.error(`Failed to ${step.action} field via API`);
       return {
         success: false,
         error: error instanceof Error ? error.message : `Field ${step.action} failed`,

@@ -12,7 +12,7 @@ import { ObjectAgentService } from '@/modules/agents/object-agent/object-agent.s
 import { ObjectAgentInput } from '@/modules/agents/object-agent/types/object.types';
 import { Agent, AgentOutput, HITLRequest } from '@/modules/agents/types';
 import { MEMORY_SERVICE } from '@/modules/memory/const';
-import { IMemoryService } from '@/modules/memory/interfaces';
+import type { IMemoryService } from '@/modules/memory/interfaces';
 import { ShortTermMemory } from '@/modules/memory/types';
 
 import { ActiveAgent, AgentStatus, DEFAULT_AGENT_STATUS } from '../consts';

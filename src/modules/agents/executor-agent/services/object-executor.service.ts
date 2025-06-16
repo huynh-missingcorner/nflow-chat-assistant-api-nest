@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { ChatSessionService } from '@/modules/chat-session/chat-session.service';
 import { MEMORY_SERVICE } from '@/modules/memory/const';
-import { IMemoryService } from '@/modules/memory/interfaces';
+import type { IMemoryService } from '@/modules/memory/interfaces';
 import { CreatedObject, Field, ShortTermMemory } from '@/modules/memory/types';
 import { NFlowObjectService } from '@/modules/nflow/services/object.service';
 import { FieldDto, FieldResponse, ObjectDto, ObjectResponse } from '@/modules/nflow/types';

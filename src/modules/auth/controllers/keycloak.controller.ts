@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
+import type { Response } from 'express';
 
 import { EnvConfig } from '@/config/env/env.config';
 import { RedisSessionService } from '@/shared/services/redis-session.service';
@@ -21,7 +21,7 @@ import { RedisSessionService } from '@/shared/services/redis-session.service';
 import { AuthStatusResponseDto, TokenResponseDto } from '../dto/auth-response.dto';
 import { KeycloakService } from '../services/keycloak.service';
 import { KeycloakUserInfo } from '../types/keycloak';
-import { SessionData } from '../types/session';
+import type { SessionData } from '../types/session';
 
 @ApiTags('Authentication')
 @Controller('auth/keycloak')

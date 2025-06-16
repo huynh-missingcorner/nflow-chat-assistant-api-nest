@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ToolChoiceFunction } from 'openai/resources/responses/responses.mjs';
 
 import { MEMORY_SERVICE } from '@/modules/memory/const';
-import { IMemoryService } from '@/modules/memory/interfaces';
+import type { IMemoryService } from '@/modules/memory/interfaces';
 import { ShortTermMemory } from '@/modules/memory/types';
 import { AGENT_PATHS } from '@/shared/constants/agent-paths.constants';
 import { OpenAIService } from '@/shared/infrastructure/openai/openai.service';

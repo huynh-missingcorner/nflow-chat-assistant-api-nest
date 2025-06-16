@@ -14,7 +14,7 @@ import { Server, Socket } from 'socket.io';
 
 import { WsKeycloakAuthGuard } from '../auth/guards/ws-keycloak-auth.guard';
 import { MessageRole } from './dto/chat-message.dto';
-import {
+import type {
   WebSocketChatMessageDto,
   WebSocketErrorDto,
   WebSocketMessageAckDto,

@@ -3,12 +3,20 @@ import {
   ObjectExecutionResult,
   ObjectStateType,
 } from '@/modules/agents-v2/object/types/object-graph-state.types';
-import { FieldDto } from '@/modules/nflow/types';
+import { FieldDto, FilterItem } from '@/modules/nflow/types';
+
+export type FieldFormatData = ApiFormatParserInput['fieldsFormat'][0];
+
+export interface FieldAttributes {
+  subType?: string;
+  onDelete?: 'noAction' | 'setNull' | 'cascade';
+  filters?: FilterItem[][];
+}
 
 export interface FieldExecutionStep {
   type: 'create_field' | 'update_field' | 'delete_field' | 'recover_field';
   action: 'create' | 'update' | 'delete' | 'recover';
-  fieldData: ApiFormatParserInput['fieldsFormat'][0];
+  fieldData: FieldFormatData;
   description: string;
 }
 
@@ -21,6 +29,28 @@ export interface FieldStepResult {
   fieldId?: string;
   error?: string;
 }
+
+export interface ExecutionContext {
+  userId: string;
+  chatSessionId: string;
+  state: ObjectStateType;
+  objectNameMapping: Map<string, string>;
+}
+
+export interface StepExecutionSummary {
+  hasSuccessfulSteps: boolean;
+  hasFailedSteps: boolean;
+  totalSteps: number;
+  completedSteps: number;
+}
+
+export interface FieldTransformationContext {
+  step: FieldExecutionStep;
+  state: ObjectStateType;
+  objectNameMapping: Map<string, string>;
+}
+
+export type ExecutionStatus = 'success' | 'partial' | 'failed';
 
 export interface IFieldExecutorService {
   /**
